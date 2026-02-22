@@ -29,3 +29,6 @@ Or apply it manually now: dotnet ef database update
 
 
 git config --global credential.helper store
+git push origin main
+tsizism
+token
