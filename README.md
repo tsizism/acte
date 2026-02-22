@@ -28,3 +28,4 @@ The migration will be automatically applied when you run your Blazor app (becaus
 Or apply it manually now: dotnet ef database update
 
 
+git config --global credential.helper store
