@@ -12,6 +12,7 @@ namespace UIPooc.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Holding> Holdings { get; set; }
+        public DbSet<Equity> Equities { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -20,7 +21,9 @@ namespace UIPooc.Data
 
             ConfigureUser(modelBuilder);
             ConfigureHolding(modelBuilder);
+            ConfigureEquity(modelBuilder);
             ConfigureTransaction(modelBuilder);
+            ConfigureRelationships(modelBuilder);
         }
 
         private void ConfigureUser(ModelBuilder modelBuilder)
@@ -73,6 +76,25 @@ namespace UIPooc.Data
                 entity.Property(e => e.UserId)
                     .IsRequired();
 
+                entity.Property(e => e.Index)
+                    .IsRequired();
+
+                entity.Property(e => e.LastUpdated)
+                    .IsRequired();
+
+                entity.HasIndex(e => e.UserId);
+            });
+        }
+
+        private void ConfigureEquity(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Equity>(entity =>
+            {
+                entity.HasKey(e => e.EquityId);
+
+                entity.Property(e => e.HoldingId)
+                    .IsRequired();
+
                 entity.Property(e => e.Symbol)
                     .IsRequired()
                     .HasMaxLength(10);
@@ -91,10 +113,8 @@ namespace UIPooc.Data
                 entity.Property(e => e.CurrentPrice)
                     .HasColumnType("decimal(18,2)");
 
-                entity.Property(e => e.LastUpdated)
-                    .IsRequired();
-
-                entity.HasIndex(e => new { e.UserId, e.Symbol });
+                entity.HasIndex(e => e.HoldingId);
+                entity.HasIndex(e => new { e.HoldingId, e.Symbol });
             });
         }
 
@@ -139,6 +159,15 @@ namespace UIPooc.Data
                 entity.HasIndex(e => e.Symbol);
                 entity.HasIndex(e => e.TransactionDate);
             });
+        }
+
+        private void ConfigureRelationships(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Holding>()
+                .HasMany(h => h.Equities)
+                .WithOne(e => e.Holding)
+                .HasForeignKey(e => e.HoldingId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
