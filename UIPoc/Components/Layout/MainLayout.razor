@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using UIPooc.Services
+@using UIPooc.Models
+@inherits LayoutComponentBase
+@inject IUserService UserService
 
 <div class="page">
     <div class="sidebar">
@@ -7,6 +10,16 @@
 
     <main>
         <div class="top-row px-4">
+            @if (currentUser != null)
+            {
+                <div class="user-info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>@currentUser.FirstName @currentUser.LastName</span>
+                </div>
+            }
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
         </div>
 
@@ -21,3 +34,12 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private User? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserService.GetCurrentUserAsync();
+    }
+}
