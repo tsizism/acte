@@ -127,6 +127,9 @@ namespace UIPooc.Data
                 entity.Property(e => e.UserId)
                     .IsRequired();
 
+                entity.Property(e => e.HoldingId)
+                    .IsRequired();
+
                 entity.Property(e => e.Symbol)
                     .IsRequired()
                     .HasMaxLength(10);
@@ -158,6 +161,7 @@ namespace UIPooc.Data
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.Symbol);
                 entity.HasIndex(e => e.TransactionDate);
+                entity.HasIndex(e => e.HoldingId);
             });
         }
 
@@ -168,6 +172,11 @@ namespace UIPooc.Data
                 .WithOne(e => e.Holding)
                 .HasForeignKey(e => e.HoldingId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Holding>()
+                .HasMany(h => h.Transactions)
+                .WithOne(t => t.Holding)
+                .HasForeignKey(t => t.HoldingId);
         }
     }
 }

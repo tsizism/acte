@@ -8,5 +8,6 @@ namespace UIPooc.Models
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
         public User User { get; set; } = null!;
         public ICollection<Equity> Equities { get; set; } = new List<Equity>();
+        public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     }
 }
