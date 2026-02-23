@@ -9,6 +9,10 @@ namespace UIPooc.Models
         public decimal Quantity { get; set; }
         public decimal AverageCost { get; set; }
         public decimal? CurrentPrice { get; set; }
+        public decimal? LastTxnQuantity { get; set; }
+        public decimal? LastTxnPrice { get; set; }
+        public TransactionType LastTxnType { get; set; }
+        public DateTime LastTxnAt { get; set; }
         public Holding Holding { get; set; } = null!;
     }
 }

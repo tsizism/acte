@@ -113,6 +113,18 @@ namespace UIPooc.Data
                 entity.Property(e => e.CurrentPrice)
                     .HasColumnType("decimal(18,2)");
 
+                entity.Property(e => e.LastTxnPrice)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.LastTxnQuantity)
+                    .HasColumnType("decimal(18,4)");
+
+                entity.Property(e => e.LastTxnType)
+                    .IsRequired();
+
+                entity.Property(e => e.LastTxnAt)
+                    .IsRequired();
+
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });
             });
