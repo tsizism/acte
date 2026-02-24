@@ -85,7 +85,18 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.HasIndex(e => e.UserId);
-            });
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.CallName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+             });
         }
 
         private void ConfigureEquity(ModelBuilder modelBuilder)
@@ -125,6 +136,18 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.Property(e => e.LastTxnAt)
+                    .IsRequired();
+
+                entity.Property(e => e.HoldingHigh)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.HoldingHighAt)
+                    .IsRequired();
+
+                entity.Property(e => e.HoldingLow)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.HoldingLowAt)
                     .IsRequired();
 
                 entity.HasIndex(e => e.HoldingId);
