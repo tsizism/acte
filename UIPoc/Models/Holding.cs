@@ -9,5 +9,6 @@ namespace UIPooc.Models
         public User User { get; set; } = null!;
         public ICollection<Equity> Equities { get; set; } = new List<Equity>();
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<IndexHistory> IndexHistories { get; set; } = new List<IndexHistory>();
     }
 }

@@ -14,6 +14,7 @@ namespace UIPooc.Data
         public DbSet<Holding> Holdings { get; set; }
         public DbSet<Equity> Equities { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<IndexHistory> IndexHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,6 +24,7 @@ namespace UIPooc.Data
             ConfigureHolding(modelBuilder);
             ConfigureEquity(modelBuilder);
             ConfigureTransaction(modelBuilder);
+            ConfigureIndexHistory(modelBuilder);
             ConfigureRelationships(modelBuilder);
         }
 
@@ -177,6 +179,27 @@ namespace UIPooc.Data
             });
         }
 
+        private void ConfigureIndexHistory(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<IndexHistory>(entity =>
+            {
+                entity.HasKey(e => e.IndexHistoryId);
+
+                entity.Property(e => e.HoldingId)
+                    .IsRequired();
+
+                entity.Property(e => e.Index)
+                    .IsRequired();
+
+                entity.Property(e => e.RecordedAt)
+                    .IsRequired();
+
+                entity.HasIndex(e => e.HoldingId);
+                entity.HasIndex(e => e.RecordedAt);
+                entity.HasIndex(e => new { e.HoldingId, e.RecordedAt });
+            });
+        }
+
         private void ConfigureRelationships(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Holding>()
@@ -188,7 +211,14 @@ namespace UIPooc.Data
             modelBuilder.Entity<Holding>()
                 .HasMany(h => h.Transactions)
                 .WithOne(t => t.Holding)
-                .HasForeignKey(t => t.HoldingId);
+                .HasForeignKey(t => t.HoldingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Holding>()
+                .HasMany(h => h.IndexHistories)
+                .WithOne(i => i.Holding)
+                .HasForeignKey(i => i.HoldingId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
