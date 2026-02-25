@@ -16,7 +16,7 @@ namespace UIPooc.Models
         public decimal Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal TotalAmount { get; set; }
-        public decimal? Commission { get; set; }
+        public decimal Commission { get; set; }
         public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
         public string? Notes { get; set; }
         public User User { get; set; } = null!;

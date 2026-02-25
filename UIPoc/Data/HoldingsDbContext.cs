@@ -42,6 +42,9 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasMaxLength(255);
 
+                entity.Property(e => e.Phone)
+                    .HasMaxLength(64);
+
                 entity.Property(e => e.FirstName)
                     .HasMaxLength(100);
 
@@ -80,6 +83,15 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.Index)
                     .IsRequired();
+
+                entity.Property(e => e.Index)
+                    .IsRequired();
+
+                entity.Property(e => e.FlagMaxIndex).IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.FlagMinIndex).IsRequired()
+                    .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.LastUpdated)
                     .IsRequired();
@@ -124,31 +136,44 @@ namespace UIPooc.Data
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.CurrentPrice)
+                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
-
-                entity.Property(e => e.LastTxnPrice)
-                    .HasColumnType("decimal(18,2)");
-
-                entity.Property(e => e.LastTxnQuantity)
-                    .HasColumnType("decimal(18,4)");
 
                 entity.Property(e => e.LastTxnType)
                     .IsRequired();
+
+                entity.Property(e => e.LastTxnPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.LastTxnQuantity)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,4)");
 
                 entity.Property(e => e.LastTxnAt)
                     .IsRequired();
 
                 entity.Property(e => e.HoldingHigh)
+                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.HoldingHighAt)
                     .IsRequired();
 
                 entity.Property(e => e.HoldingLow)
+                    .IsRequired() 
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.HoldingLowAt)
                     .IsRequired();
+
+                entity.Property(e => e.FlagMax)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.FlagMin)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
 
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });
@@ -187,6 +212,7 @@ namespace UIPooc.Data
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.Commission)
+                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.TransactionDate)
