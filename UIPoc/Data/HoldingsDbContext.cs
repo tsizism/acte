@@ -94,10 +94,12 @@ namespace UIPooc.Data
                 entity.Property(e => e.Currency)
                     .HasMaxLength(5);
 
-                entity.Property(e => e.FlagMaxIndex).IsRequired()
+                entity.Property(e => e.FlagMaxIndex)
+                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
-                entity.Property(e => e.FlagMinIndex).IsRequired()
+                entity.Property(e => e.FlagMinIndex)
+                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.LastUpdated)
@@ -130,6 +132,10 @@ namespace UIPooc.Data
                 entity.Property(e => e.Symbol)
                     .IsRequired()
                     .HasMaxLength(10);
+
+                entity.Property(e => e.Market)
+                    .IsRequired()
+                    .HasMaxLength(5);
 
                 entity.Property(e => e.CompanyName)
                     .HasMaxLength(255);
@@ -283,6 +289,8 @@ namespace UIPooc.Data
 
         public async Task<Holding> CreateHolding(Holding holding)
         {
+            holding.FlagMaxIndex = 0;
+            holding.FlagMinIndex = 0;
             holding.CallName = SpecificColorNames[Random.Shared.Next(SpecificColorNames.Length)];
             Holdings.Add(holding);
             await SaveChangesAsync();

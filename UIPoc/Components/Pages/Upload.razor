@@ -123,8 +123,9 @@
 
             holding = new Holding 
             { 
-                Name = currentHoldingName,
+                Name = currentHoldingName+DateTime.Now.ToString("yyMMddHHmm"),
                 CallName = currentHoldingName,
+                Currency = "CAD", 
                 UserId = currentUser.UserId
             };
 

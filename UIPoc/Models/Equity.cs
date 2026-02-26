@@ -5,6 +5,7 @@ namespace UIPooc.Models
         public int EquityId { get; set; }
         public int HoldingId { get; set; }
         public string Currency { get; set; } = string.Empty;
+        public string Market { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
         public decimal Quantity { get; set; }
@@ -18,8 +19,8 @@ namespace UIPooc.Models
         public DateTime HoldingHighAt { get; set; }
         public decimal HoldingLow { get; set; }
         public DateTime HoldingLowAt { get; set; }
-        public decimal? FlagMax { get; set; }
-        public decimal? FlagMin { get; set; }
+        public decimal? FlagMax { get; set; } = 0;
+        public decimal? FlagMin { get; set; } = 0;
         public Holding Holding { get; set; } = null!;
     }
 }

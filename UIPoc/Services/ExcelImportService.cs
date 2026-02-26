@@ -20,7 +20,8 @@ namespace UIPooc.Services
 
         public async Task<int> ImportEquitiesFromExcelAsync(Stream excelStream, int holdingId)
         {
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
 
             using var package = new ExcelPackage(excelStream);
             var worksheet = package.Workbook.Worksheets[0];
@@ -32,23 +33,37 @@ namespace UIPooc.Services
             // Expected columns: Symbol, CompanyName, Quantity, AverageCost, CurrentPrice
             for (int row = 2; row <= rowCount; row++)
             {
-                var symbol = worksheet.Cells[row, 1].Text?.Trim();
-                if (string.IsNullOrWhiteSpace(symbol))
-                    continue;
+                string? assetType = worksheet.Cells[row, 1].Text?.Trim();
 
-                var equity = new Equity
+                if( assetType == null || !assetType.Equals("Equities", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue; // Skip header or non-equity rows
+                }
+
+                //if (string.IsNullOrWhiteSpace(symbol))
+                //    continue;
+
+                Equity equity = new Equity
                 {
                     HoldingId = holdingId,
-                    Symbol = symbol,
-                    CompanyName = worksheet.Cells[row, 2].Text?.Trim(),
-                    Quantity = ParseDecimal(worksheet.Cells[row, 3].Text),
-                    AverageCost = ParseDecimal(worksheet.Cells[row, 4].Text),
-                    CurrentPrice = ParseDecimal(worksheet.Cells[row, 5].Text),
+                    Currency = worksheet.Cells[row, 2].Text?.Trim() ?? throw new InvalidDataException("Currency is empty"),
+                    Symbol = worksheet.Cells[row, 3].Text?.Trim() ?? throw new InvalidDataException("Symbol is empty"),
+                    Market = worksheet.Cells[row, 4].Text?.Trim() ?? throw new InvalidDataException("Market is empty"),
+                    CompanyName = worksheet.Cells[row, 5].Text?.Trim(),
+                    Quantity = ParseDecimal(worksheet.Cells[row, 6].Text),
+                    AverageCost = ParseDecimal(worksheet.Cells[row, 7].Text), 
+                    CurrentPrice = ParseDecimal(worksheet.Cells[row, 8].Text), // Closing price
                     LastTxnType = TransactionType.Buy,
-                    LastTxnQuantity = ParseDecimal(worksheet.Cells[row, 3].Text),
-                    LastTxnPrice = ParseDecimal(worksheet.Cells[row, 4].Text),
                     LastTxnAt = DateTime.UtcNow
                 };
+
+
+                equity.LastTxnQuantity = equity.Quantity;
+                equity.LastTxnPrice = equity.CurrentPrice;
+                equity.HoldingHigh = equity.LastTxnPrice;
+                equity.HoldingHighAt = equity.LastTxnAt;
+                equity.HoldingLow = equity.LastTxnPrice;
+                equity.HoldingLowAt = equity.LastTxnAt;
 
                 _context.Equities.Add(equity);
                 importedCount++;

@@ -32,7 +32,8 @@ ExcelPackage.License.SetCommercial("<Your License Key here>");
 ExcelPackage.License.SetNonCommercialPersonal("<Your Name>");
 //or..
 ExcelPackage.License.SetNonCommercialOrganization("<Your Noncommercial Organization>");
-    
+
+ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");    
 using(var package = new ExcelPackage(new FileInfo("MyWorkbook.xlsx")))
 {
 
