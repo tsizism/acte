@@ -1,0 +1,173 @@
+﻿@page "/upload"
+@using UIPooc.Services
+@using UIPooc.Models
+@using UIPooc.Data
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject IExcelImportService ExcelImportService
+@inject HoldingsDbContext DbContext
+@inject NotificationService NotificationService
+
+<PageTitle>Upload Equities</PageTitle>
+
+<h1>Upload Equities from Excel</h1>
+
+<div class="mb-3">
+    <label for="holdingSelect" class="form-label">Select Holding:</label>
+    <RadzenDropDown 
+                    @bind-Value="selectedHoldingId" 
+                    Change=@(args => OnHoldingChanged(args))
+                    Data="@holdings" 
+                    TextProperty="Name" 
+                    ValueProperty="HoldingId"
+                    Style="width: 100%; max-width: 400px;"
+                    Placeholder="Select a holding..." />
+</div>
+
+<p role="status">Selected Holding Name: @currentHoldingName</p>
+
+
+<div class="mb-3">
+    <label for="fileInput" class="form-label">Upload Excel File:</label>
+    <InputFile id="fileInput" OnChange="HandleFileSelected" accept=".xlsx,.xls" class="form-control" style="max-width: 400px;" />
+</div>
+
+<button class="btn btn-primary" @onclick="ProcessFileAsync">Process @file?.Name</button>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success")" role="alert">
+        @statusMessage
+    </div>
+}
+
+<div class="mt-3">
+    <p><strong>Expected Excel Format:</strong></p>
+    <ul>
+        <li>Column 1: Symbol</li>
+        <li>Column 2: Company Name</li>
+        <li>Column 3: Quantity</li>
+        <li>Column 4: Average Cost</li>
+        <li>Column 5: Current Price (optional)</li>
+    </ul>
+    <p>First row should contain headers.</p>
+</div>
+
+@code {
+    private int? selectedHoldingId;
+    private List<Holding> holdings = new();
+    private string? statusMessage;
+    private string currentHoldingName = string.Empty;
+    private bool isError;
+    private IBrowserFile? file;
+
+    void OnHoldingChanged(object value)
+    {
+        Console.WriteLine($"Selected value: {value}");
+        // Perform actions here based on selection
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        holdings = await DbContext.Holdings.OrderBy(h => h.Name).ToListAsync();
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        statusMessage = null;
+        isError = false;
+
+        file = e.File;
+        if (file == null)
+            return;
+
+        if (file.Size > 10 * 1024 * 1024) // 10MB limit
+        {
+            statusMessage = "File size must be less than 10MB.";
+            isError = true;
+            return;
+        }
+
+
+        if (!selectedHoldingId.HasValue)
+        {
+            currentHoldingName = file.Name.Split('.')[0];
+            // holdings.FirstOrDefault(h => h.HoldingId == selectedHoldingId)?.Name;
+            // statusMessage = "Please select a holding first.";
+            // isError = true;
+            // return;
+        }
+    }
+
+    private async Task ProcessFileAsync()  
+    {
+        if (file == null)
+        {
+            statusMessage = "Please select a file first.";
+            isError = true;
+            return;
+        }
+
+        Holding? holding = await DbContext.Holdings.FirstOrDefaultAsync(h => h.Name == currentHoldingName);
+
+        if (holding == null)
+        {
+            // Get current user to associate with the new holding
+            var currentUser = await DbContext.Users.FirstOrDefaultAsync();
+            if (currentUser == null)
+            {
+                statusMessage = "No user found. Please create a user first.";
+                isError = true;
+                return;
+            }
+
+            holding = new Holding 
+            { 
+                Name = currentHoldingName,
+                CallName = currentHoldingName,
+                UserId = currentUser.UserId
+            };
+
+            holding = await DbContext.CreateHolding(holding);
+            selectedHoldingId = holding.HoldingId;
+        }
+        else
+        {
+            selectedHoldingId = holding.HoldingId;
+        }
+
+        try
+        {
+            using var stream = file!.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            int importedCount = await ExcelImportService.ImportEquitiesFromExcelAsync(memoryStream, selectedHoldingId.Value);
+
+            statusMessage = $"Successfully imported {importedCount} equities.";
+            isError = false;
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Import Successful",
+                Detail = $"Imported {importedCount} equities",
+                Duration = 4000
+            });
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error importing file: {ex.Message}";
+            isError = true;
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Import Failed",
+                Detail = ex.Message,
+                Duration = 4000
+            });
+        }
+    }
+}

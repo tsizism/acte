@@ -1,10 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using UIPooc.Models;
 
 namespace UIPooc.Data
 {
     public class HoldingsDbContext : DbContext
     {
+        private static readonly string[] SpecificColorNames = new string[]
+            {
+        "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Cyan",
+        "Magenta", "Lime", "Teal", "Navy", "Maroon", "Olive", "Gray", "Black"
+            };
+
         public HoldingsDbContext(DbContextOptions<HoldingsDbContext> options)
             : base(options)
         {
@@ -268,6 +275,14 @@ namespace UIPooc.Data
                 .WithOne(i => i.Holding)
                 .HasForeignKey(i => i.HoldingId)
                 .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        public async Task<Holding> CreateHolding(Holding holding)
+        {
+            holding.CallName = SpecificColorNames[Random.Shared.Next(SpecificColorNames.Length)];
+            Holdings.Add(holding);
+            await SaveChangesAsync();
+            return holding;
         }
     }
 }

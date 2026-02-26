@@ -1,7 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using Radzen;
 using UIPooc.Components;
 using UIPooc.Data;
 using UIPooc.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace UIPooc
 {
@@ -14,6 +15,8 @@ namespace UIPooc
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
             builder.Services.AddDbContext<HoldingsDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IExcelImportService, ExcelImportService>();
+            builder.Services.AddRadzenComponents();
 
             WebApplication app = builder.Build();
 
