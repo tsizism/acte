@@ -5,6 +5,7 @@ namespace UIPooc.Models
         public int HoldingId { get; set; }
         public int UserId { get; set; }
         public double Index { get; set; }
+        public string? Currency { get; set; }
         public double? FlagMaxIndex { get; set; }
         public double? FlagMinIndex { get; set; }
         public string Name { get; set; } = string.Empty;

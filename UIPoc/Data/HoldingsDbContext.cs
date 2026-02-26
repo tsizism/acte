@@ -91,8 +91,8 @@ namespace UIPooc.Data
                 entity.Property(e => e.Index)
                     .IsRequired();
 
-                entity.Property(e => e.Index)
-                    .IsRequired();
+                entity.Property(e => e.Currency)
+                    .HasMaxLength(5);
 
                 entity.Property(e => e.FlagMaxIndex).IsRequired()
                     .HasColumnType("decimal(18,2)");
@@ -133,6 +133,10 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.CompanyName)
                     .HasMaxLength(255);
+
+                entity.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(5);
 
                 entity.Property(e => e.Quantity)
                     .IsRequired()

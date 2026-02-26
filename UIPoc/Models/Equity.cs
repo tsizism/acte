@@ -4,6 +4,7 @@ namespace UIPooc.Models
     {
         public int EquityId { get; set; }
         public int HoldingId { get; set; }
+        public string Currency { get; set; } = string.Empty;
         public string Symbol { get; set; } = string.Empty;
         public string? CompanyName { get; set; }
         public decimal Quantity { get; set; }
