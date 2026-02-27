@@ -13,7 +13,15 @@ namespace UIPooc
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-            builder.Services.AddDbContext<HoldingsDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddDbContext<HoldingsDbContext>(options => 
+                options
+                .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+                //.UseAsyncSeeding(async (context, _, cancellationToken) =>
+                //    {
+                //        await ((HoldingsDbContext)context).SeedDefaultUserAsync();
+                //    }
+                //)
+            );
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IExcelImportService, ExcelImportService>();
             builder.Services.AddRadzenComponents();
@@ -56,7 +64,9 @@ namespace UIPooc
 
                     // EF Core will automatically create the database if it doesn't exist when running migrations
                     await dbContext.Database.MigrateAsync();
+                    await dbContext.SeedDefaultUserAsync();
                     logger.LogInformation("Database created/updated and migrations applied successfully!");
+
                 }
                 catch (Microsoft.Data.SqlClient.SqlException sqlEx)
                 {
@@ -76,5 +86,7 @@ namespace UIPooc
                 }
             }
         }
+
+        
     }
 }

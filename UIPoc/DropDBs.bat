@@ -1,0 +1,1 @@
+sqlcmd -S (localdb)\\mssqllocaldb -Q "DROP DATABASE HoldingsDb;"

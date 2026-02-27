@@ -23,6 +23,19 @@ namespace UIPooc.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<IndexHistory> IndexHistories { get; set; }
 
+        //protected override void See(ModelBuilder modelBuilder)
+        //{
+        //    // Add synchronous seeding logic here
+        //}
+
+        //protected override Task UseAsyncSeeding(ModelBuilder modelBuilder, CancellationToken cancellationToken = default)
+        //{
+        //    // Add asynchronous seeding logic here (e.g., making an external API call)
+        //    // Ensure this mirrors the sync version's logic where possible for tooling compatibility
+        //    // This is often better handled by creating a separate DbContext instance within the method
+        //    return Task.CompletedTask;
+        //}
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -77,6 +90,39 @@ namespace UIPooc.Data
                     .HasForeignKey(t => t.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
+        }
+
+        public async Task SeedDefaultUserAsync()
+        {
+            try
+            {
+                // Check if any users exist
+                if (!await Users.AnyAsync())
+                {
+                    var defaultUser = new UIPooc.Models.User
+                    {
+                        Username = "admin",
+                        Email = "admin@example.com",
+                        FirstName = "Admin",
+                        LastName = "User",
+                        Phone = "555-0100",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    Users.Add(defaultUser);
+                    await SaveChangesAsync();
+
+                    //logger.LogInformation("Default user 'admin' created successfully.");
+                }
+                else
+                {
+                    //logger.LogInformation("Users already exist. Skipping default user seed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                //logger.LogError(ex, "Error seeding default user.");
+            }
         }
 
         private void ConfigureHolding(ModelBuilder modelBuilder)
