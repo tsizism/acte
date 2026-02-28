@@ -306,6 +306,10 @@ namespace UIPooc.Data
                 entity.Property(e => e.RecordedAt)
                     .IsRequired();
 
+                entity.Property(e => e.HoldingSnapshot)
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
+
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => e.RecordedAt);
                 entity.HasIndex(e => new { e.HoldingId, e.RecordedAt });

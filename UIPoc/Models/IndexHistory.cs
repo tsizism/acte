@@ -6,6 +6,7 @@ namespace UIPooc.Models
         public int HoldingId { get; set; }
         public double Index { get; set; }
         public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
+        public string? HoldingSnapshot { get; set; }
         public Holding Holding { get; set; } = null!;
     }
 }
