@@ -23,7 +23,10 @@ namespace UIPooc
                 //)
             );
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IExcelImportService, ExcelImportService>();
+            builder.Services.AddScoped<IModelService, ModelService>();
+            //builder.Services.AddScoped<IExcelImportService, ExcelImportService>();
+            builder.Services.AddScoped<IImportService, ImportService>();
+            builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddRadzenComponents();
 
             WebApplication app = builder.Build();

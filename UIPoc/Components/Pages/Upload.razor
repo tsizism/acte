@@ -4,8 +4,9 @@
 @using UIPooc.Data
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
-@inject IExcelImportService ExcelImportService
+@inject IModelService ModelService
 @inject HoldingsDbContext DbContext
+@inject IImportService ImportService
 @inject NotificationService NotificationService
 
 <PageTitle>Upload Equities</PageTitle>
@@ -69,7 +70,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        holdings = await DbContext.Holdings.OrderBy(h => h.Name).ToListAsync();
+        holdings = await ModelService.GetAllHoldingsAsync();
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
@@ -108,12 +109,14 @@
             return;
         }
 
-        Holding? holding = await DbContext.Holdings.FirstOrDefaultAsync(h => h.Name == currentHoldingName);
+        // Holding? holding = await DbContext.Holdings.FirstOrDefaultAsync(h => h.Name == currentHoldingName);
+
+        Holding? holding = await ModelService.GetHoldingByNameAsync(currentHoldingName);
 
         if (holding == null)
         {
             // Get current user to associate with the new holding
-            var currentUser = await DbContext.Users.FirstOrDefaultAsync();
+            var currentUser = await ModelService.GetCurrentUserAsync();
             if (currentUser == null)
             {
                 statusMessage = "No user found. Please create a user first.";
@@ -124,12 +127,13 @@
             holding = new Holding 
             { 
                 Name = currentHoldingName+DateTime.Now.ToString("yyMMddHHmm"),
-                CallName = currentHoldingName,
                 Currency = "CAD", 
-                UserId = currentUser.UserId
+                UserId = currentUser.UserId,
+                FlagMaxIndex = 0,
+                FlagMinIndex = 0,
             };
 
-            holding = await DbContext.CreateHolding(holding);
+            holding = await ModelService.CreateHoldingAsync(holding); 
             selectedHoldingId = holding.HoldingId;
         }
         else
@@ -144,16 +148,16 @@
             await stream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
-            int importedCount = await ExcelImportService.ImportEquitiesFromExcelAsync(memoryStream, selectedHoldingId.Value);
+            ImportResult importResult = await ImportService.ImportEquitiesFromExcelAsync(memoryStream, selectedHoldingId.Value);
 
-            statusMessage = $"Successfully imported {importedCount} equities.";
+            statusMessage = $"Successfully imported {importResult.ImportedCount} equities.";
             isError = false;
 
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
                 Summary = "Import Successful",
-                Detail = $"Imported {importedCount} equities",
+                Detail = $"Imported {importResult.ImportedCount} equities",
                 Duration = 4000
             });
         }

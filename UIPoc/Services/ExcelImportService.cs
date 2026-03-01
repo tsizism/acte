@@ -54,7 +54,7 @@ namespace UIPooc.Services
                     AverageCost = ParseDecimal(worksheet.Cells[row, 7].Text), 
                     CurrentPrice = ParseDecimal(worksheet.Cells[row, 8].Text), // Closing price
                     LastTxnType = TransactionType.Buy,
-                    LastTxnAt = DateTime.UtcNow
+                    //LastTxnAt = DateTime.UtcNow
                 };
 
 
