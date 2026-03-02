@@ -37,3 +37,5 @@ token
 
 PS Y:\LossLess\7.swProjects\acte\webapp\Balazor\UIPoc\acte\UIPoc> dotnet tool update --global dotnet-ef
 Tool 'dotnet-ef' was successfully updated from version '10.0.2' to version '10.0.3'.
+
+#sqlcmd -S (localdb)\MSSQLLocalDB -Q "DROP DATABASE HoldingsDb"

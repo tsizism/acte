@@ -50,6 +50,9 @@ namespace UIPooc.Services
 
         public async Task<Holding?> GetHoldingByNameAsync(string name)
         {
+            if (_context.Holdings == null || !_context.Holdings.Any())
+                return null;
+
             return await _context.Holdings
                 .Include(h => h.Equities)
                 .FirstOrDefaultAsync(h => h.Name == name);
@@ -66,6 +69,9 @@ namespace UIPooc.Services
 
         public async Task<List<Holding>> GetAllHoldingsAsync()
         {
+            if (_context.Holdings == null || !_context.Holdings.Any())
+                return new List<Holding>();
+
             return await _context.Holdings
                 .Include(h => h.Equities)
                 .OrderBy(h => h.Name)

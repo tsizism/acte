@@ -1,1 +1,7 @@
-sqlcmd -S (localdb)\\mssqllocaldb -Q "DROP DATABASE HoldingsDb;"
+sqllocaldb info
+
+sqllocaldb info mssqllocaldb
+
+sqlcmd -S (localdb)\MSSQLLocalDB -Q "DROP DATABASE HoldingsDb"
+
+REM dotnet ef database update

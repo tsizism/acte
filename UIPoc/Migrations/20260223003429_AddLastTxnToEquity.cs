@@ -21,6 +21,20 @@ namespace UIPooc.Migrations
                 table: "Equities",
                 type: "decimal(18,4)",
                 nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "LastTxnType",
+                table: "Equities",
+                type: "int",
+                nullable: true);
+
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "LastTxnAt",
+                table: "Equities",
+                type: "datetime2",
+                nullable: false,
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
         }
 
         /// <inheritdoc />
@@ -33,6 +47,15 @@ namespace UIPooc.Migrations
             migrationBuilder.DropColumn(
                 name: "LastTxnQuantity",
                 table: "Equities");
+
+            migrationBuilder.DropColumn(
+                name: "LastTxnAt",
+                table: "Equities");
+
+            migrationBuilder.DropColumn(
+                name: "LastTxnType",
+                table: "Equities");
+
         }
     }
 }
