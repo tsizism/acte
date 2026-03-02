@@ -1,0 +1,319 @@
+@page "/equities"
+@page "/equities/{HoldingId:int}"
+@using UIPooc.Services
+@using UIPooc.Models
+@using Microsoft.JSInterop
+@rendermode InteractiveServer
+@inject IModelService ModelService
+@inject IExportService ExportService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+@inject IJSRuntime JSInterop
+
+<PageTitle>Equities</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H3">Equities Portfolio</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" class="rz-text-align-end">
+            @if (selectedHoldingId.HasValue)
+            {
+                <RadzenButton Icon="download" Text="Export to Excel" 
+                             Click="@ExportEquitiesAsync" 
+                             ButtonStyle="ButtonStyle.Success" 
+                             Size="ButtonSize.Medium" />
+            }
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenCard>
+        <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenLabel Text="Select Holding:" />
+                <RadzenDropDown @bind-Value="@selectedHoldingId"
+                               Data="@holdings"
+                               TextProperty="Name"
+                               ValueProperty="HoldingId"
+                               Change="@OnHoldingChanged"
+                               Placeholder="Select a holding..."
+                               Style="width: 100%;" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                @if (selectedHolding != null)
+                {
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Subtitle1"><strong>@selectedHolding.Name</strong></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            Index: <strong>@selectedHolding.Index.ToString("N2")</strong> | 
+                            Currency: <strong>@selectedHolding.Currency</strong>
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    @if (isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (equities != null && equities.Count > 0)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Total Equities: <strong>@equities.Count</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Total Value: <strong>@totalValue.ToString("C2")</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Total Gain/Loss: <strong style="color: @(totalGainLoss >= 0 ? "green" : "red")">
+                                @totalGainLoss.ToString("C2") (@totalGainLossPercent.ToString("P2"))
+                            </strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenDataGrid Data="@equities" 
+                       TItem="Equity" 
+                       AllowFiltering="true" 
+                       AllowSorting="true"
+                       AllowPaging="true"
+                       PageSize="20"
+                       PagerHorizontalAlign="HorizontalAlign.Center"
+                       FilterMode="FilterMode.Simple"
+                       Style="height: 800px">
+            <Columns>
+                <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="100px" Frozen="true">
+                    <Template Context="equity">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@equity.Symbol" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="CompanyName" Title="Company" Width="200px" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="Market" Title="Market" Width="80px">
+                    <Template Context="equity">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@equity.Market" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
+                    <Template Context="equity">
+                        @((equity.Quantity * equity.CurrentPrice).ToString("C2"))
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss" Width="120px" TextAlign="TextAlign.Right">
+                    <Template Context="equity">
+                        @{
+                            var gainLoss = CalculateGainLoss(equity);
+                            var color = gainLoss >= 0 ? "green" : "red";
+                        }
+                        <span style="color: @color; font-weight: bold;">@gainLoss.ToString("C2")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" Sortable="false" TextAlign="TextAlign.Right">
+                    <Template Context="equity">
+                        @{
+                            var gainLossPercent = CalculateGainLossPercent(equity);
+                            var color = gainLossPercent >= 0 ? "green" : "red";
+                        }
+                        <span style="color: @color; font-weight: bold;">@gainLossPercent.ToString("P2")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="LastTxnType" Title="Last Txn" Width="90px">
+                    <Template Context="equity">
+                        <RadzenBadge BadgeStyle="@(equity.LastTxnType == TransactionType.Buy ? BadgeStyle.Success : BadgeStyle.Danger)" 
+                                    Text="@equity.LastTxnType.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingLow" Title="Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (selectedHoldingId.HasValue)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenText>No equities found for this holding.</RadzenText>
+        </RadzenAlert>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenText>Please select a holding to view equities.</RadzenText>
+        </RadzenAlert>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public int? HoldingId { get; set; }
+
+    private List<Holding> holdings = new();
+    private List<Equity> equities = new();
+    private int? selectedHoldingId;
+    private Holding? selectedHolding;
+    private bool isLoading = false;
+    private decimal totalValue = 0;
+    private decimal totalGainLoss = 0;
+    private decimal totalGainLossPercent = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHoldingsAsync();
+
+        if (HoldingId.HasValue)
+        {
+            selectedHoldingId = HoldingId.Value;
+            await LoadEquitiesAsync();
+        }
+    }
+
+    private async Task LoadHoldingsAsync()
+    {
+        try
+        {
+            holdings = await ModelService.GetAllHoldingsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to load holdings: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task OnHoldingChanged()
+    {
+        await LoadEquitiesAsync();
+    }
+
+    private async Task LoadEquitiesAsync()
+    {
+        if (!selectedHoldingId.HasValue)
+        {
+            equities.Clear();
+            selectedHolding = null;
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            selectedHolding = await ModelService.GetHoldingByIdAsync(selectedHoldingId.Value);
+            equities = await ModelService.GetEquitiesByHoldingIdAsync(selectedHoldingId.Value);
+            CalculateTotals();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to load equities: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CalculateTotals()
+    {
+        totalValue = equities.Sum(e => e.Quantity * e.CurrentPrice);
+        totalGainLoss = equities.Sum(e => CalculateGainLoss(e));
+        
+        var totalCost = equities.Sum(e => e.Quantity * e.AverageCost);
+        totalGainLossPercent = totalCost != 0 ? totalGainLoss / totalCost : 0;
+    }
+
+    private decimal CalculateGainLoss(Equity equity)
+    {
+        var currentValue = equity.Quantity * equity.CurrentPrice;
+        var costBasis = equity.Quantity * equity.AverageCost;
+        return currentValue - costBasis;
+    }
+
+    private decimal CalculateGainLossPercent(Equity equity)
+    {
+        var costBasis = equity.Quantity * equity.AverageCost;
+        if (costBasis == 0) return 0;
+        
+        var gainLoss = CalculateGainLoss(equity);
+        return gainLoss / costBasis;
+    }
+
+    private async Task ExportEquitiesAsync()
+    {
+        if (!selectedHoldingId.HasValue)
+            return;
+
+        try
+        {
+            var excelData = await ExportService.ExportEquitiesToExcelAsync(selectedHoldingId.Value);
+            
+            // Download the file
+            var fileName = $"Equities_{selectedHolding?.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await DownloadFileAsync(fileName, excelData);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Export Successful",
+                Detail = "Equities exported to Excel",
+                Duration = 4000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Export Failed",
+                Detail = ex.Message,
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task DownloadFileAsync(string fileName, byte[] fileData)
+    {
+        var base64 = Convert.ToBase64String(fileData);
+        var dataUrl = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
+        
+        await JSInterop.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
+}
