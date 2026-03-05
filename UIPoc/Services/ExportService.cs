@@ -19,7 +19,7 @@ namespace UIPooc.Services
             if (holding == null)
                 throw new InvalidOperationException($"Holding with ID {holdingId} not found.");
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage();
             
@@ -48,7 +48,7 @@ namespace UIPooc.Services
             if (holdings.Count == 0)
                 throw new InvalidOperationException($"No holdings found for user ID {userId}.");
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("All Holdings");
@@ -100,7 +100,7 @@ namespace UIPooc.Services
             if (equities.Count == 0)
                 throw new InvalidOperationException($"No equities found for holding ID {holdingId}.");
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Equities");
@@ -116,7 +116,7 @@ namespace UIPooc.Services
             if (transactions.Count == 0)
                 throw new InvalidOperationException($"No transactions found for holding ID {holdingId}.");
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Transactions");
@@ -132,7 +132,7 @@ namespace UIPooc.Services
             if (indexHistories.Count == 0)
                 throw new InvalidOperationException($"No index history found for holding ID {holdingId}.");
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Index History");

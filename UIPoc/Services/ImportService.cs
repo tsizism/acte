@@ -246,7 +246,7 @@ namespace UIPooc.Services
                     return result;
                 }
 
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
                 using var package = new ExcelPackage(excelStream);
                 var worksheet = package.Workbook.Worksheets[0];

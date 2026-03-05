@@ -121,7 +121,7 @@ namespace UIPooc.Data
                     //logger.LogInformation("Users already exist. Skipping default user seed.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //logger.LogError(ex, "Error seeding default user.");
             }
