@@ -186,6 +186,9 @@ namespace UIPooc.Data
                 entity.Property(e => e.CompanyName)
                     .HasMaxLength(255);
 
+                entity.Property(e => e.Keywords)
+                    .HasMaxLength(255);
+
                 entity.Property(e => e.Currency)
                     .IsRequired()
                     .HasMaxLength(5);

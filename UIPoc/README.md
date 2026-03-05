@@ -3,7 +3,7 @@ so the migration will be automatically applied when you run your Blazor applicat
 Alternatively, you can manually apply the migration now using:
 
 
-dotnet ef migrations add CreateIndexHistoryTable
+dotnet ef migrations add <CreateIndexHistoryTable
 dotnet ef database update
 
 The database and tables will be created in your SQL Express instance as configured in your connection string!
