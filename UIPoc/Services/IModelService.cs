@@ -26,6 +26,16 @@ namespace UIPooc.Services
         Task<Equity> UpdateEquityAsync(Equity equity);
         Task DeleteEquityAsync(int equityId);
 
+        // EquityMarket operations
+        Task<EquityMarket?> GetEquityMarketByIdAsync(int equityMarketId);
+        Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market);
+        Task<List<EquityMarket>> GetAllEquityMarketsAsync();
+        Task<List<EquityMarket>> GetEquityMarketsByMarketAsync(string market);
+        Task<EquityMarket> CreateEquityMarketAsync(EquityMarket equityMarket);
+        Task<EquityMarket> UpdateEquityMarketAsync(EquityMarket equityMarket);
+        Task DeleteEquityMarketAsync(int equityMarketId);
+        Task<EquityMarket> UpsertEquityMarketAsync(EquityMarket equityMarket);
+
         // Transaction operations
         Task<Transaction?> GetTransactionByIdAsync(int transactionId);
         Task<List<Transaction>> GetTransactionsByHoldingIdAsync(int holdingId);

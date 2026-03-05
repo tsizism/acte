@@ -20,6 +20,7 @@ namespace UIPooc.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Holding> Holdings { get; set; }
         public DbSet<Equity> Equities { get; set; }
+        public DbSet<EquityMarket> EquityMarkets { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<IndexHistory> IndexHistories { get; set; }
 
@@ -43,6 +44,7 @@ namespace UIPooc.Data
             ConfigureUser(modelBuilder);
             ConfigureHolding(modelBuilder);
             ConfigureEquity(modelBuilder);
+            ConfigureEquityMarket(modelBuilder);
             ConfigureTransaction(modelBuilder);
             ConfigureIndexHistory(modelBuilder);
             ConfigureRelationships(modelBuilder);
@@ -243,6 +245,85 @@ namespace UIPooc.Data
 
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });
+            });
+        }
+
+        private void ConfigureEquityMarket(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<EquityMarket>(entity =>
+            {
+                entity.HasKey(e => e.EquityMarketId);
+
+                entity.Property(e => e.Symbol)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
+                entity.Property(e => e.Market)
+                    .IsRequired()
+                    .HasMaxLength(5);
+
+                entity.Property(e => e.CompanyName)
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(5);
+
+                entity.Property(e => e.CurrentPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.PreviousClose)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.OpenPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.DayHigh)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.DayLow)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Volume)
+                    .IsRequired();
+
+                entity.Property(e => e.MarketCap)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Week52High)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Week52Low)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.PERatio)
+                    .HasColumnType("decimal(18,4)");
+
+                entity.Property(e => e.DividendYield)
+                    .HasColumnType("decimal(18,4)");
+
+                entity.Property(e => e.EPS)
+                    .HasColumnType("decimal(18,4)");
+
+                entity.Property(e => e.LastUpdated)
+                    .IsRequired();
+
+                entity.Property(e => e.LastTradeTime);
+
+                entity.Property(e => e.Exchange)
+                    .HasMaxLength(50);
+
+                entity.HasIndex(e => new { e.Symbol, e.Market })
+                    .IsUnique();
+
+                entity.HasIndex(e => e.Symbol);
+                entity.HasIndex(e => e.Market);
+                entity.HasIndex(e => e.LastUpdated);
             });
         }
 

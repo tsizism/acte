@@ -155,6 +155,95 @@ namespace UIPooc.Services
 
         #endregion
 
+        #region EquityMarket Operations
+
+        public async Task<EquityMarket?> GetEquityMarketByIdAsync(int equityMarketId)
+        {
+            return await _context.EquityMarkets.FindAsync(equityMarketId);
+        }
+
+        public async Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market)
+        {
+            return await _context.EquityMarkets
+                .FirstOrDefaultAsync(em => em.Symbol == symbol && em.Market == market);
+        }
+
+        public async Task<List<EquityMarket>> GetAllEquityMarketsAsync()
+        {
+            return await _context.EquityMarkets
+                .OrderBy(em => em.Symbol)
+                .ToListAsync();
+        }
+
+        public async Task<List<EquityMarket>> GetEquityMarketsByMarketAsync(string market)
+        {
+            return await _context.EquityMarkets
+                .Where(em => em.Market == market)
+                .OrderBy(em => em.Symbol)
+                .ToListAsync();
+        }
+
+        public async Task<EquityMarket> CreateEquityMarketAsync(EquityMarket equityMarket)
+        {
+            _context.EquityMarkets.Add(equityMarket);
+            await _context.SaveChangesAsync();
+            return equityMarket;
+        }
+
+        public async Task<EquityMarket> UpdateEquityMarketAsync(EquityMarket equityMarket)
+        {
+            _context.EquityMarkets.Update(equityMarket);
+            await _context.SaveChangesAsync();
+            return equityMarket;
+        }
+
+        public async Task DeleteEquityMarketAsync(int equityMarketId)
+        {
+            var equityMarket = await _context.EquityMarkets.FindAsync(equityMarketId);
+            if (equityMarket != null)
+            {
+                _context.EquityMarkets.Remove(equityMarket);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<EquityMarket> UpsertEquityMarketAsync(EquityMarket equityMarket)
+        {
+            var existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, equityMarket.Market);
+
+            if (existing != null)
+            {
+                // Update existing
+                existing.CompanyName = equityMarket.CompanyName;
+                existing.Currency = equityMarket.Currency;
+                existing.CurrentPrice = equityMarket.CurrentPrice;
+                existing.PreviousClose = equityMarket.PreviousClose;
+                existing.OpenPrice = equityMarket.OpenPrice;
+                existing.DayHigh = equityMarket.DayHigh;
+                existing.DayLow = equityMarket.DayLow;
+                existing.Volume = equityMarket.Volume;
+                existing.MarketCap = equityMarket.MarketCap;
+                existing.Week52High = equityMarket.Week52High;
+                existing.Week52Low = equityMarket.Week52Low;
+                existing.PERatio = equityMarket.PERatio;
+                existing.DividendYield = equityMarket.DividendYield;
+                existing.EPS = equityMarket.EPS;
+                existing.LastUpdated = equityMarket.LastUpdated;
+                existing.LastTradeTime = equityMarket.LastTradeTime;
+                existing.Exchange = equityMarket.Exchange;
+
+                await _context.SaveChangesAsync();
+                return existing;
+            }
+            else
+            {
+                // Create new
+                return await CreateEquityMarketAsync(equityMarket);
+            }
+        }
+
+        #endregion
+
         #region Transaction Operations
 
         public async Task<Transaction?> GetTransactionByIdAsync(int transactionId)
