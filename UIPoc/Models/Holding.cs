@@ -1,9 +1,19 @@
 namespace UIPooc.Models
 {
+    public enum HoldingType
+    {
+        WatchList,
+        Active,
+        Listless,
+        CustomIndex,
+    }
+
+
     public class Holding
     {
         public int HoldingId { get; set; }
         public int UserId { get; set; }
+        public HoldingType Type { get; set; } = HoldingType.WatchList;
         public double Index { get; set; }
         public string? Currency { get; set; }
         public double? FlagMaxIndex { get; set; }

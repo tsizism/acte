@@ -24,7 +24,7 @@ namespace UIPooc.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<IndexHistory> IndexHistories { get; set; }
 
-        //protected override void See(ModelBuilder modelBuilder)
+        //protected override void Seed(ModelBuilder modelBuilder)
         //{
         //    // Add synchronous seeding logic here
         //}
@@ -137,6 +137,9 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.Property(e => e.Index)
+                    .IsRequired();
+
+                entity.Property(e => e.Type)
                     .IsRequired();
 
                 entity.Property(e => e.Currency)
