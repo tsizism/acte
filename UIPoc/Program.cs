@@ -1,8 +1,24 @@
+using Azure;
+using Azure.Core;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using Radzen.Blazor.Markdown;
+using Radzen.Blazor.Rendering;
+using System.Runtime.ConstrainedExecution;
 using UIPooc.Components;
 using UIPooc.Data;
 using UIPooc.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+
+
+//Singleton: This creates only one instance of a class during the application's lifecycle. Every time you request this class, you get the same instance.
+//Use it for classes that are expensive to create or maintain a common state throughout the application, like a database connection.
+//Transient: Every time you request a transient class, a new instance is created.This is useful for lightweight,
+//stateless services where each operation requires a clean and independent instance.
+//Scoped: Scoped instances are created once per client request.In a web application, for example,
+//a new instance is created for each HTTP request but is shared across that request.
+//Use it for services that need to maintain state within a request but not beyond it, like shopping cart in an e - commerce site.
 
 namespace UIPooc
 {
@@ -27,6 +43,7 @@ namespace UIPooc
             builder.Services.AddScoped<IImportService, ImportService>();
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddHttpClient<IFinanceService, FinanceService>();
+            builder.Services.AddHostedService<EquityMarketSyncService>();
             builder.Services.AddRadzenComponents();
 
             WebApplication app = builder.Build();
@@ -54,10 +71,10 @@ namespace UIPooc
 
         static async Task InitializeDatabaseAsync(WebApplication app)
         {
-            using (var scope = app.Services.CreateScope())
+            using (IServiceScope scope = app.Services.CreateScope())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                HoldingsDbContext dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
+                ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
                 try
                 {

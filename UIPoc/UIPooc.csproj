@@ -26,4 +26,8 @@
     <Folder Include="Excel\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="cfg.user" />
+  </ItemGroup>
+
 </Project>
