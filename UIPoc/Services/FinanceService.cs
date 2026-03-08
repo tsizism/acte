@@ -1,78 +1,265 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using UIPooc.Models;
 
+// Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
+// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
 
 // https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete/playground/apiendpoint_e40c1e4d-f29b-4041-b947-18bb42f3458b
 // curl --request GET --url https://yh-finance-complete.p.rapidapi.com/insights  --header 'x-rapidapi-host: yh-finance-complete.p.rapidapi.com' --header 'x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b98'
 // curl --request GET  --url "https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL&reportsCount=1" --header "x-rapidapi-host: yh-finance-complete.p.rapidapi.com" --header "x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938"
 // curl --request GET  --url "https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL&reportsCount=1" --header "x-rapidapi-host: yh-finance-complete.p.rapidapi.com" --header "x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938"
+/*
+ +	[0]	{[symbol, ValueKind = String : "AAPL"]}	System.Collections.Generic.KeyValuePair<string, object>
++		[1]	{[price, ValueKind = Number : "230.13"]}	System.Collections.Generic.KeyValuePair<string, object>
++		[2]	{[currency, ValueKind = String : "USD"]}	System.Collections.Generic.KeyValuePair<string, object>
++		[3]	{[symbolName, ValueKind = String : "Apple"]}	System.Collections.Generic.KeyValuePair<string, object>
++		[4]	{[marketCap, ValueKind = Number : "3498919591936"]}	System.Collections.Generic.KeyValuePair<string, object>
+* 
+ * 
+*/
 
 
 namespace UIPooc.Services;
 
-
-public class StockPropertiesCommonYhComplete
-{
-    public void PopulateFromDict(Dictionary<string, object> dict)
-    {
-        Type t = GetType();
-
-        foreach (var keyValuePair in dict)
-        {
-            PropertyInfo? property = t.GetProperty(keyValuePair.Key, BindingFlags.Public | BindingFlags.Instance);
-            if (property != null && property.CanWrite)
-            {
-                //property.SetValue(this, Convert.ChangeType(keyValuePair.Value, property.PropertyType), null);
-                property.SetValue(this, keyValuePair.Value.ToString(), null);
-
-            }
-        }
-    }
-}
-
-
-public class StockTickerProperties : StockPropertiesCommonYhComplete
+public struct EntityStockPrice2
 {
     public string symbol { get; set; }
     public string price { get; set; }
     public string currency { get; set; }
     public string marketCap { get; set; }
 
-    public StockTickerProperties()
-    {
-        symbol = String.Empty;
-        price = String.Empty;
-        currency = String.Empty;
-        marketCap = String.Empty;
+    //public EntityStockPrice()
+    //{
+    //    symbol = String.Empty;
+    //    price = String.Empty;
+    //    currency = String.Empty;
+    //    marketCap = String.Empty;
 
-    }
-    public static StockTickerProperties CreateFromJson(string jsonResponse)
-    {
-        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
-        StockTickerProperties stockTickerProps = new StockTickerProperties();
+    //}
+}
 
-        if (dict != null)
-        {
-            stockTickerProps.PopulateFromDict(dict);
-            Console.WriteLine(stockTickerProps.ToString());
-        }
-
-        return stockTickerProps;
-    }
+public struct EntityStockPrice
+{
+    public string currency { get; set; }     //      "USD"
+    public string currencySymbol { get; set; }     //      "$"
+    public string exchange { get; set; }     //      "NYQ"
+    public decimal exchangeDataDelayedBy { get; set; }     //      0
+    public string exchangeName { get; set; }     //      "NYSE"
+    public string fromCurrency { get; set; }     //      null
+    public string lastMarket { get; set; }     //      null
+    public string longName { get; set; }     //      "Agilent Technologies, Inc."
+    public string marketCap { get; set; }     //      32546357248
+    public string marketState { get; set; }     //      "CLOSED"
+    public string maxAge { get; set; }     //      1
+    public string postMarketChange { get; set; }     //      0.9299011
+    public string postMarketChangePercent { get; set; }     //      0.008081177
+    public string postMarketPrice { get; set; }     //      115.9999
+    public string price { get; set; }     //      115.9999
+    public string postMarketSource { get; set; }     //      "FREE_REALTIME"
+    public string postMarketTime { get; set; }     //      "2026-03-07T00  { get; set; }     //      49  { get; set; }     //      29.000Z"
+    public string preMarketSource { get; set; }     //      "DELAYED"
+    public string priceHint { get; set; }     //      2
+    public string quoteSourceName { get; set; }     //      "Nasdaq Real Time Price"
+    public string quoteType { get; set; }     //      "EQUITY"
+    public string regularMarketChange { get; set; }     //      -3.04
+    public string regularMarketChangePercent { get; set; }     //      -0.0257387
+    public string regularMarketDayHigh { get; set; }     //      116.74
+    public string regularMarketDayLow { get; set; }     //      114.92
+    public string regularMarketOpen { get; set; }     //      116.66
+    public string regularMarketPreviousClose { get; set; }     //      118.11
+    public string regularMarketPrice { get; set; }     //      115.07
+    public string regularMarketSource { get; set; }     //      "FREE_REALTIME"
+    public string regularMarketTime { get; set; }     //      "2026-03-06T21  { get; set; }     //      00  { get; set; }     //      03.000Z"
+    public string regularMarketVolume { get; set; }     //      2507276
+    public string shortName { get; set; }     //      "Agilent Technologies, Inc."
+    public string symbol { get; set; }     //      "A"
+    public string toCurrency { get; set; }     //      null
+    public string underlyingSymbol { get; set; }     //      null
 }
 
 
-    /*
-     +	[0]	{[symbol, ValueKind = String : "AAPL"]}	System.Collections.Generic.KeyValuePair<string, object>
-+		[1]	{[price, ValueKind = Number : "230.13"]}	System.Collections.Generic.KeyValuePair<string, object>
-+		[2]	{[currency, ValueKind = String : "USD"]}	System.Collections.Generic.KeyValuePair<string, object>
-+		[3]	{[symbolName, ValueKind = String : "Apple"]}	System.Collections.Generic.KeyValuePair<string, object>
-+		[4]	{[marketCap, ValueKind = Number : "3498919591936"]}	System.Collections.Generic.KeyValuePair<string, object>
-* 
-     * 
-    */
 
+
+
+
+public class YahooHttpClient
+{
+    //public static async Task<Dictionary<string, object>?> Get(string url)
+
+    /// <summary>
+    /// Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+    /// </summary>
+    /// <param name="ticker"></param>
+    /// <param name="stockTickerProps"></param>
+    /// <returns></returns>
+    public static async Task GetTickerPriceAsync(string ticker, EntityStockPrice stockTickerProps)
+    {
+        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+        //string urlYhComplete =       $"https://yh-finance-complete.p.rapidapi.com/price?symbol={ticker}";
+
+        var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+        
+        //Dictionary<string, object>? dict = await Get(url
+        string jsonResponse = await Get(url);
+
+        //string ticker = @"{""symbol"": ""AAPL"", 
+        //                    ""price"": 230.4584, 
+        //                    ""currency"": ""USD"",
+        //                    ""symbolName"": ""Apple"",
+        //                    ""marketCap"": 3503912648704
+        //                    }";
+
+        PopulateStockTicker(jsonResponse, stockTickerProps);
+
+    }
+
+
+    /// <summary>
+    /// Full Price
+    /// </summary>
+    /// <param name="ticker"></param>
+    /// <param name="stockTickerProps"></param>
+    /// <returns></returns>
+    public static async Task GetSymbolFullPriceAsync(string symbol, EntityStockPrice stockTickerProps)
+    {
+        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+        string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
+
+        //Dictionary<string, object>? dict = await Get(url
+        string jsonResponse = await Get(urlYhComplete);
+
+        //string ticker = @"{""symbol"": ""AAPL"", 
+        //                    ""price"": 230.4584, 
+        //                    ""currency"": ""USD"",
+        //                    ""symbolName"": ""Apple"",
+        //                    ""marketCap"": 3503912648704
+        //                    }";
+
+        PopulateEntityStockPrice(jsonResponse, stockTickerProps);
+
+    }
+
+    public static T CreateFromJson<T>(string jsonResponse) where T : new()
+    {
+        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+        T entity = new T();
+
+        if (dict != null)
+        {
+            YahooHttpClient.PopulateEntityFromDict(entity, dict);
+            Console.WriteLine(entity.ToString());
+        }
+
+        return entity;
+    }
+
+
+    static public void PopulateEntityFromDict<T>(T props, Dictionary<string, object> dict)
+    {
+        Type t = props!.GetType();
+
+        try
+        {
+            foreach (var keyValuePair in dict)
+            {
+                PropertyInfo? property = t.GetProperty(keyValuePair.Key, BindingFlags.Public | BindingFlags.Instance);
+                if (property != null && property.CanWrite)
+                {
+                    //property.SetValue(this, Convert.ChangeType(keyValuePair.Value, property.PropertyType), null);
+                    property.SetValue(props, keyValuePair.Value.ToString(), null);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error populating entity from dict: {ex.Message}");
+        }
+        }
+
+
+    public static void PopulateStockTicker(string jsonResponse, EntityStockPrice stockTicker)
+    {
+        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+        if (dict != null)
+        {
+            YahooHttpClient.PopulateEntityFromDict(stockTicker, dict);
+            Console.WriteLine(stockTicker.ToString());
+        }
+    }
+
+    public static void PopulateEntityStockPrice(string jsonResponse, EntityStockPrice stockTicker)
+    {
+        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+        if (dict != null)
+        {
+            object tmp = dict["price"];
+            //Dictionary<string, object>? priceDict = tmp as Dictionary<string, object>;
+            Dictionary<string, object>? priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(tmp.ToString());
+            YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
+            Console.WriteLine(stockTicker.ToString());
+        }
+    }
+
+
+    //RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/news?ticker=AAPL"),
+    // RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL"),
+    //RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL"),
+
+
+    static public async Task<string> Get(string url)
+    {
+        //  Secret Manager
+        string token = File.ReadAllText("cfg.user");
+
+        HttpClient client = new HttpClient();
+        HttpRequestMessage request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri(url),
+
+
+
+            Headers =
+                {
+                    { "x-rapidapi-key", token },
+                    { "x-rapidapi-host", "yh-finance-complete.p.rapidapi.com" },
+                },
+        };
+
+        string bodyJson = string.Empty;
+        using (HttpResponseMessage response = await client.SendAsync(request))
+        {
+            //HttpResponseMessage result = response.EnsureSuccessStatusCode();
+            bodyJson = await response.Content.ReadAsStringAsync();
+            //Console.WriteLine("Http response:");
+            //values = JsonSerializer.Deserialize<Dictionary<string, object>>(body);
+
+
+            //if (values != null)
+            //{
+            //    //StockTicker stockTicker = new StockTicker(values);
+            //    //Console.WriteLine(stockTicker.ToString());
+            //}
+
+            //Console.WriteLine(body);
+
+        }
+        return bodyJson;
+    }
+
+    //public async Task TaskTestTickerHttpClientAsync()
+    //{
+    //    string ticker = "AAPL";
+    //    StockTickerProperties stockTickerProps = new StockTickerProperties();
+    //    await GetTickerAsync(ticker, stockTickerProps);
+    //}
+}
 
 
 public class FinanceService : IFinanceService
@@ -96,26 +283,31 @@ public class FinanceService : IFinanceService
 
     #region Quote Operations
 
-    public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
-    {
-        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+    //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
+    //{
+    //    Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
 
-        if (dict != null)
-        {
-            stockTickerProps.PopulateFromDict(dict);
-            Console.WriteLine(stockTickerProps.ToString());
-        }
-    }
+    //    if (dict != null)
+    //    {
+    //        ApiAdapterHttpClient.PopulateEntityFromDict(stockTickerProps, dict);
+    //        Console.WriteLine(stockTickerProps.ToString());
+    //    }
+    //}
 
     public async Task<EquityMarket?> GetQuoteAsync(string ticker, string market = "US")
-    {
-        string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+    {   // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?ticker={ticker}";
+        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        string url = $"https://yh-finance-complete.p.rapidapi.com/price?ticker={ticker}";
 
-        //Dictionary<string, object>? dict = await Get(url
-        string jsonResponse = await GetYhCompteteAsync(urlYhComplete);
+        EntityStockPrice stockTickerProps = new EntityStockPrice();
+        //await YahooHttpClient.GetTickerPriceAsync(ticker, stockTickerProps);
 
-        StockTickerProperties stockTickerProps = new StockTickerProperties();
-        PopulateStockTickerProps(jsonResponse, stockTickerProps);
+        await YahooHttpClient.GetSymbolFullPriceAsync(ticker, stockTickerProps);
+
+        //StockTickerProperties stockTickerProps = new StockTickerProperties();
+        //PopulateStockTickerProps(jsonResponse, stockTickerProps);
 
         return new EquityMarket
         {
@@ -126,7 +318,29 @@ public class FinanceService : IFinanceService
             CurrentPrice = decimal.TryParse(stockTickerProps.price, out var price) ? price : 0,
             MarketCap = decimal.TryParse(stockTickerProps.marketCap, out var marketCap) ? marketCap : (decimal?)null,
             LastUpdated = DateTime.UtcNow
-        };
+
+        public int EquityMarketId { get; set; }
+    public string Symbol { get; set; } = string.Empty;
+    public string Market { get; set; } = string.Empty;
+    public string? CompanyName { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public decimal CurrentPrice { get; set; }
+    public decimal PreviousClose { get; set; }
+    public decimal OpenPrice { get; set; }
+    public decimal DayHigh { get; set; }
+    public decimal DayLow { get; set; }
+    public long Volume { get; set; }
+    public decimal? MarketCap { get; set; }
+    public decimal? Week52High { get; set; }
+    public decimal? Week52Low { get; set; }
+    public decimal? PERatio { get; set; }
+    public decimal? DividendYield { get; set; }
+    public decimal? EPS { get; set; }
+    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    public DateTime? LastTradeTime { get; set; }
+    public string? Exchange { get; set; }
+
+};
 
         //try
         //{
@@ -160,55 +374,6 @@ public class FinanceService : IFinanceService
         //}
     }
 
-    public static async Task TaskTestTickerHttpClientAsync()
-    {
-        string ticker = "AAPL";
-        StockTickerProperties stockTickerProps = new StockTickerProperties();
-        //await GetQuoteAsync(ticker, stockTickerProps);
-    }
-
-    public static async Task<string> GetYhCompteteAsync(string url)
-    {
-        string token = File.ReadAllText("cfg.user");
-
-        HttpClient client = new HttpClient();
-        HttpRequestMessage request = new HttpRequestMessage
-        {
-            Method = HttpMethod.Get,
-            //RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/news?ticker=AAPL"),
-            // RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL"),
-            //RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL"),
-            RequestUri = new Uri(url),
-
-
-            
-            Headers =
-                {
-                    { "x-rapidapi-key", token },
-                    { "x-rapidapi-host", "yh-finance-complete.p.rapidapi.com" },
-                },
-        };
-
-        string bodyJson = string.Empty;
-        using (HttpResponseMessage response = await client.SendAsync(request))
-        {
-            response.EnsureSuccessStatusCode();
-            bodyJson = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine("Http response:");
-            //values = JsonSerializer.Deserialize<Dictionary<string, object>>(body);
-
-
-            //if (values != null)
-            //{
-            //    //StockTicker stockTicker = new StockTicker(values);
-            //    //Console.WriteLine(stockTicker.ToString());
-            //}
-
-            //Console.WriteLine(body);
-
-        }
-        return bodyJson;
-    }
 
     public async Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US")
     {
@@ -701,3 +866,54 @@ public class FinanceService : IFinanceService
     #endregion
 }
 
+class FinanceServiceTest
+{
+    public static void TestTickerRestSharp()
+    {
+        //var client = new RestClient("https://yh-finance-complete.p.rapidapi.com/news?ticker=AAPL");
+        string ticker = "AAPL";
+        string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+        //RestClient client = new RestClient(urlYhComplete);
+        //RestRequest request = new RestRequest(); // Method.Get);
+        //request.AddHeader("x-rapidapi-key", "9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938");
+        //request.AddHeader("x-rapidapi-host", "yh-finance-complete.p.rapidapi.com");
+        //request.AddHeader("content-type", "application/json");
+
+        //object? queryResult = client.Execute<Object>(request).Data;
+
+        ////dynamic jsonResponse = JsonConvert.DeserializeObject(restResponse.Content);
+        //RestResponse response = client.Execute(request);
+        //Console.WriteLine("Rest response:");
+        //Console.WriteLine(response.Content);
+
+        //if (response.Content != null)
+        //{
+        //    //Dictionary<string, object>? values = JsonSerializer.Deserialize<Dictionary<string, object>>(json: response.Content);
+        //    //Console.WriteLine(values.ToString());
+        //    StockTickerProperties stockTickerProps = StockTickerProperties.CreateFromJson(jsonResponse: response.Content);
+        //}
+
+
+
+        //dynamic jsonResponse = JsonConvert.DeserializeObject(restResponse.Content);
+
+        //string json = JsonConvert.SerializeObject(queryResult);
+        //RestResponse response = client.Execute(request);
+
+
+        //request.OnBeforeDeserialization = resp => { resp.ContentType = "application/json"; };
+
+        //var queryResult = client.Execute(request);
+
+        //Console.WriteLine(queryResult.Content);
+
+    }
+
+
+    // curl --request GET --url https://yh-finance-complete.p.rapidapi.com/insights  --header 'x-rapidapi-host: yh-finance-complete.p.rapidapi.com' --header 'x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b98'
+
+    // curl --request GET  --url "https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL&reportsCount=1" --header "x-rapidapi-host: yh-finance-complete.p.rapidapi.com" --header "x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938"
+
+    // C:\Users\mtsizis>
+    // curl --request GET  --url "https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL&reportsCount=1" --header "x-rapidapi-host: yh-finance-complete.p.rapidapi.com" --header "x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938"
+}

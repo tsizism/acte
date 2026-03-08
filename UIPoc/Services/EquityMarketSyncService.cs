@@ -79,7 +79,7 @@ namespace UIPooc.Services
                 {
                     return;
                 }
-
+                
                 Equity equity = this._equities[0];
 
                 try
