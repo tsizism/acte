@@ -15,7 +15,7 @@ namespace UIPooc.Services
         Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US");
 
         // Market Summary
-        Task<MarketSummary?> GetMarketSummaryAsync(string symbol, string market = "US");
+        Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
 
         // Batch Operations
         Task UpdateEquityPricesAsync(int holdingId);

@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using UIPooc.Attributes;
+using UIPooc.Helpers;
 using UIPooc.Models;
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
@@ -23,60 +25,129 @@ using UIPooc.Models;
 
 namespace UIPooc.Services;
 
-public struct EntityStockPrice2
+[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Short format stock price from Yahoo Finance API")]
+public struct EntityYhStockPrice
 {
+    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, Description = "Stock ticker symbol")]
     public string symbol { get; set; }
+
+    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)", Description = "Current stock price")]
     public string price { get; set; }
+
+    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD", Description = "Currency code")]
     public string currency { get; set; }
+
+    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)", Description = "Market capitalization")]
     public string marketCap { get; set; }
-
-    //public EntityStockPrice()
-    //{
-    //    symbol = String.Empty;
-    //    price = String.Empty;
-    //    currency = String.Empty;
-    //    marketCap = String.Empty;
-
-    //}
 }
 
-public struct EntityStockPrice
+[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
+public struct EntityYhFullStockPrice
 {
-    public string currency { get; set; }     //      "USD"
-    public string currencySymbol { get; set; }     //      "$"
-    public string exchange { get; set; }     //      "NYQ"
-    public decimal exchangeDataDelayedBy { get; set; }     //      0
-    public string exchangeName { get; set; }     //      "NYSE"
-    public string fromCurrency { get; set; }     //      null
-    public string lastMarket { get; set; }     //      null
-    public string longName { get; set; }     //      "Agilent Technologies, Inc."
-    public string marketCap { get; set; }     //      32546357248
-    public string marketState { get; set; }     //      "CLOSED"
-    public string maxAge { get; set; }     //      1
-    public string postMarketChange { get; set; }     //      0.9299011
-    public string postMarketChangePercent { get; set; }     //      0.008081177
-    public string postMarketPrice { get; set; }     //      115.9999
-    public string price { get; set; }     //      115.9999
-    public string postMarketSource { get; set; }     //      "FREE_REALTIME"
-    public string postMarketTime { get; set; }     //      "2026-03-07T00  { get; set; }     //      49  { get; set; }     //      29.000Z"
-    public string preMarketSource { get; set; }     //      "DELAYED"
-    public string priceHint { get; set; }     //      2
-    public string quoteSourceName { get; set; }     //      "Nasdaq Real Time Price"
-    public string quoteType { get; set; }     //      "EQUITY"
-    public string regularMarketChange { get; set; }     //      -3.04
-    public string regularMarketChangePercent { get; set; }     //      -0.0257387
-    public string regularMarketDayHigh { get; set; }     //      116.74
-    public string regularMarketDayLow { get; set; }     //      114.92
-    public string regularMarketOpen { get; set; }     //      116.66
-    public string regularMarketPreviousClose { get; set; }     //      118.11
-    public string regularMarketPrice { get; set; }     //      115.07
-    public string regularMarketSource { get; set; }     //      "FREE_REALTIME"
-    public string regularMarketTime { get; set; }     //      "2026-03-06T21  { get; set; }     //      00  { get; set; }     //      03.000Z"
-    public string regularMarketVolume { get; set; }     //      2507276
-    public string shortName { get; set; }     //      "Agilent Technologies, Inc."
-    public string symbol { get; set; }     //      "A"
-    public string toCurrency { get; set; }     //      null
-    public string underlyingSymbol { get; set; }     //      null
+    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD")]
+    public string currency { get; set; }
+
+    [DbProperty(SourceName = "currencySymbol", Description = "Currency symbol like $, €, etc.")]
+    public string currencySymbol { get; set; }
+
+    [DbProperty(SourceName = "exchange", ColumnName = "Exchange", Description = "Stock exchange code")]
+    public string exchange { get; set; }
+
+    [DbProperty(SourceName = "exchangeDataDelayedBy", Description = "Data delay in minutes")]
+    public decimal exchangeDataDelayedBy { get; set; }
+
+    [DbProperty(SourceName = "exchangeName", Description = "Full exchange name")]
+    public string exchangeName { get; set; }
+
+    [DbProperty(SourceName = "fromCurrency", Ignore = true)]
+    public string fromCurrency { get; set; }
+
+    [DbProperty(SourceName = "lastMarket", Ignore = true)]
+    public string lastMarket { get; set; }
+
+    [DbProperty(SourceName = "longName", ColumnName = "CompanyName", Description = "Full company name")]
+    public string longName { get; set; }
+
+    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)")]
+    public string marketCap { get; set; }
+
+    [DbProperty(SourceName = "marketState", Description = "Market state: OPEN, CLOSED, PRE, POST")]
+    public string marketState { get; set; }
+
+    [DbProperty(SourceName = "maxAge", Ignore = true)]
+    public string maxAge { get; set; }
+
+    [DbProperty(SourceName = "postMarketChange", Description = "After-hours price change")]
+    public string postMarketChange { get; set; }
+
+    [DbProperty(SourceName = "postMarketChangePercent", Description = "After-hours change percentage")]
+    public string postMarketChangePercent { get; set; }
+
+    [DbProperty(SourceName = "postMarketPrice", Description = "After-hours price")]
+    public string postMarketPrice { get; set; }
+
+    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
+    public string price { get; set; }
+
+    [DbProperty(SourceName = "postMarketSource", Ignore = true)]
+    public string postMarketSource { get; set; }
+
+    [DbProperty(SourceName = "postMarketTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
+    public string postMarketTime { get; set; }
+
+    [DbProperty(SourceName = "preMarketSource", Ignore = true)]
+    public string preMarketSource { get; set; }
+
+    [DbProperty(SourceName = "priceHint", Ignore = true)]
+    public string priceHint { get; set; }
+
+    [DbProperty(SourceName = "quoteSourceName", Description = "Data source name")]
+    public string quoteSourceName { get; set; }
+
+    [DbProperty(SourceName = "quoteType", Description = "Type: EQUITY, ETF, INDEX, etc.")]
+    public string quoteType { get; set; }
+
+    [DbProperty(SourceName = "regularMarketChange", Description = "Regular hours price change")]
+    public string regularMarketChange { get; set; }
+
+    [DbProperty(SourceName = "regularMarketChangePercent", Description = "Regular hours change percentage")]
+    public string regularMarketChangePercent { get; set; }
+
+    [DbProperty(SourceName = "regularMarketDayHigh", ColumnName = "DayHigh", DbType = "decimal(18,2)")]
+    public string regularMarketDayHigh { get; set; }
+
+    [DbProperty(SourceName = "regularMarketDayLow", ColumnName = "DayLow", DbType = "decimal(18,2)")]
+    public string regularMarketDayLow { get; set; }
+
+    [DbProperty(SourceName = "regularMarketOpen", ColumnName = "OpenPrice", DbType = "decimal(18,2)")]
+    public string regularMarketOpen { get; set; }
+
+    [DbProperty(SourceName = "regularMarketPreviousClose", ColumnName = "PreviousClose", DbType = "decimal(18,2)")]
+    public string regularMarketPreviousClose { get; set; }
+
+    [DbProperty(SourceName = "regularMarketPrice", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
+    public string regularMarketPrice { get; set; }
+
+    [DbProperty(SourceName = "regularMarketSource", Ignore = true)]
+    public string regularMarketSource { get; set; }
+
+    [DbProperty(SourceName = "regularMarketTime", ColumnName = "LastTradeTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
+    public string regularMarketTime { get; set; }
+
+    [DbProperty(SourceName = "regularMarketVolume", ColumnName = "Volume", DbType = "bigint")]
+    public string regularMarketVolume { get; set; }
+
+    [DbProperty(SourceName = "shortName", ColumnName = "CompanyName", Description = "Short company name")]
+    public string shortName { get; set; }
+
+    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, IsPrimaryKey = true)]
+    public string symbol { get; set; }
+
+    [DbProperty(SourceName = "toCurrency", Ignore = true)]
+    public string toCurrency { get; set; }
+
+    [DbProperty(SourceName = "underlyingSymbol", Ignore = true)]
+    public string underlyingSymbol { get; set; }
 }
 
 
@@ -88,13 +159,62 @@ public class YahooHttpClient
 {
     //public static async Task<Dictionary<string, object>?> Get(string url)
 
+    public static async Task<(Dictionary<string, object>, Dictionary<string, object>)> GetStockSummaryDetailAsync(string symbol)
+    {
+        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
+        string url = $"https://yh-finance-complete.p.rapidapi.com/yhf?ticker={symbol}";
+
+        //Dictionary<string, object>? dict = await Get(url
+        string jsonResponse = await Get(url);
+
+        //string ticker = @"{""symbol"": ""AAPL"", 
+        //                    ""price"": 230.4584, 
+        //                    ""currency"": ""USD"",
+        //                    ""symbolName"": ""Apple"",
+        //                    ""marketCap"": 3503912648704
+        //                    }";
+
+        //PopulateEntityStockPrice(jsonResponse, stockTickerProps);
+
+        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+
+        if (dict == null)
+        {
+            return (new Dictionary<string, object>() { { "Error", "Failed to deserialize JSON response" } }, new Dictionary<string, object>());
+        }
+
+        object pricesJson = dict["price"];
+        //Dictionary<string, object>? priceDict = tmp as Dictionary<string, object>;
+        Dictionary<string, object> priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(pricesJson.ToString());
+
+        //Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
+
+        //EquityMarket dbEquityMarket = new EquityMarket();
+
+        //EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, metadata);
+
+        //EntityMapper.PopulateFromDictionary(stockTickerProps, priceDict!);
+
+        object summaryDetailJson = dict["summaryDetail"];
+        Dictionary<string, object> summaryDetailDict = JsonSerializer.Deserialize<Dictionary<string, object>>(summaryDetailJson.ToString());
+
+        ///YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
+        //Console.WriteLine(stockTicker.ToString());
+
+        return (priceDict, summaryDetailDict);
+    }
+
+
     /// <summary>
     /// Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
     /// </summary>
     /// <param name="ticker"></param>
     /// <param name="stockTickerProps"></param>
     /// <returns></returns>
-    public static async Task GetTickerPriceAsync(string ticker, EntityStockPrice stockTickerProps)
+    public static async Task GetTickerPriceAsync(string ticker, EntityYhFullStockPrice stockTickerProps)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
@@ -117,13 +237,7 @@ public class YahooHttpClient
     }
 
 
-    /// <summary>
-    /// Full Price
-    /// </summary>
-    /// <param name="ticker"></param>
-    /// <param name="stockTickerProps"></param>
-    /// <returns></returns>
-    public static async Task GetSymbolFullPriceAsync(string symbol, EntityStockPrice stockTickerProps)
+    public static async Task GetSymbolFullPriceAsync(string symbol, EntityYhFullStockPrice stockTickerProps)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
@@ -181,7 +295,7 @@ public class YahooHttpClient
         }
 
 
-    public static void PopulateStockTicker(string jsonResponse, EntityStockPrice stockTicker)
+    public static void PopulateStockTicker(string jsonResponse, EntityYhFullStockPrice stockTicker)
     {
         Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
 
@@ -192,7 +306,7 @@ public class YahooHttpClient
         }
     }
 
-    public static void PopulateEntityStockPrice(string jsonResponse, EntityStockPrice stockTicker)
+    public static void PopulateEntityStockPrice(string jsonResponse, EntityYhFullStockPrice stockTicker)
     {
         Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
 
@@ -283,64 +397,96 @@ public class FinanceService : IFinanceService
 
     #region Quote Operations
 
-    //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
-    //{
-    //    Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+    public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
+    {
+        (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
 
-    //    if (dict != null)
-    //    {
-    //        ApiAdapterHttpClient.PopulateEntityFromDict(stockTickerProps, dict);
-    //        Console.WriteLine(stockTickerProps.ToString());
-    //    }
-    //}
+        Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
 
-    public async Task<EquityMarket?> GetQuoteAsync(string ticker, string market = "US")
-    {   // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
-        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
-        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?ticker={ticker}";
-        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
-        string url = $"https://yh-finance-complete.p.rapidapi.com/price?ticker={ticker}";
+        EquityMarket dbEquityMarket = new EquityMarket() { Market = market }; 
 
-        EntityStockPrice stockTickerProps = new EntityStockPrice();
-        //await YahooHttpClient.GetTickerPriceAsync(ticker, stockTickerProps);
+        EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+        equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
 
-        await YahooHttpClient.GetSymbolFullPriceAsync(ticker, stockTickerProps);
+        if (equityMarket.Symbol != symbol)
+        {             
+            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
+            return null;
+        }
 
-        //StockTickerProperties stockTickerProps = new StockTickerProperties();
-        //PopulateStockTickerProps(jsonResponse, stockTickerProps);
+        return dbEquityMarket;
 
-        return new EquityMarket
+
+        //try
+        //{
+        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
+        //    var response = await _httpClient.GetAsync(url);
+
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
+        //        return null;
+        //    }
+
+        //    var content = await response.Content.ReadAsStringAsync();
+        //    var jsonDoc = JsonDocument.Parse(content);
+
+        //    var result = jsonDoc.RootElement
+        //        .GetProperty("quoteResponse")
+        //        .GetProperty("result");
+
+        //    if (result.GetArrayLength() == 0)
+        //        return null;
+
+        //    var quote = result[0];
+
+        //    return new MarketSummary
+        //    {
+        //        Symbol = GetStringValue(quote, "symbol"),
+        //        ShortName = GetStringValue(quote, "shortName"),
+        //        LongName = GetStringValue(quote, "longName"),
+        //        RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
+        //        RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
+        //        RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
+        //        RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
+        //        MarketCap = GetNullableDecimalValue(quote, "marketCap"),
+        //        FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
+        //        FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
+        //        TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
+        //        DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
+        //        Currency = GetStringValue(quote, "currency"),
+        //        Exchange = GetStringValue(quote, "exchange")
+        //    };
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
+        //    return null;
+        //}
+    }
+
+
+    public async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
+    {
+        var quote = await GetMarketSummaryAsync(symbol, market);
+        if (quote != null)
         {
-            Symbol = stockTickerProps.symbol,
-            Market = market,
-            CompanyName = stockTickerProps.symbol, // Placeholder, as yhprice endpoint doesn't return company name
-            Currency = stockTickerProps.currency,
-            CurrentPrice = decimal.TryParse(stockTickerProps.price, out var price) ? price : 0,
-            MarketCap = decimal.TryParse(stockTickerProps.marketCap, out var marketCap) ? marketCap : (decimal?)null,
-            LastUpdated = DateTime.UtcNow
+            await _modelService.UpsertEquityMarketAsync(quote);
+        }
+        return quote;
+    }
 
-        public int EquityMarketId { get; set; }
-    public string Symbol { get; set; } = string.Empty;
-    public string Market { get; set; } = string.Empty;
-    public string? CompanyName { get; set; }
-    public string Currency { get; set; } = string.Empty;
-    public decimal CurrentPrice { get; set; }
-    public decimal PreviousClose { get; set; }
-    public decimal OpenPrice { get; set; }
-    public decimal DayHigh { get; set; }
-    public decimal DayLow { get; set; }
-    public long Volume { get; set; }
-    public decimal? MarketCap { get; set; }
-    public decimal? Week52High { get; set; }
-    public decimal? Week52Low { get; set; }
-    public decimal? PERatio { get; set; }
-    public decimal? DividendYield { get; set; }
-    public decimal? EPS { get; set; }
-    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-    public DateTime? LastTradeTime { get; set; }
-    public string? Exchange { get; set; }
+    public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
+    {
+        // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        EntityYhFullStockPrice entityStockPrice = new EntityYhFullStockPrice();
+        await YahooHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
 
-};
+        // Use mapper to convert Yahoo API entity to database model
+        
+        
+        return entityStockPrice.ToEquityMarket(market);
+
 
         //try
         //{
@@ -374,6 +520,16 @@ public class FinanceService : IFinanceService
         //}
     }
 
+    //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
+    //{
+    //    Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+    //    if (dict != null)
+    //    {
+    //        ApiAdapterHttpClient.PopulateEntityFromDict(stockTickerProps, dict);
+    //        Console.WriteLine(stockTickerProps.ToString());
+    //    }
+    //}
 
     public async Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US")
     {
@@ -413,15 +569,6 @@ public class FinanceService : IFinanceService
         return results;
     }
 
-    public async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
-    {
-        var quote = await GetQuoteAsync(symbol, market);
-        if (quote != null)
-        {
-            await _modelService.UpsertEquityMarketAsync(quote);
-        }
-        return quote;
-    }
 
     public async Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US")
     {
@@ -560,55 +707,6 @@ public class FinanceService : IFinanceService
 
     #region Market Summary
 
-    public async Task<MarketSummary?> GetMarketSummaryAsync(string symbol, string market = "US")
-    {
-        try
-        {
-            var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
-                return null;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
-
-            var result = jsonDoc.RootElement
-                .GetProperty("quoteResponse")
-                .GetProperty("result");
-
-            if (result.GetArrayLength() == 0)
-                return null;
-
-            var quote = result[0];
-
-            return new MarketSummary
-            {
-                Symbol = GetStringValue(quote, "symbol"),
-                ShortName = GetStringValue(quote, "shortName"),
-                LongName = GetStringValue(quote, "longName"),
-                RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
-                RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
-                RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
-                RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
-                MarketCap = GetNullableDecimalValue(quote, "marketCap"),
-                FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
-                FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
-                TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
-                DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
-                Currency = GetStringValue(quote, "currency"),
-                Exchange = GetStringValue(quote, "exchange")
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error fetching market summary for {symbol}");
-            return null;
-        }
-    }
 
     #endregion
 
