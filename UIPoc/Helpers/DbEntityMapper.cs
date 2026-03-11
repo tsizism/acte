@@ -136,6 +136,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Populates an entity from a dictionary using PropertyMetadata configuration (metadata-driven approach)
     /// This version doesn't require DbEntity attributes - uses runtime metadata instead
+    /// Iterates over the data dictionary and maps fields based on metadata configuration
     /// </summary>
     /// <typeparam name="T">The entity type to populate</typeparam>
     /// <param name="entity">The entity instance to populate</param>
@@ -146,17 +147,150 @@ public static class DbEntityMapper
     {
         var type = typeof(T);
 
+        // Create reverse lookup: sourceName -> PropertyMetadata
+        Dictionary<string, PropertyMetadata> sourceToMetadata = new Dictionary<string, PropertyMetadata>();
+        foreach (PropertyMetadata metaEntry in metadata.Values)
+        {
+            if (!string.IsNullOrEmpty(metaEntry.SourceName))
+            {
+                sourceToMetadata[metaEntry.SourceName] = metaEntry;
+            }
+        }
+
+        // Iterate over data dictionary
+        foreach (var dataEntry in data)
+        {
+            string sourceFieldName = dataEntry.Key;
+            object? sourceValue = dataEntry.Value;
+
+            // Find matching metadata by SourceName
+            if (!sourceToMetadata.TryGetValue(sourceFieldName, out var meta))
+            {
+                Console.WriteLine($"{sourceFieldName}");
+                continue;
+            }
+
+            // Skip if marked as ignored
+            if (meta.Ignore)
+                continue;
+
+            // Determine target property name (use ColumnName from metadata)
+            string targetPropertyName = meta.ColumnName;
+            if (string.IsNullOrEmpty(targetPropertyName))
+                continue;
+
+            // Find the property on the target entity
+            PropertyInfo? property = type.GetProperty(targetPropertyName, BindingFlags.Public | BindingFlags.Instance);
+            if (property == null || !property.CanWrite)
+            {
+                // Try finding property by the metadata key name as fallback
+                foreach (var metaKvp in metadata)
+                {
+                    if (metaKvp.Value.SourceName == sourceFieldName)
+                    {
+                        property = type.GetProperty(metaKvp.Key, BindingFlags.Public | BindingFlags.Instance);
+                        if (property != null && property.CanWrite)
+                            break;
+                    }
+                }
+
+                if (property == null || !property.CanWrite)
+                    continue;
+            }
+
+            // Handle null or empty values
+            if (sourceValue == null || (sourceValue is string s && string.IsNullOrWhiteSpace(s)))
+            {
+                // Use default value if specified in metadata
+                if (meta.DefaultValue != null)
+                {
+                    sourceValue = meta.DefaultValue;
+                }
+                else if (meta.IsRequired)
+                {
+                    Console.WriteLine($"Warning: Required property {targetPropertyName} (source: {sourceFieldName}) has null/empty value");
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            try
+            {
+                // Check for custom converter
+                if (meta.ConverterType != null && !string.IsNullOrEmpty(meta.ConverterMethodName))
+                {
+                    var converterMethod = meta.ConverterType.GetMethod(
+                        meta.ConverterMethodName,
+                        BindingFlags.Public | BindingFlags.Static
+                    );
+
+                    if (converterMethod != null)
+                    {
+                        var convertedValue = converterMethod.Invoke(null, new[] { sourceValue });
+                        if (convertedValue != null)
+                        {
+                            property.SetValue(entity, convertedValue);
+                        }
+                        continue;
+                    }
+                }
+
+                // Convert value to target property type
+                var convertedVal = ConvertValue(sourceValue, property.PropertyType, meta.Format);
+                if (convertedVal != null)
+                {
+                    property.SetValue(entity, convertedVal);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error setting property {targetPropertyName} from source {sourceFieldName}: {ex.Message}");
+            }
+        }
+
+        // Check for required fields that weren't in the data
+        foreach (var metaEntry in metadata)
+        {
+            var meta = metaEntry.Value;
+            if (meta.IsRequired && !string.IsNullOrEmpty(meta.SourceName))
+            {
+                if (!data.ContainsKey(meta.SourceName))
+                {
+                    Console.WriteLine($"Warning: Required field {meta.SourceName} (maps to {meta.ColumnName}) not found in source data");
+                }
+            }
+        }
+
+        return entity;
+    }
+
+    /// <summary>
+    /// Populates an entity from a dictionary using PropertyMetadata configuration (metadata-driven approach)
+    /// This version doesn't require DbEntity attributes - uses runtime metadata instead
+    /// </summary>
+    /// <typeparam name="T">The entity type to populate</typeparam>
+    /// <param name="entity">The entity instance to populate</param>
+    /// <param name="data">Source data dictionary</param>
+    /// <param name="metadata">PropertyMetadata dictionary defining the mapping rules</param>
+    /// <returns>The populated entity (important for value types/structs)</returns>
+    public static T PopulateFromDictionaryBy2<T>(T entity, Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
+    {
+        var type = typeof(T);
+
         foreach (KeyValuePair<string, PropertyMetadata> metaEntry in metadata)
         {
-            var propertyName = metaEntry.Key;
-            var meta = metaEntry.Value;
+            string propertyName = metaEntry.Key;
+            PropertyMetadata meta = metaEntry.Value;
 
             // Skip if marked as ignored
             if (meta.Ignore)
                 continue;
 
             // Find the property on the target entity
-            var property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo? property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
             if (property == null || !property.CanWrite)
                 continue;
 
@@ -221,6 +355,8 @@ public static class DbEntityMapper
 
         return entity;
     }
+
+
 
     /// <summary>
     /// Converts a value to the target type with optional format support

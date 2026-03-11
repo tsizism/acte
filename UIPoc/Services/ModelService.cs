@@ -164,8 +164,7 @@ namespace UIPooc.Services
 
         public async Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market)
         {
-            return await _context.EquityMarkets
-                .FirstOrDefaultAsync(em => em.Symbol == symbol && em.Market == market);
+            return await _context.EquityMarkets.FirstOrDefaultAsync(em => em.Symbol == symbol && em.Market == market);
         }
 
         public async Task<List<EquityMarket>> GetAllEquityMarketsAsync()
@@ -209,7 +208,7 @@ namespace UIPooc.Services
 
         public async Task<EquityMarket> UpsertEquityMarketAsync(EquityMarket equityMarket)
         {
-            var existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, equityMarket.Market);
+            EquityMarket? existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, equityMarket.Market);
 
             if (existing != null)
             {

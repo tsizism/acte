@@ -1,6 +1,7 @@
 using UIPooc.Models;
+using UIPooc.Services;
 
-namespace UIPooc.Services;
+namespace UIPooc.Helpers;
 
 /// <summary>
 /// Maps Yahoo Finance API entities to database models

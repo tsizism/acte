@@ -159,6 +159,56 @@ public class YahooHttpClient
 {
     //public static async Task<Dictionary<string, object>?> Get(string url)
 
+    public static async Task<Dictionary<string, object>> GetStockFullInformationAsync(string symbol)
+    {
+        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
+        //string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
+        //string url = $"https://yh-finance-complete.p.rapidapi.com/yhf?ticker={symbol}";
+        string url = $"https://yh-finance-complete.p.rapidapi.com/fullData?ticker={symbol}";
+
+        //Dictionary<string, object>? dict = await Get(url
+        string jsonResponse = await Get(url);
+
+        //string ticker = @"{""symbol"": ""AAPL"", 
+        //                    ""price"": 230.4584, 
+        //                    ""currency"": ""USD"",
+        //                    ""symbolName"": ""Apple"",
+        //                    ""marketCap"": 3503912648704
+        //                    }";
+
+        //PopulateEntityStockPrice(jsonResponse, stockTickerProps);
+
+        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+
+        if (dict == null)
+        {
+            return new Dictionary<string, object>() { { "Error", "Failed to deserialize JSON response" } };
+        }
+
+        //object pricesJson = dict["price"];
+        ////Dictionary<string, object>? priceDict = tmp as Dictionary<string, object>;
+        //Dictionary<string, object> priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(pricesJson.ToString());
+
+        //Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
+
+        //EquityMarket dbEquityMarket = new EquityMarket();
+
+        //EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, metadata);
+
+        //EntityMapper.PopulateFromDictionary(stockTickerProps, priceDict!);
+
+        //object summaryDetailJson = dict["summaryDetail"];
+        //Dictionary<string, object> summaryDetailDict = JsonSerializer.Deserialize<Dictionary<string, object>>(summaryDetailJson.ToString());
+
+        ///YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
+        //Console.WriteLine(stockTicker.ToString());
+
+        return dict;
+    }
+
+
     public static async Task<(Dictionary<string, object>, Dictionary<string, object>)> GetStockSummaryDetailAsync(string symbol)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
@@ -397,6 +447,23 @@ public class FinanceService : IFinanceService
 
     #region Quote Operations
 
+    public async Task<EquityMarket?> GetStockFullInformationAsync(string symbol, string market = "US")
+    {
+        EquityMarket dbEquityMarket = new EquityMarket() { Market = market };
+
+        Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
+
+        EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, dict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+
+        if (equityMarket.Symbol != symbol)
+        {
+            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
+            return null;
+        }
+
+        return dbEquityMarket;
+    }
+
     public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
     {
         (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
@@ -468,7 +535,8 @@ public class FinanceService : IFinanceService
 
     public async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
     {
-        var quote = await GetMarketSummaryAsync(symbol, market);
+        //var quote = await GetMarketSummaryAsync(symbol, market);
+        EquityMarket? quote = await GetStockFullInformationAsync(symbol, market);
         if (quote != null)
         {
             await _modelService.UpsertEquityMarketAsync(quote);
