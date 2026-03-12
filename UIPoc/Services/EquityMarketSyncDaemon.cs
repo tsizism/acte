@@ -5,16 +5,16 @@ using UIPooc.Models;
 
 namespace UIPooc.Services
 {
-    public class EquityMarketSyncService : BackgroundService
+    public class EquityMarketSyncDaemon : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<EquityMarketSyncService> _logger;
+        private readonly ILogger<EquityMarketSyncDaemon> _logger;
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
 
         private List<Equity> _equities;
-        public EquityMarketSyncService(
+        public EquityMarketSyncDaemon(
             IServiceProvider serviceProvider,
-            ILogger<EquityMarketSyncService> logger)
+            ILogger<EquityMarketSyncDaemon> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;

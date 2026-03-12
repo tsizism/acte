@@ -43,7 +43,7 @@ namespace UIPooc
             builder.Services.AddScoped<IImportService, ImportService>();
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddHttpClient<IFinanceService, FinanceService>();
-            builder.Services.AddHostedService<EquityMarketSyncService>();
+            builder.Services.AddHostedService<EquityMarketSyncDaemon>();
             builder.Services.AddRadzenComponents();
 
             WebApplication app = builder.Build();
