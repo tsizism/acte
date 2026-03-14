@@ -1,0 +1,103 @@
+@page "/holdings"
+@using UIPooc.Models
+@rendermode InteractiveServer
+
+
+<PageTitle>Holdings</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.H3">Holdings Portfolio</RadzenText>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (_holdings != null && _holdings.Count > 0)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Total Holdings: <strong>@_holdings.Count</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Total Equities: <strong>@_totalEquities</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Average Index: <strong>@_averageIndex.ToString("N2")</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenDataGrid Data="@_holdings"
+                       TItem="Holding"
+                       AllowFiltering="true"
+                       AllowSorting="true"
+                       AllowPaging="true"
+                       PageSize="20"
+                       PagerHorizontalAlign="HorizontalAlign.Center"
+                       FilterMode="FilterMode.Simple"
+                       SelectionMode="DataGridSelectionMode.Single"
+                       @bind-Value="@_selectedHoldings"
+                       Style="height: 800px">
+            <Columns>
+                <RadzenDataGridColumn TItem="Holding" Property="Name" Title="Name" Width="200px" Frozen="true">
+                    <Template Context="holding">
+                        <RadzenLink Path="@($"equities/{holding.HoldingId}")" Text="@holding.Name" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Holding" Property="CallName" Title="Call Name" Width="150px" />
+
+                <RadzenDataGridColumn TItem="Holding" Property="Type" Title="Type" Width="120px">
+                    <Template Context="holding">
+                        <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(holding.Type)" Text="@holding.Type.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Holding" Property="Index" Title="Index" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Holding" Property="Currency" Title="Currency" Width="90px" />
+
+                <RadzenDataGridColumn TItem="Holding" Title="Equities" Width="90px" TextAlign="TextAlign.Right" Sortable="false">
+                    <Template Context="holding">
+                        @holding.Equities.Count
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Holding" Property="FlagMaxIndex" Title="Flag Max" Width="110px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Holding" Property="FlagMinIndex" Title="Flag Min" Width="110px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Holding" Property="CreatedAt" Title="Created" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+
+                <RadzenDataGridColumn TItem="Holding" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+
+                <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                    <Template Context="holding">
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                     Click="@(() => ViewEquities(holding.HoldingId))"
+                                     title="View Equities" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenText>No holdings found.</RadzenText>
+        </RadzenAlert>
+    }
+</RadzenStack>
