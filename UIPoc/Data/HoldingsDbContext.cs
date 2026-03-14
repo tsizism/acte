@@ -228,8 +228,11 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
+                entity.Property(e => e.IndexWeight)
+                    .HasColumnType("decimal(4,2)");
+
                 entity.Property(e => e.HoldingHighAt)
-                    .IsRequired();
+                        .IsRequired();
 
                 entity.Property(e => e.HoldingLow)
                     .IsRequired() 

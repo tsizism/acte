@@ -17,6 +17,7 @@ namespace UIPooc.Models
         public decimal LastTxnPrice { get; set; }
         public DateTime LastTxnAt { get; set; }
         public decimal HoldingHigh{ get; set; }
+        public decimal IndexWeight { get; set; }
         public DateTime HoldingHighAt { get; set; }
         public decimal HoldingLow { get; set; }
         public DateTime HoldingLowAt { get; set; }
