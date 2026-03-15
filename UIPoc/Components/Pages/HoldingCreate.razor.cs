@@ -53,6 +53,17 @@ public partial class HoldingCreate
 
             NavigationManager.NavigateTo("/holdings");
         }
+        catch (InvalidOperationException ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "InvalidOperationException",
+                Detail = $"Failed to load holdings: {ex.Message}",
+                Duration = 2000,
+                CloseOnClick = true
+            });
+        }
         catch (Exception ex)
         {
             NotificationService.Notify(new NotificationMessage
