@@ -42,7 +42,8 @@ public partial class HoldingsIndex
                 Severity = NotificationSeverity.Error,
                 Summary = "InvalidOperationException",
                 Detail = $"Failed to load holdings: {ex.Message}",
-                Duration = 4000
+                Duration = 2000,
+                CloseOnClick = true
             });
         }
         catch (Exception ex)
