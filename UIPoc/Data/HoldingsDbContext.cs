@@ -167,6 +167,14 @@ namespace UIPooc.Data
                 entity.Property(e => e.CreatedAt)
                     .IsRequired();
 
+                entity.Property(e => e.Flag)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.FlagMessage)
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.FlagDate);
+
                 entity.HasIndex(p => p.Name).IsUnique();
 
             });
@@ -232,7 +240,7 @@ namespace UIPooc.Data
                     .HasColumnType("decimal(4,2)");
 
                 entity.Property(e => e.HoldingHighAt)
-                        .IsRequired();
+                    .IsRequired();
 
                 entity.Property(e => e.HoldingLow)
                     .IsRequired() 
@@ -248,6 +256,14 @@ namespace UIPooc.Data
                 entity.Property(e => e.FlagMin)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Flag)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.FlagMessage)
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.FlagDate);
 
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });

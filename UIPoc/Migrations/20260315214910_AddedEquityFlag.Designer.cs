@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UIPooc.Data;
 
@@ -11,9 +12,11 @@ using UIPooc.Data;
 namespace UIPooc.Migrations
 {
     [DbContext(typeof(HoldingsDbContext))]
-    partial class HoldingsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260315214910_AddedEquityFlag")]
+    partial class AddedEquityFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,9 +52,6 @@ namespace UIPooc.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("FlagDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("FlagMax")
                         .HasColumnType("decimal(18,2)");
@@ -227,20 +227,8 @@ namespace UIPooc.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<bool>("Flag")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("FlagDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<decimal?>("FlagMaxIndex")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("FlagMessage")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal?>("FlagMinIndex")
                         .HasColumnType("decimal(18,2)");

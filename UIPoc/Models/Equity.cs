@@ -23,6 +23,9 @@ namespace UIPooc.Models
         public DateTime HoldingLowAt { get; set; }
         public decimal? FlagMax { get; set; } = 0;
         public decimal? FlagMin { get; set; } = 0;
+        public bool Flag { get; set; } = false;
+        public string? FlagMessage { get; set; } = string.Empty;
+        public DateTime? FlagDate { get; set; }
         public Holding Holding { get; set; } = null!;
     }
 }

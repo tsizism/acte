@@ -23,6 +23,9 @@ namespace UIPooc.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
         public User User { get; set; } = null!;
+        public bool Flag { get; set; } = false;
+        public string? FlagMessage { get; set; } = string.Empty;
+        public DateTime? FlagDate { get; set; }
         public ICollection<Equity> Equities { get; set; } = new List<Equity>();
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
         public ICollection<IndexHistory> IndexHistories { get; set; } = new List<IndexHistory>();
