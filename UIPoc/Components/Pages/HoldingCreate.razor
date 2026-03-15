@@ -1,0 +1,97 @@
+@page "/holdings/create"
+@using UIPooc.Models
+@rendermode InteractiveServer
+
+<PageTitle>New Holding</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Click="@GoBack" title="Back to Holdings" />
+                <RadzenText TextStyle="TextStyle.H3">New Holding</RadzenText>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenCard>
+        <RadzenTemplateForm TItem="Holding" Data="@_holding" Submit="@OnSubmit">
+            <RadzenStack Gap="1rem">
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Name" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="_holding.Name" Name="Name" />
+                            </ChildContent>
+                            <Helper>
+                                <RadzenRequiredValidator Component="Name" Text="Name is required" />
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Call Name" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="_holding.CallName" Name="CallName" />
+                            </ChildContent>
+                            <Helper>
+                                <RadzenRequiredValidator Component="CallName" Text="Call Name is required" />
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Type" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenDropDown @bind-Value="_holding.Type" Data="@_holdingTypes"
+                                               TextProperty="Text" ValueProperty="Value" Name="Type" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Currency" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="_holding.Currency" Name="Currency" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Index" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenNumeric @bind-Value="_holding.Index" Name="Index" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Flag Max Index" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenNumeric @bind-Value="_holding.FlagMaxIndex" Name="FlagMaxIndex" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Flag Min Index" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenNumeric @bind-Value="_holding.FlagMinIndex" Name="FlagMinIndex" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow JustifyContent="JustifyContent.End">
+                    <RadzenColumn Size="12" class="rz-text-align-end">
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@GoBack"
+                                     Style="margin-right: 0.5rem" />
+                        <RadzenButton Text="Create" Icon="save" ButtonType="ButtonType.Submit"
+                                     ButtonStyle="ButtonStyle.Primary" IsBusy="@_isSaving" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenCard>
+</RadzenStack>

@@ -13,7 +13,7 @@ namespace UIPooc.Models
         public int HoldingId { get; set; }
         public string Symbol { get; set; } = string.Empty;
         public TransactionType Type { get; set; }
-        public decimal Quantity { get; set; }
+        public int Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal Commission { get; set; }

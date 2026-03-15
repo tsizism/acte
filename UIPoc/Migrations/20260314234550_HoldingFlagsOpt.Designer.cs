@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UIPooc.Data;
 
@@ -11,9 +12,11 @@ using UIPooc.Data;
 namespace UIPooc.Migrations
 {
     [DbContext(typeof(HoldingsDbContext))]
-    partial class HoldingsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260314234550_HoldingFlagsOpt")]
+    partial class HoldingFlagsOpt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,8 +94,8 @@ namespace UIPooc.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
@@ -240,9 +243,6 @@ namespace UIPooc.Migrations
 
                     b.HasKey("HoldingId");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
                     b.HasIndex("UserId");
 
                     b.ToTable("Holdings");
@@ -301,8 +301,8 @@ namespace UIPooc.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Symbol")
                         .IsRequired()

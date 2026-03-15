@@ -6,18 +6,24 @@ namespace UIPooc.Services
 {
     public class UserService : IUserService
     {
-        private readonly HoldingsDbContext _context;
+        private User? _currentUser;
+        private readonly IModelService _modelService;
 
-        public UserService(HoldingsDbContext context)
+        public UserService(IModelService modelService)
         {
-            _context = context;
+            _modelService = modelService;
         }
 
         public async Task<User?> GetCurrentUserAsync()
         {
+            if (_currentUser == null)
+            {
+                _currentUser = await _modelService.GetCurrentUserAsync();
+            }
+
             // For now, return the first user from the database
             // In a real application, this would get the authenticated user
-            return await _context.Users.FirstOrDefaultAsync();
+            return _currentUser;
         }
     }
 }

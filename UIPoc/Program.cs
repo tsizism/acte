@@ -38,10 +38,10 @@ namespace UIPooc
                 //    }
                 //)
             );
-            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IModelService, ModelService>();
             builder.Services.AddScoped<IImportService, ImportService>();
             builder.Services.AddScoped<IExportService, ExportService>();
+            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddHttpClient<IFinanceService, FinanceService>();
             builder.Services.AddHostedService<EquityMarketSyncDaemon>();
             builder.Services.AddRadzenComponents();

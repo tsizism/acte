@@ -146,11 +146,9 @@ namespace UIPooc.Data
                     .HasMaxLength(5);
 
                 entity.Property(e => e.FlagMaxIndex)
-                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.FlagMinIndex)
-                    .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.LastUpdated)
@@ -168,7 +166,10 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.CreatedAt)
                     .IsRequired();
-             });
+
+                entity.HasIndex(p => p.Name).IsUnique();
+
+            });
         }
 
         private void ConfigureEquity(ModelBuilder modelBuilder)
@@ -199,8 +200,7 @@ namespace UIPooc.Data
                     .HasMaxLength(5);
 
                 entity.Property(e => e.Quantity)
-                    .IsRequired()
-                    .HasColumnType("decimal(18,4)");
+                    .IsRequired();
 
                 entity.Property(e => e.AverageCost)
                     .IsRequired()
@@ -353,8 +353,7 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.Property(e => e.Quantity)
-                    .IsRequired()
-                    .HasColumnType("decimal(18,4)");
+                    .IsRequired();
 
                 entity.Property(e => e.Price)
                     .IsRequired()

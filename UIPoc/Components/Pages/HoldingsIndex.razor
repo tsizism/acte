@@ -6,9 +6,13 @@
 <PageTitle>Holdings</PageTitle>
 
 <RadzenStack Gap="1rem">
-    <RadzenRow AlignItems="AlignItems.Center">
+    <RadzenRow AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenText TextStyle="TextStyle.H3">Holdings Portfolio</RadzenText>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" class="rz-text-align-end">
+            <RadzenButton Text="New Holding" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                         Click="@CreateNewHolding" />
         </RadzenColumn>
     </RadzenRow>
 

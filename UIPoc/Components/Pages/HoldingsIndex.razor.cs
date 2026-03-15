@@ -35,6 +35,16 @@ public partial class HoldingsIndex
             _holdings = await ModelService.GetAllHoldingsAsync();
             CalculateSummary();
         }
+        catch (InvalidOperationException ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "InvalidOperationException",
+                Detail = $"Failed to load holdings: {ex.Message}",
+                Duration = 4000
+            });
+        }
         catch (Exception ex)
         {
             NotificationService.Notify(new NotificationMessage
@@ -60,6 +70,11 @@ public partial class HoldingsIndex
     private void ViewEquities(int holdingId)
     {
         NavigationManager.NavigateTo($"/equities/{holdingId}");
+    }
+
+    private void CreateNewHolding()
+    {
+        NavigationManager.NavigateTo("/holdings/create");
     }
 
     private static BadgeStyle GetHoldingTypeBadgeStyle(HoldingType type) => type switch

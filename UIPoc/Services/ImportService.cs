@@ -150,7 +150,7 @@ namespace UIPooc.Services
                             Symbol = symbol,
                             Market = market,
                             CompanyName = worksheet.Cells[row, 5].Text?.Trim(),
-                            Quantity = ParseDecimal(worksheet.Cells[row, 6].Text),
+                            Quantity = ParseInt(worksheet.Cells[row, 6].Text),
                             AverageCost = ParseDecimal(worksheet.Cells[row, 7].Text),
                             CurrentPrice = ParseDecimal(worksheet.Cells[row, 8].Text),
                             LastTxnType = TransactionType.Buy,
@@ -288,7 +288,7 @@ namespace UIPooc.Services
                             UserId = holding.UserId,
                             Symbol = symbol,
                             Type = transactionType,
-                            Quantity = ParseDecimal(worksheet.Cells[row, 4].Text),
+                            Quantity = ParseInt(worksheet.Cells[row, 4].Text),
                             Price = ParseDecimal(worksheet.Cells[row, 5].Text),
                             TotalAmount = ParseDecimal(worksheet.Cells[row, 6].Text),
                             Commission = ParseDecimal(worksheet.Cells[row, 7].Text),
@@ -415,6 +415,13 @@ namespace UIPooc.Services
         private decimal ParseDecimal(string value)
         {
             if (decimal.TryParse(value?.Trim(), out decimal result))
+                return result;
+            return 0;
+        }
+
+        private int ParseInt(string value)
+        {
+            if (int.TryParse(value?.Trim(), out int result))
                 return result;
             return 0;
         }

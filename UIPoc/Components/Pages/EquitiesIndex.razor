@@ -202,6 +202,16 @@
         {
             _holdings = await ModelService.GetAllHoldingsAsync();
         }
+        catch (InvalidOperationException ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "InvalidOperationException",
+                Detail = $"Failed to load holdings: {ex.Message}",
+                Duration = 4000
+            });
+        }
         catch (Exception ex)
         {
             NotificationService.Notify(new NotificationMessage

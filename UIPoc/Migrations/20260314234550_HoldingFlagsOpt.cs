@@ -1,0 +1,54 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace UIPooc.Migrations
+{
+    /// <inheritdoc />
+    public partial class HoldingFlagsOpt : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<decimal>(
+                name: "FlagMinIndex",
+                table: "Holdings",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
+
+            migrationBuilder.AlterColumn<decimal>(
+                name: "FlagMaxIndex",
+                table: "Holdings",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<decimal>(
+                name: "FlagMinIndex",
+                table: "Holdings",
+                type: "decimal(18,2)",
+                nullable: false,
+                defaultValue: 0m,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<decimal>(
+                name: "FlagMaxIndex",
+                table: "Holdings",
+                type: "decimal(18,2)",
+                nullable: false,
+                defaultValue: 0m,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)",
+                oldNullable: true);
+        }
+    }
+}
