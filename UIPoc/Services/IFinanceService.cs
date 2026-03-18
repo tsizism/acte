@@ -18,12 +18,13 @@ namespace UIPooc.Services
         Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
 
         // Batch Operations
-        Task UpdateEquityPricesAsync(int holdingId);
-        Task UpdateAllEquityPricesAsync();
+        Task EtlEquityPricesAsync(int holdingId);
+
         Task<bool> RefreshMarketCacheAsync(string symbol, string market);
 
         // Search
         Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
+        Task<decimal> RequestTickerPriceAsync(string ticker);
     }
 
     public class StockHistoricalData

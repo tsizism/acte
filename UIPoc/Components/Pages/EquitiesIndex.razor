@@ -6,6 +6,7 @@
 @rendermode InteractiveServer
 @inject IModelService ModelService
 @inject IExportService ExportService
+@inject IFinanceService FinanceService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject IJSRuntime JSInterop
@@ -246,6 +247,27 @@
         {
             _selectedHolding = await ModelService.GetHoldingByIdAsync(_selectedHoldingId.Value);
             _equities = await ModelService.GetEquitiesByHoldingIdAsync(_selectedHoldingId.Value);
+
+            foreach(var equity in _equities)
+            {
+                try
+                {
+                    equity.CurrentPrice = await FinanceService.RequestTickerPriceAsync(equity.Symbol);
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Summary = "Price Fetch Warning",
+                        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
+                        Duration = 3000,
+                        CloseOnClick = true
+                    });
+                    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
+                }
+            }
+
             CalculateTotals();
         }
         catch (Exception ex)
