@@ -158,7 +158,7 @@ public class FinanceService : IFinanceService
 
     public async Task<EquityMarket?> GetStockFullInformationAsync(string symbol, string market = "US")
     {
-        EquityMarket dbEquityMarket = new EquityMarket() { Market = market };
+        EquityMarket dbEquityMarket = new EquityMarket() { };
 
         Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
 
@@ -179,7 +179,7 @@ public class FinanceService : IFinanceService
 
         Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
 
-        EquityMarket dbEquityMarket = new EquityMarket() { Market = market }; 
+        EquityMarket dbEquityMarket = new EquityMarket() { }; 
 
         EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
         equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
@@ -631,8 +631,6 @@ public class FinanceService : IFinanceService
         return new EquityMarket
         {
             Symbol = GetStringValue(quote, "symbol"),
-            Market = market,
-            CompanyName = GetStringValue(quote, "longName") ?? GetStringValue(quote, "shortName"),
             Currency = GetStringValue(quote, "currency") ?? "USD",
             CurrentPrice = GetDecimalValue(quote, "regularMarketPrice"),
             PreviousClose = GetDecimalValue(quote, "regularMarketPreviousClose"),
@@ -643,12 +641,8 @@ public class FinanceService : IFinanceService
             MarketCap = GetNullableDecimalValue(quote, "marketCap"),
             Week52High = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
             Week52Low = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
-            PERatio = GetNullableDecimalValue(quote, "trailingPE"),
-            DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
-            EPS = GetNullableDecimalValue(quote, "epsTrailingTwelveMonths"),
             LastUpdated = DateTime.UtcNow,
             LastTradeTime = GetNullableDateTimeValue(quote, "regularMarketTime"),
-            Exchange = GetStringValue(quote, "exchange")
         };
     }
 

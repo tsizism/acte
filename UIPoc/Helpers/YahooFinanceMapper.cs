@@ -18,8 +18,6 @@ public static class YahooFinanceMapper
         return new EquityMarket
         {
             Symbol = source.symbol ?? string.Empty,
-            Market = market,
-            CompanyName = source.longName ?? source.shortName ?? source.symbol,
             Currency = source.currency ?? "USD",
             CurrentPrice = TryParseDecimal(source.regularMarketPrice),
             PreviousClose = TryParseDecimal(source.regularMarketPreviousClose),
@@ -30,12 +28,9 @@ public static class YahooFinanceMapper
             MarketCap = TryParseNullableDecimal(source.marketCap),
             Week52High = null, // Not available in EntityStockPrice
             Week52Low = null, // Not available in EntityStockPrice
-            PERatio = null, // Not available in EntityStockPrice
-            DividendYield = null, // Not available in EntityStockPrice
-            EPS = null, // Not available in EntityStockPrice
             LastUpdated = DateTime.UtcNow,
             LastTradeTime = TryParseDateTime(source.regularMarketTime),
-            Exchange = source.exchange ?? source.exchangeName ?? string.Empty
+
         };
     }
 
@@ -47,8 +42,6 @@ public static class YahooFinanceMapper
         return new EquityMarket
         {
             Symbol = source.symbol ?? string.Empty,
-            Market = market,
-            CompanyName = source.symbol, // Short format doesn't have company name
             Currency = source.currency ?? "USD",
             CurrentPrice = TryParseDecimal(source.price),
             PreviousClose = 0,
@@ -59,12 +52,8 @@ public static class YahooFinanceMapper
             MarketCap = TryParseNullableDecimal(source.marketCap),
             Week52High = null,
             Week52Low = null,
-            PERatio = null,
-            DividendYield = null,
-            EPS = null,
             LastUpdated = DateTime.UtcNow,
             LastTradeTime = null,
-            Exchange = string.Empty
         };
     }
 
@@ -130,7 +119,7 @@ public static class YahooFinanceMapper
     {
         equity.CurrentPrice = source.CurrentPrice;
         equity.Currency = source.Currency;
-        equity.CompanyName = source.CompanyName ?? equity.CompanyName;
+        //equity.CompanyName = source.CompanyName ?? equity.CompanyName;
 
         // Update holding highs and lows
         var currentPrice = equity.CurrentPrice;

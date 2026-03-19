@@ -280,12 +280,6 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasMaxLength(10);
 
-                entity.Property(e => e.Market)
-                    .IsRequired()
-                    .HasMaxLength(5);
-
-                entity.Property(e => e.CompanyName)
-                    .HasMaxLength(255);
 
                 entity.Property(e => e.Currency)
                     .IsRequired()
@@ -323,28 +317,13 @@ namespace UIPooc.Data
                 entity.Property(e => e.Week52Low)
                     .HasColumnType("decimal(18,2)");
 
-                entity.Property(e => e.PERatio)
-                    .HasColumnType("decimal(18,4)");
-
-                entity.Property(e => e.DividendYield)
-                    .HasColumnType("decimal(18,4)");
-
-                entity.Property(e => e.EPS)
-                    .HasColumnType("decimal(18,4)");
 
                 entity.Property(e => e.LastUpdated)
                     .IsRequired();
 
                 entity.Property(e => e.LastTradeTime);
 
-                entity.Property(e => e.Exchange)
-                    .HasMaxLength(50);
-
-                entity.HasIndex(e => new { e.Symbol, e.Market })
-                    .IsUnique();
-
                 entity.HasIndex(e => e.Symbol);
-                entity.HasIndex(e => e.Market);
                 entity.HasIndex(e => e.LastUpdated);
             });
         }

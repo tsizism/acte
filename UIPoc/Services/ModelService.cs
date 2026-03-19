@@ -164,7 +164,7 @@ namespace UIPooc.Services
 
         public async Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market)
         {
-            return await _context.EquityMarkets.FirstOrDefaultAsync(em => em.Symbol == symbol && em.Market == market);
+            return await _context.EquityMarkets.FirstOrDefaultAsync(em => em.Symbol == symbol);
         }
 
         public async Task<List<EquityMarket>> GetAllEquityMarketsAsync()
@@ -176,10 +176,11 @@ namespace UIPooc.Services
 
         public async Task<List<EquityMarket>> GetEquityMarketsByMarketAsync(string market)
         {
-            return await _context.EquityMarkets
-                .Where(em => em.Market == market)
-                .OrderBy(em => em.Symbol)
-                .ToListAsync();
+            //return await _context.EquityMarkets
+            //    .Where(em => em.Market == market)
+            //    .OrderBy(em => em.Symbol)
+            //    .ToListAsync();
+            return new List<EquityMarket>();
         }
 
         public async Task<EquityMarket> CreateEquityMarketAsync(EquityMarket equityMarket)
@@ -208,12 +209,11 @@ namespace UIPooc.Services
 
         public async Task<EquityMarket> UpsertEquityMarketAsync(EquityMarket equityMarket)
         {
-            EquityMarket? existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, equityMarket.Market);
+            EquityMarket? existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, "");
 
             if (existing != null)
             {
                 // Update existing
-                existing.CompanyName = equityMarket.CompanyName;
                 existing.Currency = equityMarket.Currency;
                 existing.CurrentPrice = equityMarket.CurrentPrice;
                 existing.PreviousClose = equityMarket.PreviousClose;
@@ -224,12 +224,8 @@ namespace UIPooc.Services
                 existing.MarketCap = equityMarket.MarketCap;
                 existing.Week52High = equityMarket.Week52High;
                 existing.Week52Low = equityMarket.Week52Low;
-                existing.PERatio = equityMarket.PERatio;
-                existing.DividendYield = equityMarket.DividendYield;
-                existing.EPS = equityMarket.EPS;
                 existing.LastUpdated = equityMarket.LastUpdated;
                 existing.LastTradeTime = equityMarket.LastTradeTime;
-                existing.Exchange = equityMarket.Exchange;
 
                 await _context.SaveChangesAsync();
                 return existing;
