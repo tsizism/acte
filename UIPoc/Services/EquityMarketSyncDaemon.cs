@@ -5,6 +5,12 @@ using UIPooc.Models;
 
 namespace UIPooc.Services
 {
+    public readonly struct StockPriceSnapshot(decimal price, DateTime lastUpdated)
+    {
+        public decimal Price { get; } = price;
+        public DateTime LastUpdated { get; } = lastUpdated;
+    }
+
     public class EquityMarketSyncDaemon : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
