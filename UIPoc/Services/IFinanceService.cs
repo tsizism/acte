@@ -24,7 +24,7 @@ namespace UIPooc.Services
 
         // Search
         Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
-        Task<decimal> RequestTickerPriceAsync(string ticker);
+        Task<decimal> GetTickerPriceAsync(string ticker);
     }
 
     public class StockHistoricalData

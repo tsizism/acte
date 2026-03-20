@@ -16,7 +16,7 @@ namespace UIPooc.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<EquityMarketSyncDaemon> _logger;
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
-        public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new(StringComparer.OrdinalIgnoreCase);
+        public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
 
         private List<Equity> _equities;
         public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
@@ -24,6 +24,21 @@ namespace UIPooc.Services
             _serviceProvider = serviceProvider;
             _logger = logger;
             _equities = new List<Equity>();
+        }
+
+        static public async Task<decimal> RequestTickerPriceAsync(string ticker)
+        {
+            if (EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
+            {
+                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < 60)
+                {
+                    return snapshot.Price;
+                }
+            }
+
+            var price = await YahooHttpClient.GetTickerPriceAsync(ticker);
+            EquityMarketSyncDaemon._priceCache[ticker] = new StockPriceSnapshot(price, DateTime.UtcNow);
+            return price;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

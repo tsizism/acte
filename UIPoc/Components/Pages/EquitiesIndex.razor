@@ -252,7 +252,7 @@
             {
                 try
                 {
-                    equity.CurrentPrice = await FinanceService.RequestTickerPriceAsync(equity.Symbol);
+                    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
                 }
                 catch (Exception ex)
                 {

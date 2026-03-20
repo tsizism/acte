@@ -133,12 +133,6 @@ public struct EntityYhFullStockPrice
     public string underlyingSymbol { get; set; }
 }
 
-public readonly struct StockPriceSnapshot(decimal price, DateTime lastUpdated)
-{
-    public decimal Price { get; } = price;
-    public DateTime LastUpdated { get; } = lastUpdated;
-}
-
 public class FinanceService : IFinanceService
 {
     private readonly HttpClient _httpClient;
@@ -160,21 +154,10 @@ public class FinanceService : IFinanceService
     }
 
 
-    public async Task<decimal> RequestTickerPriceAsync(string ticker)
+    public async Task<decimal> GetTickerPriceAsync(string ticker)
     {
-        if (EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
-        {
-            if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < 60)
-            {
-                return snapshot.Price;
-            }
-        }
-
-        var price = await YahooHttpClient.GetTickerPriceAsync(ticker);
-        EquityMarketSyncDaemon._priceCache[ticker] = new StockPriceSnapshot(price, DateTime.UtcNow);
-        return price;
+        return await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker);
     }
-
 
     #region Quote Operations
 
