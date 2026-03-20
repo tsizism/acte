@@ -133,13 +133,18 @@ public struct EntityYhFullStockPrice
     public string underlyingSymbol { get; set; }
 }
 
-
+public readonly struct StockPriceSnapshot(decimal price, DateTime lastUpdated)
+{
+    public decimal Price { get; } = price;
+    public DateTime LastUpdated { get; } = lastUpdated;
+}
 
 public class FinanceService : IFinanceService
 {
     private readonly HttpClient _httpClient;
     private readonly IModelService _modelService;
     private readonly ILogger<FinanceService> _logger;
+
     private const string YahooFinanceBaseUrl = "https://query1.finance.yahoo.com/v8/finance";
     private const string YahooFinanceQuoteUrl = "https://query1.finance.yahoo.com/v7/finance/quote";
     private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
@@ -153,6 +158,23 @@ public class FinanceService : IFinanceService
             
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
+
+
+    public async Task<decimal> RequestTickerPriceAsync(string ticker)
+    {
+        if (EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
+        {
+            if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < 60)
+            {
+                return snapshot.Price;
+            }
+        }
+
+        var price = await YahooHttpClient.GetTickerPriceAsync(ticker);
+        EquityMarketSyncDaemon._priceCache[ticker] = new StockPriceSnapshot(price, DateTime.UtcNow);
+        return price;
+    }
+
 
     #region Quote Operations
 
@@ -262,7 +284,12 @@ public class FinanceService : IFinanceService
         // Use mapper to convert Yahoo API entity to database model
         
         
-        return entityStockPrice.ToEquityMarket(market);
+        var equityMarket = entityStockPrice.ToEquityMarket(market);
+        if (equityMarket != null)
+        {
+            EquityMarketSyncDaemon._priceCache[symbol] = new StockPriceSnapshot(equityMarket.CurrentPrice, DateTime.UtcNow);
+        }
+        return equityMarket;
 
 
         //try
@@ -335,7 +362,9 @@ public class FinanceService : IFinanceService
             {
                 var equityMarket = MapToEquityMarket(quote, market);
                 if (equityMarket != null)
+                {
                     results.Add(equityMarket);
+                }
             }
         }
         catch (Exception ex)
@@ -489,10 +518,6 @@ public class FinanceService : IFinanceService
 
     #region Batch Operations
 
-    public async Task<decimal> RequestTickerPriceAsync(string ticker)
-    {
-        return await YahooHttpClient.GetTickerPriceAsync(ticker);
-    }
 
     public async Task EtlEquityPricesAsync(int holdingId)
     {
@@ -579,6 +604,7 @@ public class FinanceService : IFinanceService
     }
 
     #endregion
+
 
     #region Search
 

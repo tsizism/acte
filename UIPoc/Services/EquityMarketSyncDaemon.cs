@@ -10,11 +10,10 @@ namespace UIPooc.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<EquityMarketSyncDaemon> _logger;
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
+        public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new(StringComparer.OrdinalIgnoreCase);
 
         private List<Equity> _equities;
-        public EquityMarketSyncDaemon(
-            IServiceProvider serviceProvider,
-            ILogger<EquityMarketSyncDaemon> logger)
+        public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
