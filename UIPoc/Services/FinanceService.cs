@@ -5,133 +5,8 @@ using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
 
-
 namespace UIPooc.Services;
 
-[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Short format stock price from Yahoo Finance API")]
-public struct EntityYhStockPrice
-{
-    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, Description = "Stock ticker symbol")]
-    public string symbol { get; set; }
-
-    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)", Description = "Current stock price")]
-    public string price { get; set; }
-
-    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD", Description = "Currency code")]
-    public string currency { get; set; }
-
-    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)", Description = "Market capitalization")]
-    public string marketCap { get; set; }
-}
-
-[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
-public struct EntityYhFullStockPrice
-{
-    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD")]
-    public string currency { get; set; }
-
-    [DbProperty(SourceName = "currencySymbol", Description = "Currency symbol like $, €, etc.")]
-    public string currencySymbol { get; set; }
-
-    [DbProperty(SourceName = "exchange", ColumnName = "Exchange", Description = "Stock exchange code")]
-    public string exchange { get; set; }
-
-    [DbProperty(SourceName = "exchangeDataDelayedBy", Description = "Data delay in minutes")]
-    public decimal exchangeDataDelayedBy { get; set; }
-
-    [DbProperty(SourceName = "exchangeName", Description = "Full exchange name")]
-    public string exchangeName { get; set; }
-
-    [DbProperty(SourceName = "fromCurrency", Ignore = true)]
-    public string fromCurrency { get; set; }
-
-    [DbProperty(SourceName = "lastMarket", Ignore = true)]
-    public string lastMarket { get; set; }
-
-    [DbProperty(SourceName = "longName", ColumnName = "CompanyName", Description = "Full company name")]
-    public string longName { get; set; }
-
-    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)")]
-    public string marketCap { get; set; }
-
-    [DbProperty(SourceName = "marketState", Description = "Market state: OPEN, CLOSED, PRE, POST")]
-    public string marketState { get; set; }
-
-    [DbProperty(SourceName = "maxAge", Ignore = true)]
-    public string maxAge { get; set; }
-
-    [DbProperty(SourceName = "postMarketChange", Description = "After-hours price change")]
-    public string postMarketChange { get; set; }
-
-    [DbProperty(SourceName = "postMarketChangePercent", Description = "After-hours change percentage")]
-    public string postMarketChangePercent { get; set; }
-
-    [DbProperty(SourceName = "postMarketPrice", Description = "After-hours price")]
-    public string postMarketPrice { get; set; }
-
-    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
-    public string price { get; set; }
-
-    [DbProperty(SourceName = "postMarketSource", Ignore = true)]
-    public string postMarketSource { get; set; }
-
-    [DbProperty(SourceName = "postMarketTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
-    public string postMarketTime { get; set; }
-
-    [DbProperty(SourceName = "preMarketSource", Ignore = true)]
-    public string preMarketSource { get; set; }
-
-    [DbProperty(SourceName = "priceHint", Ignore = true)]
-    public string priceHint { get; set; }
-
-    [DbProperty(SourceName = "quoteSourceName", Description = "Data source name")]
-    public string quoteSourceName { get; set; }
-
-    [DbProperty(SourceName = "quoteType", Description = "Type: EQUITY, ETF, INDEX, etc.")]
-    public string quoteType { get; set; }
-
-    [DbProperty(SourceName = "regularMarketChange", Description = "Regular hours price change")]
-    public string regularMarketChange { get; set; }
-
-    [DbProperty(SourceName = "regularMarketChangePercent", Description = "Regular hours change percentage")]
-    public string regularMarketChangePercent { get; set; }
-
-    [DbProperty(SourceName = "regularMarketDayHigh", ColumnName = "DayHigh", DbType = "decimal(18,2)")]
-    public string regularMarketDayHigh { get; set; }
-
-    [DbProperty(SourceName = "regularMarketDayLow", ColumnName = "DayLow", DbType = "decimal(18,2)")]
-    public string regularMarketDayLow { get; set; }
-
-    [DbProperty(SourceName = "regularMarketOpen", ColumnName = "OpenPrice", DbType = "decimal(18,2)")]
-    public string regularMarketOpen { get; set; }
-
-    [DbProperty(SourceName = "regularMarketPreviousClose", ColumnName = "PreviousClose", DbType = "decimal(18,2)")]
-    public string regularMarketPreviousClose { get; set; }
-
-    [DbProperty(SourceName = "regularMarketPrice", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
-    public string regularMarketPrice { get; set; }
-
-    [DbProperty(SourceName = "regularMarketSource", Ignore = true)]
-    public string regularMarketSource { get; set; }
-
-    [DbProperty(SourceName = "regularMarketTime", ColumnName = "LastTradeTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
-    public string regularMarketTime { get; set; }
-
-    [DbProperty(SourceName = "regularMarketVolume", ColumnName = "Volume", DbType = "bigint")]
-    public string regularMarketVolume { get; set; }
-
-    [DbProperty(SourceName = "shortName", ColumnName = "CompanyName", Description = "Short company name")]
-    public string shortName { get; set; }
-
-    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, IsPrimaryKey = true)]
-    public string symbol { get; set; }
-
-    [DbProperty(SourceName = "toCurrency", Ignore = true)]
-    public string toCurrency { get; set; }
-
-    [DbProperty(SourceName = "underlyingSymbol", Ignore = true)]
-    public string underlyingSymbol { get; set; }
-}
 
 public class FinanceService : IFinanceService
 {
@@ -157,6 +32,29 @@ public class FinanceService : IFinanceService
     public async Task<decimal> GetTickerPriceAsync(string ticker)
     {
         return await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker);
+    }
+
+    public async Task<decimal> GetCADExchangeRateAsync()
+    {
+        var cm = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM");
+        var cmto = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM.TO");
+        return cm / cmto;
+    }
+
+    public async Task<List<Equity>> GetEquitiesForHoldingAsync(int holdingId)
+    {
+        List<Equity> val = await _modelService.GetEquitiesByHoldingIdAsync(holdingId);
+
+        return val;
+    }
+
+    public async Task<List<Holding>> GetHoldingsAsync()
+    {
+        return await _modelService.GetAllHoldingsAsync();
+    }
+    public async Task<Holding?> GetHoldingAsync(int holdingId)
+    {
+        return await _modelService.GetHoldingByIdAsync(holdingId);
     }
 
     #region Quote Operations
@@ -802,4 +700,130 @@ class FinanceServiceTest
 
     // C:\Users\mtsizis>
     // curl --request GET  --url "https://yh-finance-complete.p.rapidapi.com/insights?symbol=AAPL&reportsCount=1" --header "x-rapidapi-host: yh-finance-complete.p.rapidapi.com" --header "x-rapidapi-key: 9b405718ddmsh954d4191ebcf658p148c17jsn58521162b938"
+}
+
+
+[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Short format stock price from Yahoo Finance API")]
+public struct EntityYhStockPrice
+{
+    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, Description = "Stock ticker symbol")]
+    public string symbol { get; set; }
+
+    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)", Description = "Current stock price")]
+    public string price { get; set; }
+
+    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD", Description = "Currency code")]
+    public string currency { get; set; }
+
+    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)", Description = "Market capitalization")]
+    public string marketCap { get; set; }
+}
+
+[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
+public struct EntityYhFullStockPrice
+{
+    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD")]
+    public string currency { get; set; }
+
+    [DbProperty(SourceName = "currencySymbol", Description = "Currency symbol like $, €, etc.")]
+    public string currencySymbol { get; set; }
+
+    [DbProperty(SourceName = "exchange", ColumnName = "Exchange", Description = "Stock exchange code")]
+    public string exchange { get; set; }
+
+    [DbProperty(SourceName = "exchangeDataDelayedBy", Description = "Data delay in minutes")]
+    public decimal exchangeDataDelayedBy { get; set; }
+
+    [DbProperty(SourceName = "exchangeName", Description = "Full exchange name")]
+    public string exchangeName { get; set; }
+
+    [DbProperty(SourceName = "fromCurrency", Ignore = true)]
+    public string fromCurrency { get; set; }
+
+    [DbProperty(SourceName = "lastMarket", Ignore = true)]
+    public string lastMarket { get; set; }
+
+    [DbProperty(SourceName = "longName", ColumnName = "CompanyName", Description = "Full company name")]
+    public string longName { get; set; }
+
+    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)")]
+    public string marketCap { get; set; }
+
+    [DbProperty(SourceName = "marketState", Description = "Market state: OPEN, CLOSED, PRE, POST")]
+    public string marketState { get; set; }
+
+    [DbProperty(SourceName = "maxAge", Ignore = true)]
+    public string maxAge { get; set; }
+
+    [DbProperty(SourceName = "postMarketChange", Description = "After-hours price change")]
+    public string postMarketChange { get; set; }
+
+    [DbProperty(SourceName = "postMarketChangePercent", Description = "After-hours change percentage")]
+    public string postMarketChangePercent { get; set; }
+
+    [DbProperty(SourceName = "postMarketPrice", Description = "After-hours price")]
+    public string postMarketPrice { get; set; }
+
+    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
+    public string price { get; set; }
+
+    [DbProperty(SourceName = "postMarketSource", Ignore = true)]
+    public string postMarketSource { get; set; }
+
+    [DbProperty(SourceName = "postMarketTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
+    public string postMarketTime { get; set; }
+
+    [DbProperty(SourceName = "preMarketSource", Ignore = true)]
+    public string preMarketSource { get; set; }
+
+    [DbProperty(SourceName = "priceHint", Ignore = true)]
+    public string priceHint { get; set; }
+
+    [DbProperty(SourceName = "quoteSourceName", Description = "Data source name")]
+    public string quoteSourceName { get; set; }
+
+    [DbProperty(SourceName = "quoteType", Description = "Type: EQUITY, ETF, INDEX, etc.")]
+    public string quoteType { get; set; }
+
+    [DbProperty(SourceName = "regularMarketChange", Description = "Regular hours price change")]
+    public string regularMarketChange { get; set; }
+
+    [DbProperty(SourceName = "regularMarketChangePercent", Description = "Regular hours change percentage")]
+    public string regularMarketChangePercent { get; set; }
+
+    [DbProperty(SourceName = "regularMarketDayHigh", ColumnName = "DayHigh", DbType = "decimal(18,2)")]
+    public string regularMarketDayHigh { get; set; }
+
+    [DbProperty(SourceName = "regularMarketDayLow", ColumnName = "DayLow", DbType = "decimal(18,2)")]
+    public string regularMarketDayLow { get; set; }
+
+    [DbProperty(SourceName = "regularMarketOpen", ColumnName = "OpenPrice", DbType = "decimal(18,2)")]
+    public string regularMarketOpen { get; set; }
+
+    [DbProperty(SourceName = "regularMarketPreviousClose", ColumnName = "PreviousClose", DbType = "decimal(18,2)")]
+    public string regularMarketPreviousClose { get; set; }
+
+    [DbProperty(SourceName = "regularMarketPrice", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)")]
+    public string regularMarketPrice { get; set; }
+
+    [DbProperty(SourceName = "regularMarketSource", Ignore = true)]
+    public string regularMarketSource { get; set; }
+
+    [DbProperty(SourceName = "regularMarketTime", ColumnName = "LastTradeTime", Format = "yyyy-MM-ddTHH:mm:ss.fffZ")]
+    public string regularMarketTime { get; set; }
+
+    [DbProperty(SourceName = "regularMarketVolume", ColumnName = "Volume", DbType = "bigint")]
+    public string regularMarketVolume { get; set; }
+
+    [DbProperty(SourceName = "shortName", ColumnName = "CompanyName", Description = "Short company name")]
+    public string shortName { get; set; }
+
+    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, IsPrimaryKey = true)]
+    public string symbol { get; set; }
+
+    [DbProperty(SourceName = "toCurrency", Ignore = true)]
+    public string toCurrency { get; set; }
+
+    [DbProperty(SourceName = "underlyingSymbol", Ignore = true)]
+    public string underlyingSymbol { get; set; }
 }

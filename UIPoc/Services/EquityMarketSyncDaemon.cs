@@ -26,9 +26,9 @@ namespace UIPooc.Services
             _equities = new List<Equity>();
         }
 
-        static public async Task<decimal> RequestTickerPriceAsync(string ticker)
+        static public async Task<decimal> RequestTickerPriceAsync(string ticker, bool live = false)
         {
-            if (EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
+            if (!live && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
             {
                 if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < 60)
                 {
@@ -36,10 +36,11 @@ namespace UIPooc.Services
                 }
             }
 
-            var price = await YahooHttpClient.GetTickerPriceAsync(ticker);
+            decimal price = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
             EquityMarketSyncDaemon._priceCache[ticker] = new StockPriceSnapshot(price, DateTime.UtcNow);
             return price;
         }
+
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {

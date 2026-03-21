@@ -39,7 +39,7 @@ public class YahooHttpClient
 {
     //public static async Task<Dictionary<string, object>?> Get(string url)
 
-    public static async Task<decimal> GetTickerPriceAsync(string ticker)
+    public static async Task<decimal> GetYhTickerPriceAsync(string ticker)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL

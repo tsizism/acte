@@ -4,7 +4,6 @@
 @using UIPooc.Models
 @using Microsoft.JSInterop
 @rendermode InteractiveServer
-@inject IModelService ModelService
 @inject IExportService ExportService
 @inject IFinanceService FinanceService
 @inject NavigationManager NavigationManager
@@ -67,21 +66,26 @@
         <RadzenCard>
             <RadzenStack Gap="1rem">
                 <RadzenRow AlignItems="AlignItems.Center">
-                    <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenColumn Size="12" SizeMD="2">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Equities: <strong>@_equities.Count</strong>
                         </RadzenText>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenColumn Size="12" SizeMD="3">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Value: <strong>@_totalValue.ToString("C2")</strong>
                         </RadzenText>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenColumn Size="12" SizeMD="3">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Gain/Loss: <strong style="color: @(_totalGainLoss >= 0 ? "green" : "red")">
                                 @_totalGainLoss.ToString("C2") (@_totalGainLossPercent.ToString("P2"))
                             </strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenText TextStyle="TextStyle.H6">
+                        CAD/USD Rate: <strong>@_usdCadRate.ToString("C4")</strong> | USD/CAD Rate: <strong>@_cadUsdRate.ToString("C4")</strong>
                         </RadzenText>
                     </RadzenColumn>
                 </RadzenRow>
@@ -104,21 +108,21 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="CompanyName" Title="Company" Width="200px" />
+                @* <RadzenDataGridColumn TItem="Equity" Property="CompanyName" Title="Company" Width="200px" /> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="Market" Title="Market" Width="80px">
+                @* <RadzenDataGridColumn TItem="Equity" Property="Market" Title="Market" Width="80px">
                     <Template Context="equity">
                         <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@equity.Market" />
                     </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" />
+                </RadzenDataGridColumn> *@
 
                 <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" />
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -175,7 +179,7 @@
     }
 </RadzenStack>
 
-@code {
+    @code {
     [Parameter]
     public int? HoldingId { get; set; }
 
@@ -187,6 +191,8 @@
     private decimal _totalValue = 0;
     private decimal _totalGainLoss = 0;
     private decimal _totalGainLossPercent = 0;
+    private decimal _cadUsdRate = 0;
+    private decimal _usdCadRate = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -203,7 +209,7 @@
     {
         try
         {
-            _holdings = await ModelService.GetAllHoldingsAsync();
+            _holdings = await FinanceService.GetHoldingsAsync();
         }
         catch (InvalidOperationException ex)
         {
@@ -245,8 +251,9 @@
         _isLoading = true;
         try
         {
-            _selectedHolding = await ModelService.GetHoldingByIdAsync(_selectedHoldingId.Value);
-            _equities = await ModelService.GetEquitiesByHoldingIdAsync(_selectedHoldingId.Value);
+            _selectedHolding = await FinanceService.GetHoldingAsync(_selectedHoldingId.Value);
+            
+            _equities = await FinanceService.GetEquitiesForHoldingAsync(_selectedHoldingId.Value);
 
             foreach(var equity in _equities)
             {
@@ -269,6 +276,9 @@
             }
 
             CalculateTotals();
+            await CalculateRatesAsync();
+
+
         }
         catch (Exception ex)
         {
@@ -284,6 +294,12 @@
         {
             _isLoading = false;
         }
+    }
+
+    private async Task CalculateRatesAsync()
+    {
+        _usdCadRate = await FinanceService.GetCADExchangeRateAsync();
+        _cadUsdRate = 1/_usdCadRate;
     }
 
     private void CalculateTotals()
