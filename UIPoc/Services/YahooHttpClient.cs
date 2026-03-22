@@ -26,12 +26,13 @@ using UIPooc.Models;
 namespace UIPooc.Services;
 
 
-public class EntityYhPrice
+public class TickerPriceEntity
 {
-    public string symbol { get; set; } = string.Empty;
-    public decimal price { get; set; }
-    public string currency { get; set; } = string.Empty;
-    public decimal marketCap { get; set; }
+    public string Symbol { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public decimal MarketCap { get; set; }
+    public DateTime LastUpdated { get; set; }
 }
 
 
@@ -39,7 +40,7 @@ public class YahooHttpClient
 {
     //public static async Task<Dictionary<string, object>?> Get(string url)
 
-    public static async Task<decimal> GetYhTickerPriceAsync(string ticker)
+    public static async Task<TickerPriceEntity> GetYhTickerPriceAsync(string ticker)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
@@ -61,14 +62,14 @@ public class YahooHttpClient
         //                    ""marketCap"": 3503912648704
         //                    }";
 
-        EntityYhPrice? entityYhPrice = JsonSerializer.Deserialize<EntityYhPrice>(jsonResponse);
+        TickerPriceEntity? result = JsonSerializer.Deserialize<TickerPriceEntity>(jsonResponse, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
 
-        if (entityYhPrice == null)
+        if (result == null)
         {
-            return 0;
+            result=  new TickerPriceEntity();
         }
-
-        return entityYhPrice!.price;
+        result.LastUpdated = DateTime.UtcNow;
+        return result;
     }
 
 
@@ -78,7 +79,7 @@ public class YahooHttpClient
     /// <param name="ticker"></param>
     /// <param name="stockTickerProps"></param>
     /// <returns></returns>
-    public static async Task GetTickerPriceInfoAsync(string ticker, EntityYhPrice entityYhPrice)
+    public static async Task GetTickerPriceInfoAsync(string ticker, TickerPriceEntity entityYhPrice)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
@@ -103,7 +104,7 @@ public class YahooHttpClient
         FromJson(jsonResponse, entityYhPrice);
     }
 
-    public static bool FromJson(string json, EntityYhPrice entityYhPrice)
+    public static bool FromJson(string json, TickerPriceEntity entityYhPrice)
     {
         Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         if (dict == null)
@@ -111,7 +112,7 @@ public class YahooHttpClient
             return false;
         }
 
-        foreach (FieldInfo field in typeof(EntityYhPrice).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        foreach (FieldInfo field in typeof(TickerPriceEntity).GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
             if (dict.TryGetValue(field.Name, out var value))
             {

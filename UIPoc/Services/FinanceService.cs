@@ -1,3 +1,4 @@
+using Radzen;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -29,23 +30,95 @@ public class FinanceService : IFinanceService
     }
 
 
-    public async Task<decimal> GetTickerPriceAsync(string ticker)
+    public async Task<TickerPriceEntity> GetTickerPriceAsync(string ticker)
     {
         return await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker);
     }
 
-    public async Task<decimal> GetCADExchangeRateAsync()
+    /// <summary>
+    /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
+    /// This assumes that both tickers are available and that their prices are up to date. 
+    /// In a real implementation, you would want to add error handling and caching to avoid making too many API calls.
+    /// CAD/USD (CADUSD=X) 0.7287 USD --> CM(USD)/CM.TO(CAD) USD
+    /// USD/CAD (CAD=X)    1.3723 CAD  --> CM.TO(CAD)/CM(USD) CAD
+    /// </summary>
+    /// <returns></returns>
+    public async Task<decimal> GetCADUSDExchangeRateAsync()
     {
-        var cm = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM");
-        var cmto = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM.TO");
-        return cm / cmto;
+        //symbol: "CADUSD=X"
+        //price: 0.7287036
+        //currency: "USD"
+
+
+        var usd = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CADUSD=X");
+        return usd.Price;
+
     }
 
-    public async Task<List<Equity>> GetEquitiesForHoldingAsync(int holdingId)
+    public async Task<decimal> GetCADExchangeRateAsync()
     {
-        List<Equity> val = await _modelService.GetEquitiesByHoldingIdAsync(holdingId);
+        //symbol: "CAD=X"
+        //price: 1.3723
+        //currency: "CAD"
 
-        return val;
+        var cm = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM");
+        var cmto = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM.TO");
+        return cmto.Price / cm.Price;
+
+        //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
+        //return cad.Price;
+    }
+
+
+    public async Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding)
+    {
+        List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
+
+        foreach (var equity in lst)
+        {
+            TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol, equity.Market);
+
+            //string ticker = @"{""symbol"": ""AAPL"", 
+            //                    ""price"": 230.4584, 
+            //                    ""currency"": ""USD"",
+            //                    ""symbolName"": ""Apple"",
+            //                    ""marketCap"": 3503912648704
+
+
+            equity.CurrentPrice = tp.Price;
+            if (holding.Currency != tp.Currency)
+            {
+                decimal exchangeRate = holding.Currency == "CAD" ?  await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                equity.CurrentPrice = tp.Price * exchangeRate;
+            }
+
+            if (equity.Currency != holding.Currency)
+            {
+                throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
+            }
+
+            //if (holding.Currency == equity.Currency)
+
+            //try
+            //{
+            //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
+            //}
+            //catch (Exception ex)
+            //{
+            //    NotificationService.Notify(new NotificationMessage
+            //    {
+            //        Severity = NotificationSeverity.Warning,
+            //        Summary = "Price Fetch Warning",
+            //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
+            //        Duration = 3000,
+            //        CloseOnClick = true
+            //    });
+            //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
+            //}
+        }
+
+
+        return lst;
     }
 
     public async Task<List<Holding>> GetHoldingsAsync()
@@ -166,10 +239,10 @@ public class FinanceService : IFinanceService
         
         
         var equityMarket = entityStockPrice.ToEquityMarket(market);
-        if (equityMarket != null)
-        {
-            EquityMarketSyncDaemon._priceCache[symbol] = new StockPriceSnapshot(equityMarket.CurrentPrice, DateTime.UtcNow);
-        }
+        //if (equityMarket != null)
+        //{
+        //    EquityMarketSyncDaemon._priceCache[symbol] = new StockPriceSnapshot(equityMarket.CurrentPrice, DateTime.UtcNow);
+        //}
         return equityMarket;
 
 

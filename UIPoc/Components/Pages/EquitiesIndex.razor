@@ -116,13 +116,13 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
-
-                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -251,34 +251,39 @@
         _isLoading = true;
         try
         {
-            _selectedHolding = await FinanceService.GetHoldingAsync(_selectedHoldingId.Value);
-            
-            _equities = await FinanceService.GetEquitiesForHoldingAsync(_selectedHoldingId.Value);
-
-            foreach(var equity in _equities)
+            try
             {
-                try
-                {
-                    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
-                }
-                catch (Exception ex)
+                _selectedHolding = await FinanceService.GetHoldingAsync(_selectedHoldingId.Value);
+
+                if (_selectedHolding == null)
                 {
                     NotificationService.Notify(new NotificationMessage
                     {
                         Severity = NotificationSeverity.Warning,
-                        Summary = "Price Fetch Warning",
-                        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
+                        Summary = "Holding Not Found",
+                        Detail = $"No holding found with ID {_selectedHoldingId.Value}",
                         Duration = 3000,
                         CloseOnClick = true
                     });
-                    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
+                    _equities.Clear();
+                    return;
                 }
+
+                _equities = await FinanceService.GetEquitiesForHoldingAsync(_selectedHolding);
             }
-
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Price Fetch Warning",
+                    Detail = $"Failed to GetEquitiesForHoldingAsync for {_selectedHolding!.Name}: {ex.Message}",
+                    Duration = 3000,
+                    CloseOnClick = true
+                });
+            }
+            await GetRatesAsync();
             CalculateTotals();
-            await CalculateRatesAsync();
-
-
         }
         catch (Exception ex)
         {
@@ -296,10 +301,10 @@
         }
     }
 
-    private async Task CalculateRatesAsync()
+    private async Task GetRatesAsync()
     {
-        _usdCadRate = await FinanceService.GetCADExchangeRateAsync();
-        _cadUsdRate = 1/_usdCadRate;
+        _usdCadRate = await FinanceService.GetCADUSDExchangeRateAsync();
+        _cadUsdRate = await FinanceService.GetCADExchangeRateAsync();
     }
 
     private void CalculateTotals()

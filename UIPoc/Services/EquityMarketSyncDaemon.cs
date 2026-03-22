@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Radzen.Blazor.Rendering;
 using UIPooc.Data;
 using UIPooc.Models;
 
@@ -16,7 +17,8 @@ namespace UIPooc.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<EquityMarketSyncDaemon> _logger;
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
-        public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
+        //public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
+        public static readonly Dictionary<string, TickerPriceEntity> _priceCache = new(StringComparer.OrdinalIgnoreCase);
 
         private List<Equity> _equities;
         public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
@@ -26,21 +28,65 @@ namespace UIPooc.Services
             _equities = new List<Equity>();
         }
 
-        static public async Task<decimal> RequestTickerPriceAsync(string ticker, bool live = false)
+        static readonly TimeOnly TRADING_START_UTC = TimeOnly.Parse("14:30");
+        static readonly TimeOnly TRADING_FINISH_UTC = TimeOnly.Parse("21:00");
+        static readonly int  TICKER_CACHE_DURATIO_NMINUTES = 120;
+
+
+        /// <summary>
+        /// Pre-market session: 4:00 a.m. – 9:30 a.m. ET.  (09:00 to 14:30 UTC)
+        // After-hours session: 4:00 p.m. – 8:00 p.m.ET.   (21:00 to 01:00 UTC)
+        // Overnight trading: Some platforms allow trading between 8:00 p.m.and 4:00 a.m.ET.
+        // Regular trading hours: 9:30 a.m. – 4:00 p.m ET.   (14:30 to 21:00 UTC)
+        /// </summary>
+        /// <param name="ticker"></param>
+        /// <param name="live"></param>
+        /// <returns></returns>
+        /// 
+
+        static public bool IsTradingTime()
+        {
+            DateTime now = DateTime.UtcNow;
+            DayOfWeek day = now.DayOfWeek;
+
+            if ((day == DayOfWeek.Saturday) || (day == DayOfWeek.Sunday))
+            {
+                return false;
+            }
+
+            TimeOnly nowTimeOnly = TimeOnly.FromDateTime(now);
+            if (nowTimeOnly < TRADING_START_UTC || nowTimeOnly > TRADING_FINISH_UTC)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        static public async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, string market = "US", bool live = false)
         {
             if (!live && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
             {
-                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < 60)
+                if (!IsTradingTime())
                 {
-                    return snapshot.Price;
+                    return snapshot;
+                }
+
+                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < TICKER_CACHE_DURATIO_NMINUTES)
+                {
+                    return snapshot;
                 }
             }
 
-            decimal price = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
-            EquityMarketSyncDaemon._priceCache[ticker] = new StockPriceSnapshot(price, DateTime.UtcNow);
-            return price;
-        }
+            if (market == "CDN")
+            {
+                ticker += ".TO";
+            }
 
+            TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
+            EquityMarketSyncDaemon._priceCache[ticker] = result;
+            return result;
+        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
