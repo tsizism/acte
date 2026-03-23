@@ -68,7 +68,6 @@ public static class YahooFinanceMapper
     {
         equity.CurrentPrice = TryParseDecimal(source.regularMarketPrice);
         equity.Currency = source.currency ?? equity.Currency;
-        equity.CompanyName = source.longName ?? source.shortName ?? equity.CompanyName;
 
         // Update holding highs and lows
         var currentPrice = equity.CurrentPrice;

@@ -197,8 +197,8 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasMaxLength(5);
 
-                entity.Property(e => e.CompanyName)
-                    .HasMaxLength(255);
+                entity.Property(e => e.GainLoss)
+                    .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.Keywords)
                     .HasMaxLength(255);

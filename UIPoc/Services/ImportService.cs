@@ -149,7 +149,6 @@ namespace UIPooc.Services
                             Currency = currency,
                             Symbol = symbol,
                             Market = market,
-                            CompanyName = worksheet.Cells[row, 5].Text?.Trim(),
                             Quantity = ParseInt(worksheet.Cells[row, 6].Text),
                             AverageCost = ParseDecimal(worksheet.Cells[row, 7].Text),
                             CurrentPrice = ParseDecimal(worksheet.Cells[row, 8].Text),

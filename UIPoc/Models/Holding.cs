@@ -2,10 +2,10 @@ namespace UIPooc.Models
 {
     public enum HoldingType
     {
-        WatchList,
+        WatchList, 
         Active,
-        Listless,
-        CustomIndex,
+        Listless,       // Sold
+        CustomIndex,    // BuyPending
     }
 
 

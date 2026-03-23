@@ -226,7 +226,6 @@ namespace UIPooc.Services
                     : 0;
 
                 worksheet.Cells[row, 1].Value = equity.Symbol;
-                worksheet.Cells[row, 2].Value = equity.CompanyName;
                 worksheet.Cells[row, 3].Value = equity.Market;
                 worksheet.Cells[row, 4].Value = equity.Currency;
                 worksheet.Cells[row, 5].Value = equity.Quantity;

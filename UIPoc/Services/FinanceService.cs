@@ -73,7 +73,7 @@ public class FinanceService : IFinanceService
     public async Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding)
     {
         List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
-
+        
         foreach (var equity in lst)
         {
             TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol, equity.Market);
@@ -97,6 +97,8 @@ public class FinanceService : IFinanceService
                 throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
             }
 
+            equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
+
             //if (holding.Currency == equity.Currency)
 
             //try
@@ -117,7 +119,7 @@ public class FinanceService : IFinanceService
             //}
         }
 
-
+        holding.Index = (double)lst.Sum(e => e.Quantity * e.CurrentPrice);
         return lst;
     }
 

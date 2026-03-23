@@ -66,17 +66,28 @@
         <RadzenCard>
             <RadzenStack Gap="1rem">
                 <RadzenRow AlignItems="AlignItems.Center">
+
+                    <RadzenColumn Size="12" SizeMD="2">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
+                        </RadzenText>
+                    </RadzenColumn>
+
                     <RadzenColumn Size="12" SizeMD="2">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Equities: <strong>@_equities.Count</strong>
                         </RadzenText>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    
+
+                    @* <RadzenColumn Size="12" SizeMD="3">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Value: <strong>@_totalValue.ToString("C2")</strong>
                         </RadzenText>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    </RadzenColumn> *@
+
+
+                    <RadzenColumn Size="12" SizeMD="4">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Gain/Loss: <strong style="color: @(_totalGainLoss >= 0 ? "green" : "red")">
                                 @_totalGainLoss.ToString("C2") (@_totalGainLossPercent.ToString("P2"))
@@ -116,13 +127,13 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
+                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
+
                 <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
 
-                <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" />
+                @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
 
                 <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
-
-                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -130,17 +141,17 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss" Width="120px" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Property="GainLoss" Title="Gain/Loss" Width="120px" TextAlign="TextAlign.Right" SortOrder="SortOrder.Descending">
                     <Template Context="equity">
                         @{
-                            var gainLoss = CalculateGainLoss(equity);
+                            var gainLoss = equity!.GainLoss!.Value;
                             var color = gainLoss >= 0 ? "green" : "red";
                         }
-                        <span style="color: @color; font-weight: bold;">@gainLoss.ToString("C2")</span>
+                    <span style="color: @color; font-weight: bold;">@gainLoss.ToString("C2")</span>
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" Sortable="false" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" TextAlign="TextAlign.Right">
                     <Template Context="equity">
                         @{
                             var gainLossPercent = CalculateGainLossPercent(equity);
@@ -150,18 +161,18 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="LastTxnType" Title="Last Txn" Width="90px">
+                @* <RadzenDataGridColumn TItem="Equity" Property="LastTxnType" Title="Last Txn" Width="90px">
                     <Template Context="equity">
                         <RadzenBadge BadgeStyle="@(equity.LastTxnType == TransactionType.Buy ? BadgeStyle.Success : BadgeStyle.Danger)" 
                                     Text="@equity.LastTxnType.ToString()" />
                     </Template>
-                </RadzenDataGridColumn>
+                </RadzenDataGridColumn> *@
 
                 <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+            <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingLow" Title="Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+            <RadzenDataGridColumn TItem="Equity" Property="HoldingLow" Title="Holding Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
             </Columns>
         </RadzenDataGrid>
     }
@@ -309,27 +320,29 @@
 
     private void CalculateTotals()
     {
-        _totalValue = _equities.Sum(e => e.Quantity * e.CurrentPrice);
-        _totalGainLoss = _equities.Sum(e => CalculateGainLoss(e));
+        _totalValue = (decimal)(_selectedHolding?.Index ?? 0);
+        _totalGainLoss = _equities.Sum(e => e.GainLoss!.Value);
         
         var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
         _totalGainLossPercent = totalCost != 0 ? _totalGainLoss / totalCost : 0;
     }
 
-    private decimal CalculateGainLoss(Equity equity)
-    {
-        var currentValue = equity.Quantity * equity.CurrentPrice;
-        var costBasis = equity.Quantity * equity.AverageCost;
-        return currentValue - costBasis;
-    }
+    // private decimal CalculateGainLoss(Equity equity)
+    // {
+    //     var currentValue = equity.Quantity * equity.CurrentPrice;
+    //     var costBasis = equity.Quantity * equity.AverageCost;
+    //     return currentValue - costBasis;
+    // }
 
     private decimal CalculateGainLossPercent(Equity equity)
     {
         var costBasis = equity.Quantity * equity.AverageCost;
-        if (costBasis == 0) return 0;
+        if (costBasis == 0) 
+        {
+            return 0;
+        }
         
-        var gainLoss = CalculateGainLoss(equity);
-        return gainLoss / costBasis;
+        return equity.GainLoss!.Value / costBasis;
     }
 
     private async Task ExportEquitiesAsync()
@@ -372,4 +385,14 @@
         
         await JSInterop.InvokeVoidAsync("downloadFile", fileName, dataUrl);
     }
+
+    private static BadgeStyle GetHoldingTypeBadgeStyle(HoldingType type) => type switch
+    {
+        HoldingType.Active => BadgeStyle.Success,
+        HoldingType.WatchList => BadgeStyle.Info,
+        HoldingType.Listless => BadgeStyle.Warning,
+        HoldingType.CustomIndex => BadgeStyle.Primary,
+        _ => BadgeStyle.Light
+    };
+
 }
