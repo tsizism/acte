@@ -11,6 +11,7 @@ namespace UIPooc.Models
         public int Quantity { get; set; }
         public decimal AverageCost { get; set; }
         public decimal CurrentPrice { get; set; }
+        public decimal MarketPrice { get; set; } = 0;
         public decimal? GainLoss { get; set; }
         public TransactionType LastTxnType { get; set; }
         public decimal LastTxnQuantity { get; set; }

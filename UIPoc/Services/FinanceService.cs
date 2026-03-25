@@ -85,17 +85,26 @@ public class FinanceService : IFinanceService
             //                    ""marketCap"": 3503912648704
 
 
+            equity.MarketPrice = tp.Price;
+            equity.Currency = tp.Currency;
             equity.CurrentPrice = tp.Price;
+            equity.Symbol = tp.Symbol;
+
+            //if (tp.Currency == "CAD")
+            //{
+            //    equity.Symbol += ".TO";
+            //}
+
             if (holding.Currency != tp.Currency)
             {
                 decimal exchangeRate = holding.Currency == "CAD" ?  await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
                 equity.CurrentPrice = tp.Price * exchangeRate;
             }
 
-            if (equity.Currency != holding.Currency)
-            {
-                throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
-            }
+            //if (equity.Currency != holding.Currency)
+            //{
+            //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
+            //}
 
             equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
 

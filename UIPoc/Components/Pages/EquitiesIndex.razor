@@ -127,7 +127,11 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice" Title="Current Price" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Market Currency" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn Property="CurrentPrice" Title="Current Price" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
 
                 <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
 
@@ -151,7 +155,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" TextAlign="TextAlign.Right">
+                @* <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" TextAlign="TextAlign.Right">
                     <Template Context="equity">
                         @{
                             var gainLossPercent = CalculateGainLossPercent(equity);
@@ -159,7 +163,7 @@
                         }
                         <span style="color: @color; font-weight: bold;">@gainLossPercent.ToString("P2")</span>
                     </Template>
-                </RadzenDataGridColumn>
+                </RadzenDataGridColumn> *@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="LastTxnType" Title="Last Txn" Width="90px">
                     <Template Context="equity">

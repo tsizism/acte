@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using UIPooc.Models;
 
 namespace UIPooc.Data
@@ -215,6 +214,10 @@ namespace UIPooc.Data
                     .HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.CurrentPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.MarketPrice)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 

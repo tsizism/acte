@@ -29,9 +29,8 @@ namespace UIPooc
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-            builder.Services.AddDbContext<HoldingsDbContext>(options => 
-                options
-                .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+            builder.Services.AddDbContext<HoldingsDbContext>(
+                options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
                 //.UseAsyncSeeding(async (context, _, cancellationToken) =>
                 //    {
                 //        await ((HoldingsDbContext)context).SeedDefaultUserAsync();
