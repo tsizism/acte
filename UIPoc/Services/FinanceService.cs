@@ -30,10 +30,7 @@ public class FinanceService : IFinanceService
     }
 
 
-    public async Task<TickerPriceEntity> GetTickerPriceAsync(string ticker)
-    {
-        return await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker);
-    }
+
 
     /// <summary>
     /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 

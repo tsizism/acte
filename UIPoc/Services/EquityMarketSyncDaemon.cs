@@ -19,6 +19,7 @@ namespace UIPooc.Services
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
         //public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
         public static readonly Dictionary<string, TickerPriceEntity> _priceCache = new(StringComparer.OrdinalIgnoreCase);
+        public static readonly Dictionary<string, FullStockPriceEntity> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
 
         private List<Equity> _equities;
         public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
@@ -30,7 +31,8 @@ namespace UIPooc.Services
 
         static readonly TimeOnly TRADING_START_UTC = TimeOnly.Parse("14:30");
         static readonly TimeOnly TRADING_FINISH_UTC = TimeOnly.Parse("21:00");
-        static readonly int  TICKER_CACHE_DURATIO_NMINUTES = 120;
+        static readonly int  TICKER_CACHE_DURATION_MINUTES = 120; // 2 hours
+        static readonly int SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES = 480; // 4 hours
 
 
         /// <summary>
@@ -72,7 +74,7 @@ namespace UIPooc.Services
                     return snapshot;
                 }
 
-                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < TICKER_CACHE_DURATIO_NMINUTES)
+                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < TICKER_CACHE_DURATION_MINUTES)
                 {
                     return snapshot;
                 }
@@ -87,6 +89,32 @@ namespace UIPooc.Services
             EquityMarketSyncDaemon._priceCache[ticker] = result;
             return result;
         }
+
+        static public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, string market = "US", bool live = false)
+        {
+            if (!live && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var snapshot))
+            {
+                if (!IsTradingTime())
+                {
+                    return snapshot;
+                }
+
+                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
+                {
+                    return snapshot;
+                }
+            }
+
+            if (market == "CDN")
+            {
+                symbol += ".TO";
+            }
+
+            FullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);
+            EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
+            return result;
+        }
+
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -113,7 +141,7 @@ namespace UIPooc.Services
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             HoldingsDbContext dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
-            IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
+            //IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
 
             try
             {
@@ -153,19 +181,21 @@ namespace UIPooc.Services
                 {
                     // GetQuoteAndCacheAsync will automatically add to EquityMarket if not exists
                     // and update if it already exists
-                    EquityMarket? equityMarket = await financeService.GetQuoteAndCacheAsync(equity.Symbol, equity.Market);
+                    //EquityMarket? equityMarket = await financeService.GetQuoteAndCacheAsync(equity.Symbol, equity.Market);
+
+                    FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
                     this._equities.RemoveAt(0);
 
-                    if (equityMarket != null)
-                    {
-                        _logger.LogDebug("Successfully synced {Symbol} ({Market})", equity.Symbol, equity.Market);
-                        successCount++;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to fetch quote for {Symbol} ({Market})", equity.Symbol, equity.Market);
-                        failureCount++;
-                    }
+                    //if (equityMarket != null)
+                    //{
+                    //    _logger.LogDebug("Successfully synced {Symbol} ({Market})", equity.Symbol, equity.Market);
+                    //    successCount++;
+                    //}
+                    //else
+                    //{
+                    //    _logger.LogWarning("Failed to fetch quote for {Symbol} ({Market})", equity.Symbol, equity.Market);
+                    //    failureCount++;
+                    //}
 
                     // Small delay to avoid overwhelming the API
                     await Task.Delay(100, cancellationToken);
