@@ -22,6 +22,11 @@
         <RadzenColumn Size="12" SizeMD="6" class="rz-text-align-end">
             @if (_selectedHoldingId.HasValue)
             {
+                <RadzenButton Icon="add" Text="Add Equity" 
+                             Click="@NavigateToAddEquity" 
+                             ButtonStyle="ButtonStyle.Primary" 
+                             Size="ButtonSize.Medium"
+                             Style="margin-right: 0.5rem" />
                 <RadzenButton Icon="download" Text="Export to Excel" 
                              Click="@ExportEquitiesAsync" 
                              ButtonStyle="ButtonStyle.Success" 
@@ -32,7 +37,7 @@
 
     <RadzenCard>
         <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
+            <RadzenColumn Size="12" SizeMD="4">
                 <RadzenLabel Text="Select Holding:" />
                 <RadzenDropDown @bind-Value="@_selectedHoldingId"
                                Data="@_holdings"
@@ -42,7 +47,7 @@
                                Placeholder="Select a holding..."
                                Style="width: 100%;" />
             </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
+            <RadzenColumn Size="12" SizeMD="2">
                 @if (_selectedHolding != null)
                 {
                     <RadzenStack Gap="0.5rem">
@@ -52,6 +57,22 @@
                             Currency: <strong>@_selectedHolding.Currency</strong>
                         </RadzenText>
                     </RadzenStack>
+                }
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="2">
+                @if (_selectedHolding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.H6">
+                        Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
+                    </RadzenText>
+                }
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="2">
+                @if (_selectedHolding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.H6">
+                        Currency: <strong>@_selectedHolding.Currency</strong>
+                    </RadzenText>
                 }
             </RadzenColumn>
         </RadzenRow>
@@ -66,13 +87,6 @@
         <RadzenCard>
             <RadzenStack Gap="1rem">
                 <RadzenRow AlignItems="AlignItems.Center">
-
-                    <RadzenColumn Size="12" SizeMD="2">
-                        <RadzenText TextStyle="TextStyle.H6">
-                            Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
-                        </RadzenText>
-                    </RadzenColumn>
-
                     <RadzenColumn Size="12" SizeMD="2">
                         <RadzenText TextStyle="TextStyle.H6">
                             Total Equities: <strong>@_equities.Count</strong>
@@ -347,6 +361,11 @@
         }
         
         return equity.GainLoss!.Value / costBasis;
+    }
+
+    private void NavigateToAddEquity()
+    {
+        NavigationManager.NavigateTo($"/equities/{_selectedHoldingId!.Value}/create");
     }
 
     private async Task ExportEquitiesAsync()

@@ -1,0 +1,120 @@
+@page "/equities/{HoldingId:int}/create"
+@using UIPooc.Models
+@rendermode InteractiveServer
+
+<RadzenNotification />
+
+<PageTitle>Add Equity</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Click="@GoBack" title="Back to Equities" />
+                <RadzenText TextStyle="TextStyle.H3">Add Equity</RadzenText>
+                @if (_holding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-left: 0.5rem;">— @_holding.Name</RadzenText>
+                }
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenCard>
+        <RadzenTemplateForm TItem="Equity" Data="@_equity" Submit="@OnSubmit">
+            <RadzenStack Gap="1rem">
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Symbol" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="_equity.Symbol" Name="Symbol" />
+                            </ChildContent>
+                            <Helper>
+                                <RadzenRequiredValidator Component="Symbol" Text="Symbol is required" />
+                            </Helper>
+                        </RadzenFormField>
+                    </RadzenColumn>
+
+                    @if (_holding != null && _holding!.Type == HoldingType.Active)
+                    {
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenFormField Text="Market" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenTextBox @bind-Value="_equity.Market" Name="Market" />
+                                </ChildContent>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenFormField Text="Currency" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenTextBox @bind-Value="_equity.Currency" Name="Currency" />
+                                </ChildContent>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    }
+                </RadzenRow>
+                <RadzenRow>
+                    @if (_holding != null && _holding!.Type == HoldingType.Active)
+                    {
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenFormField Text="Quantity" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenNumeric @bind-Value="_equity.Quantity" Name="Quantity" />
+                                </ChildContent>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenFormField Text="Average Cost" Style="width: 100%">
+                                <ChildContent>
+                                    <RadzenNumeric @bind-Value="_equity.AverageCost" Name="AverageCost" />
+                                </ChildContent>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    }
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Keywords" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenTextBox @bind-Value="_equity.Keywords" Name="Keywords" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @* <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Last Transaction Type" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenDropDown @bind-Value="_equity.LastTxnType" Data="@_transactionTypes"
+                                               TextProperty="Text" ValueProperty="Value" Name="LastTxnType" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Last Transaction Quantity" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenNumeric @bind-Value="_equity.LastTxnQuantity" Name="LastTxnQuantity" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Last Transaction Price" Style="width: 100%">
+                            <ChildContent>
+                                <RadzenNumeric @bind-Value="_equity.LastTxnPrice" Name="LastTxnPrice" />
+                            </ChildContent>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow> *@
+
+                <RadzenRow JustifyContent="JustifyContent.End">
+                    <RadzenColumn Size="12" class="rz-text-align-end">
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@GoBack"
+                                     Style="margin-right: 0.5rem" />
+                        <RadzenButton Text="Create" Icon="save" ButtonType="ButtonType.Submit"
+                                     ButtonStyle="ButtonStyle.Primary" IsBusy="@_isSaving" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenCard>
+</RadzenStack>
