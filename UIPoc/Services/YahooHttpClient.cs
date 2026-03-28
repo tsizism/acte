@@ -2,6 +2,7 @@ using Microsoft.VisualBasic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
@@ -35,6 +36,7 @@ public class TickerPriceEntity
     public string Currency { get; set; } = string.Empty;
     public decimal MarketCap { get; set; }
     public DateTime LastUpdated { get; set; }
+    public string Error { get; set; } = string.Empty;
 }
 
 // DTO for full stock price information retrieved from Yahoo Finance API
@@ -96,6 +98,25 @@ public class YahooHttpClient
 
         //Dictionary<string, object>? dict = await Get(url
         string jsonResponse = await Get(url);
+
+        if (jsonResponse == null)
+        {
+            return new TickerPriceEntity() { Error = "GetYhTickerPriceAsync: Get returned empty string" };
+        }
+
+        if (jsonResponse.Contains("error"))
+        {
+            Dictionary<string, object>? dict1 = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse );
+
+            if (dict1 == null)
+            {
+                return new TickerPriceEntity() { Error = "GetYhTickerPriceAsync: Failed to parse JSON response" };
+            }
+
+            string errorMessage = dict1.ContainsKey("error") ? dict1["error"].ToString() ?? "Unknown error" : "Undefined error";    
+
+            return new TickerPriceEntity() { Error = errorMessage };
+        }
 
         //string ticker = @"{""symbol"": ""AAPL"", 
         //                    ""price"": 230.4584, 

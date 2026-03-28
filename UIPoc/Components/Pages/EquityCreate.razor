@@ -28,10 +28,14 @@
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenFormField Text="Symbol" Style="width: 100%">
                             <ChildContent>
-                                <RadzenTextBox @bind-Value="_equity.Symbol" Name="Symbol" />
+                                <RadzenTextBox @bind-Value="_equity.Symbol" Change=@OnValueChange Name ="Symbol"/>
                             </ChildContent>
                             <Helper>
-                                <RadzenRequiredValidator Component="Symbol" Text="Symbol is required" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="font-size: 10px; color: gray;">
+                                        Required, max 10 characters.
+                                    </RadzenText>
+                                <RadzenRequiredValidator Component="Symbol"  Text="Symbol is required" />
+                                <RadzenCustomValidator Component="Symbol" Validator="@ValidateSymbol" Text="@_symbolValidationMessage" /> 
                             </Helper>
                         </RadzenFormField>
                     </RadzenColumn>

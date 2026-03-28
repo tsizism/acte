@@ -80,12 +80,18 @@ namespace UIPooc.Services
                 }
             }
 
-            if (market == "CDN")
+            if (market == "CDN" && !ticker.EndsWith(".TO"))
             {
                 ticker += ".TO";
             }
 
             TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
+
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                return result;
+            }
+
             EquityMarketSyncDaemon._priceCache[ticker] = result;
             return result;
         }

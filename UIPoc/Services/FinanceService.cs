@@ -66,6 +66,22 @@ public class FinanceService : IFinanceService
         //return cad.Price;
     }
 
+    public async Task<decimal?> GetTickerPriceAsync(string ticker)
+    {
+        if (ticker.Contains(".TO"))
+        {
+            ticker = ticker.Replace(".TO", "");
+        }
+        string market = ticker.Contains(".TO") ? "CDN" : "US";
+        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, market, true);
+
+        if (!string.IsNullOrEmpty(tp?.Error))
+        {
+            return null;
+        }
+
+        return tp?.Price;
+    }
 
     public async Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding)
     {

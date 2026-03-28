@@ -14,6 +14,10 @@ public partial class EquityCreate
     private IModelService ModelService { get; set; } = default!;
 
     [Inject]
+    private IFinanceService FinanceService { get; set; } = default!;
+
+
+    [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
@@ -22,6 +26,8 @@ public partial class EquityCreate
     private Equity _equity = new();
     private Holding? _holding;
     private bool _isSaving;
+    private string _symbolValidationMessage = string.Empty;
+    private List<Equity> _existingEquities = [];
 
     private readonly List<object> _transactionTypes = Enum.GetValues<TransactionType>()
         .Select(t => (object)new { Text = t.ToString(), Value = t })
@@ -35,6 +41,7 @@ public partial class EquityCreate
         try
         {
             _holding = await ModelService.GetHoldingByIdAsync(HoldingId);
+            _existingEquities = await ModelService.GetEquitiesByHoldingIdAsync(HoldingId);
         }
         catch (Exception ex)
         {
@@ -92,6 +99,55 @@ public partial class EquityCreate
         {
             _isSaving = false;
         }
+    }
+
+    private bool ValidateSymbol()
+    {
+        var symbol = _equity.Symbol?.Trim() ?? string.Empty;
+
+        if (symbol.Length is < 1 or > 5)
+        {
+            _symbolValidationMessage = "Symbol must be between 1 and 5 characters";
+            return false;
+        }
+
+        if (!symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-'))
+        {
+            _symbolValidationMessage = "Symbol can only contain letters, digits, '.', or '-'";
+            return false;
+        }
+
+        //var tickerPrice = await FinanceService.GetTickerPriceAsync(symbol);
+        //if (tickerPrice == null)
+        //{
+        //    _symbolValidationMessage = $"Symbol '{symbol}' is not valid or not found.";
+        //    return false;
+        //}
+
+        _symbolValidationMessage = string.Empty;
+        return true;
+    }
+
+    private async Task OnValueChange(object obj)
+    {
+        string symbol = obj?.ToString()?.Trim() ?? string.Empty;
+        var tickerPrice = await FinanceService.GetTickerPriceAsync(symbol);
+
+        _symbolValidationMessage = tickerPrice == null ? string.Empty : $"Symbol '{symbol}' is not valid or not found.";
+
+        if (tickerPrice == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Symbol '{symbol}' is not valid or not found.",
+                Duration = 4000
+            });
+        }
+
+
+
     }
 
     private void GoBack()
