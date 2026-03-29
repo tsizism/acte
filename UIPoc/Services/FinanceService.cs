@@ -1,4 +1,5 @@
 using Radzen;
+using Radzen.Blazor.Rendering;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -72,8 +73,8 @@ public class FinanceService : IFinanceService
         {
             ticker = ticker.Replace(".TO", "");
         }
-        string market = ticker.Contains(".TO") ? "CDN" : "US";
-        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, market, true);
+        //string market = ticker.Contains(".TO") ? "CDN" : "US";
+        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, true);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -89,7 +90,8 @@ public class FinanceService : IFinanceService
         
         foreach (var equity in lst)
         {
-            TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol, equity.Market);
+            var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+            TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
             //                    ""price"": 230.4584, 
@@ -98,10 +100,12 @@ public class FinanceService : IFinanceService
             //                    ""marketCap"": 3503912648704
 
 
-            equity.MarketPrice = tp.Price;
-            equity.Currency = tp.Currency;
-            equity.CurrentPrice = tp.Price;
-            equity.Symbol = tp.Symbol;
+            tp.ToEquity(equity);
+
+            //equity.MarketPrice = tp.Price;
+            //equity.Currency = tp.Currency;
+            //equity.CurrentPrice = tp.Price;
+            //equity.Symbol = tp.Symbol;
 
             //if (tp.Currency == "CAD")
             //{
@@ -141,7 +145,7 @@ public class FinanceService : IFinanceService
             //}
         }
 
-        holding.Index = (double)lst.Sum(e => e.Quantity * e.CurrentPrice);
+        holding.Index = (decimal)lst.Sum(e => e.Quantity * e.CurrentPrice);
         return lst;
     }
 
@@ -152,6 +156,39 @@ public class FinanceService : IFinanceService
     public async Task<Holding?> GetHoldingAsync(int holdingId)
     {
         return await _modelService.GetHoldingByIdAsync(holdingId);
+    }
+
+    private static TransactionType GetLastTxnType(HoldingType type) => type switch
+    {
+        HoldingType.Active => TransactionType.Buy,
+        HoldingType.WatchList => TransactionType.Watch,
+
+        //HoldingType.Listless => BadgeStyle.Warning,
+        //HoldingType.CustomIndex => BadgeStyle.Primary,
+        _ => TransactionType.Watch
+    };
+
+
+    public async Task<Equity?> CreateEquityAsync(Equity equity)
+    {
+        var result = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol);
+
+        if (result == null || !string.IsNullOrEmpty(result?.Error))
+        {
+            return null;
+        }
+
+
+        //if (equity.Holding.Type == HoldingType.WatchList)
+        //{
+        //    equity.LastTxnType = TransactionType.Watch;
+        //}
+
+        equity.LastTxnType = GetLastTxnType(equity.Holding.Type);
+        equity.LastTxnAt = DateTime.UtcNow;
+        result!.ToEquity(equity);
+
+        return await _modelService.CreateEquityAsync(equity);
     }
 
     #region Quote Operations

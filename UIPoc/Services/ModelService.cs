@@ -136,6 +136,27 @@ namespace UIPooc.Services
             return equity;
         }
 
+        public async Task<Equity> UpsertEquityAsync(Equity equity)
+        {
+            List<Equity> lst = await GetEquitiesBySymbolAsync(equity.Symbol);
+
+            Equity existing = lst[0];
+
+            if (existing != null)
+            {
+                // Update existing
+                equity.CopyTo(existing);
+                await _context.SaveChangesAsync();
+                return existing;
+            }
+            else
+            {
+                // Create new
+                return await CreateEquityAsync(equity);
+            }
+        }
+
+
         public async Task<Equity> UpdateEquityAsync(Equity equity)
         {
             _context.Equities.Update(equity);

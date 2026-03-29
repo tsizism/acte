@@ -3,7 +3,8 @@ namespace UIPooc.Models
     public enum TransactionType
     {
         Buy,
-        Sell
+        Sell,
+        Watch,
     }
 
     public class Transaction

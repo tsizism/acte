@@ -20,7 +20,7 @@ public partial class HoldingsIndex
     private IList<Holding>? _selectedHoldings;
     private bool _isLoading;
     private int _totalEquities;
-    private double _averageIndex;
+    private decimal _averageIndex;
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,8 +82,8 @@ public partial class HoldingsIndex
     {
         HoldingType.Active => BadgeStyle.Success,
         HoldingType.WatchList => BadgeStyle.Info,
-        HoldingType.Listless => BadgeStyle.Warning,
-        HoldingType.CustomIndex => BadgeStyle.Primary,
+        HoldingType.Sold => BadgeStyle.Warning,
+        HoldingType.BuyPending => BadgeStyle.Primary,
         _ => BadgeStyle.Light
     };
 }

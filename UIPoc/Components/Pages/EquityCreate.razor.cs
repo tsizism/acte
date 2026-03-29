@@ -11,9 +11,6 @@ public partial class EquityCreate
     public int HoldingId { get; set; }
 
     [Inject]
-    private IModelService ModelService { get; set; } = default!;
-
-    [Inject]
     private IFinanceService FinanceService { get; set; } = default!;
 
 
@@ -27,7 +24,7 @@ public partial class EquityCreate
     private Holding? _holding;
     private bool _isSaving;
     private string _symbolValidationMessage = string.Empty;
-    private List<Equity> _existingEquities = [];
+    //private List<Equity> _existingEquities = [];
 
     private readonly List<object> _transactionTypes = Enum.GetValues<TransactionType>()
         .Select(t => (object)new { Text = t.ToString(), Value = t })
@@ -36,12 +33,13 @@ public partial class EquityCreate
     protected override async Task OnInitializedAsync()
     {
         _equity.HoldingId = HoldingId;
-        _equity.LastTxnAt = DateTime.UtcNow;
 
         try
         {
-            _holding = await ModelService.GetHoldingByIdAsync(HoldingId);
-            _existingEquities = await ModelService.GetEquitiesByHoldingIdAsync(HoldingId);
+            _holding = await FinanceService.GetHoldingAsync(HoldingId);
+            _equity.Holding = _holding!;
+            //_holding = await ModelService.GetHoldingByIdAsync(HoldingId);
+            //_existingEquities = await ModelService.GetEquitiesByHoldingIdAsync(HoldingId);
         }
         catch (Exception ex)
         {
@@ -60,9 +58,7 @@ public partial class EquityCreate
         _isSaving = true;
         try
         {
-            _equity.LastTxnAt = DateTime.UtcNow;
-
-            await ModelService.CreateEquityAsync(_equity);
+            await FinanceService.CreateEquityAsync(_equity);
 
             NotificationService.Notify(new NotificationMessage
             {
@@ -145,9 +141,6 @@ public partial class EquityCreate
                 Duration = 4000
             });
         }
-
-
-
     }
 
     private void GoBack()

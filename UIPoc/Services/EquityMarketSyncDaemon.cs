@@ -18,8 +18,10 @@ namespace UIPooc.Services
         private readonly ILogger<EquityMarketSyncDaemon> _logger;
         private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
         //public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
-        public static readonly Dictionary<string, TickerPriceEntity> _priceCache = new(StringComparer.OrdinalIgnoreCase);
+        public static readonly Dictionary<string, TickerPriceEntity>    _priceCache = new(StringComparer.OrdinalIgnoreCase);
         public static readonly Dictionary<string, FullStockPriceEntity> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
+
+        public static readonly Dictionary<string, Equity> _equity = new(StringComparer.OrdinalIgnoreCase);
 
         private List<Equity> _equities;
         public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
@@ -65,7 +67,7 @@ namespace UIPooc.Services
             return true;
         }
 
-        static public async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, string market = "US", bool live = false)
+        static public async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, bool live = false)
         {
             if (!live && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var snapshot))
             {
@@ -80,10 +82,10 @@ namespace UIPooc.Services
                 }
             }
 
-            if (market == "CDN" && !ticker.EndsWith(".TO"))
-            {
-                ticker += ".TO";
-            }
+            //if (market == "CDN" && !ticker.EndsWith(".TO"))
+            //{
+            //    ticker += ".TO";
+            //}
 
             TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
 
@@ -96,7 +98,7 @@ namespace UIPooc.Services
             return result;
         }
 
-        static public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, string market = "US", bool live = false)
+        static public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool live = false)
         {
             if (!live && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var snapshot))
             {
@@ -109,11 +111,6 @@ namespace UIPooc.Services
                 {
                     return snapshot;
                 }
-            }
-
-            if (market == "CDN")
-            {
-                symbol += ".TO";
             }
 
             FullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);

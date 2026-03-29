@@ -4,20 +4,19 @@ namespace UIPooc.Models
     {
         WatchList, 
         Active,
-        Listless,       // Sold
-        CustomIndex,    // BuyPending
+        Sold,
+        BuyPending,
     }
-
 
     public class Holding
     {
         public int HoldingId { get; set; }
         public int UserId { get; set; }
         public HoldingType Type { get; set; } = HoldingType.WatchList;
-        public double Index { get; set; }
+        public decimal Index { get; set; }
         public string? Currency { get; set; }
-        public double? FlagMaxIndex { get; set; }
-        public double? FlagMinIndex { get; set; }
+        public decimal? FlagMaxIndex { get; set; }
+        public decimal? FlagMinIndex { get; set; }
         public string Name { get; set; } = string.Empty;
         public string CallName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

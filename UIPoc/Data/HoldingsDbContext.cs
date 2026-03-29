@@ -136,6 +136,7 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.Property(e => e.Index)
+                    .HasColumnType("decimal(18,2)")
                     .IsRequired();
 
                 entity.Property(e => e.Type)
@@ -270,6 +271,7 @@ namespace UIPooc.Data
 
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });
+                entity.HasIndex(e => e.Symbol).IsUnique();
             });
         }
 
@@ -326,7 +328,7 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.LastTradeTime);
 
-                entity.HasIndex(e => e.Symbol);
+                entity.HasIndex(e => e.Symbol).IsUnique();
                 entity.HasIndex(e => e.LastUpdated);
             });
         }

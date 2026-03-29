@@ -37,8 +37,8 @@
 
     <RadzenCard>
         <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="4">
-                <RadzenLabel Text="Select Holding:" />
+            <RadzenColumn Size="12" SizeMD="2">
+                <RadzenLabel Text="Selected Holding:" />
                 <RadzenDropDown @bind-Value="@_selectedHoldingId"
                                Data="@_holdings"
                                TextProperty="Name"
@@ -47,26 +47,30 @@
                                Placeholder="Select a holding..."
                                Style="width: 100%;" />
             </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="2">
+
+            @* <RadzenColumn Size="12" SizeMD="4">
                 @if (_selectedHolding != null)
                 {
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1"><strong>@_selectedHolding.Name</strong></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle1"><strong>@_selectedHolding.Name</strong></RadzenText> 
                         <RadzenText TextStyle="TextStyle.Body2">
                             Index: <strong>@_selectedHolding.Index.ToString("N2")</strong> | 
                             Currency: <strong>@_selectedHolding.Currency</strong>
                         </RadzenText>
                     </RadzenStack>
                 }
-            </RadzenColumn>
+            </RadzenColumn> *@
+
             <RadzenColumn Size="12" SizeMD="2">
                 @if (_selectedHolding != null)
                 {
                     <RadzenText TextStyle="TextStyle.H6">
-                        Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
+                        Index: <strong>@_selectedHolding.Index.ToString("N2")</strong>
                     </RadzenText>
                 }
             </RadzenColumn>
+
+
             <RadzenColumn Size="12" SizeMD="2">
                 @if (_selectedHolding != null)
                 {
@@ -75,6 +79,16 @@
                     </RadzenText>
                 }
             </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                @if (_selectedHolding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.H6">
+                        Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
+                    </RadzenText>
+                }
+            </RadzenColumn>
+
         </RadzenRow>
     </RadzenCard>
 
@@ -147,7 +161,10 @@
 
                 <RadzenDataGridColumn Property="CurrentPrice" Title="Current Price" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" />
 
-                <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
+                {
+                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                }
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
 
@@ -413,8 +430,8 @@
     {
         HoldingType.Active => BadgeStyle.Success,
         HoldingType.WatchList => BadgeStyle.Info,
-        HoldingType.Listless => BadgeStyle.Warning,
-        HoldingType.CustomIndex => BadgeStyle.Primary,
+        HoldingType.Sold => BadgeStyle.Warning,
+        HoldingType.BuyPending => BadgeStyle.Primary,
         _ => BadgeStyle.Light
     };
 

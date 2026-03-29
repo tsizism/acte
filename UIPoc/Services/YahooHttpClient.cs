@@ -37,6 +37,27 @@ public class TickerPriceEntity
     public decimal MarketCap { get; set; }
     public DateTime LastUpdated { get; set; }
     public string Error { get; set; } = string.Empty;
+
+    public Equity ToEquity(Equity equity)
+    {
+        var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+
+        if (symbol != this.Symbol)
+        {
+            throw new InvalidOperationException("FullStockPriceEntityPrice.ToEquity: Symbol mismatch.");
+        }
+
+        equity.Currency = this.Currency;
+        equity.MarketPrice = this.Price;
+        equity.CurrentPrice = this.Price;
+        equity.AverageCost= this.Price;
+        equity.HoldingHigh = equity.CurrentPrice;
+        equity.HoldingHighAt = this.LastUpdated;
+        equity.HoldingLow = equity.CurrentPrice;
+        equity.HoldingLowAt = this.LastUpdated;
+
+        return equity;
+    }
 }
 
 // DTO for full stock price information retrieved from Yahoo Finance API
@@ -77,6 +98,8 @@ public class FullStockPriceEntityPrice
     public string? ToCurrency { get; set; }//toCurrency:null
     public string? LastMarket { get; set; }//lastMarket:null
     public long MarketCap { get; set; } //marketCap:32843560960
+
+
 }
 
 
