@@ -127,7 +127,10 @@ namespace UIPooc.Services
             {
                 try
                 {
-                    await SyncEquityMarketsAsync(stoppingToken);
+                    if (!IsTradingTime())
+                    {
+                        await EtlEquityAsync(stoppingToken);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +143,7 @@ namespace UIPooc.Services
             _logger.LogInformation("EquityMarketSyncService is stopping.");
         }
 
-        private async Task SyncEquityMarketsAsync(CancellationToken cancellationToken)
+        private async Task EtlEquityAsync(CancellationToken cancellationToken)
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             HoldingsDbContext dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
@@ -186,8 +189,16 @@ namespace UIPooc.Services
                     // and update if it already exists
                     //EquityMarket? equityMarket = await financeService.GetQuoteAndCacheAsync(equity.Symbol, equity.Market);
 
+                    //FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
                     FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
+
                     this._equities.RemoveAt(0);
+
+                    fullStockPrice.ToDatabaseEquity(equity);
+
+                    dbContext.Equities.Update(equity);
+                    await dbContext.SaveChangesAsync();
+
 
                     //if (equityMarket != null)
                     //{

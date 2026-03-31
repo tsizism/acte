@@ -38,7 +38,7 @@ public class TickerPriceEntity
     public DateTime LastUpdated { get; set; }
     public string Error { get; set; } = string.Empty;
 
-    public Equity ToEquity(Equity equity)
+    public Equity ToDatabaseEquity(Equity equity)
     {
         var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
 
@@ -50,7 +50,6 @@ public class TickerPriceEntity
         equity.Currency = this.Currency;
         equity.MarketPrice = this.Price;
         equity.CurrentPrice = this.Price;
-        equity.AverageCost= this.Price;
         equity.HoldingHigh = equity.CurrentPrice;
         equity.HoldingHighAt = this.LastUpdated;
         equity.HoldingLow = equity.CurrentPrice;
@@ -68,6 +67,32 @@ public class FullStockPriceEntity
 {
     public FullStockPriceEntityPrice? Price { get; set; }
     public DateTime LastUpdated { get; set; }
+
+    public Equity ToDatabaseEquity(Equity equity)
+    {
+        if (Price == null)
+        {
+            throw new InvalidOperationException("FullStockPriceEntity.ToDatabaseEquity: Price is null.");
+        }
+
+        equity.MarketPrice = Price.RegularMarketPrice;
+        equity.CurrentPrice = Price.RegularMarketPrice;
+
+
+        if (Price.RegularMarketPrice > equity.HoldingHigh)
+        {
+            equity.HoldingHigh = Price.RegularMarketPrice;
+            equity.HoldingHighAt = this.LastUpdated;
+        }
+
+        if (Price.RegularMarketPrice < equity.HoldingLow)
+        {
+            equity.HoldingLow = Price.RegularMarketPrice;
+            equity.HoldingLowAt = this.LastUpdated;
+        }
+
+        return equity;
+    }
 }
 public class FullStockPriceEntityPrice
 {

@@ -100,7 +100,7 @@ public class FinanceService : IFinanceService
             //                    ""marketCap"": 3503912648704
 
 
-            tp.ToEquity(equity);
+            tp.ToDatabaseEquity(equity);
 
             //equity.MarketPrice = tp.Price;
             //equity.Currency = tp.Currency;
@@ -186,7 +186,7 @@ public class FinanceService : IFinanceService
 
         equity.LastTxnType = GetLastTxnType(equity.Holding.Type);
         equity.LastTxnAt = DateTime.UtcNow;
-        result!.ToEquity(equity);
+        result!.ToDatabaseEquity(equity);
 
         return await _modelService.CreateEquityAsync(equity);
     }
