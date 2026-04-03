@@ -15,8 +15,8 @@ namespace UIPooc.Services
     public class EquityMarketSyncDaemon : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
+        //private readonly IModelService _modelService;
         private readonly ILogger<EquityMarketSyncDaemon> _logger;
-        private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
         //public static readonly Dictionary<string, StockPriceSnapshot> _priceCache = new (StringComparer.OrdinalIgnoreCase);
         public static readonly Dictionary<string, TickerPriceEntity>    _priceCache = new(StringComparer.OrdinalIgnoreCase);
         public static readonly Dictionary<string, FullStockPriceEntity> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
@@ -50,15 +50,15 @@ namespace UIPooc.Services
 
         static public bool IsTradingTime()
         {
-            DateTime now = DateTime.UtcNow;
-            DayOfWeek day = now.DayOfWeek;
+            DateTime currentTime = DateTime.UtcNow;
+            DayOfWeek day = currentTime.DayOfWeek;
 
             if ((day == DayOfWeek.Saturday) || (day == DayOfWeek.Sunday))
             {
                 return false;
             }
 
-            TimeOnly nowTimeOnly = TimeOnly.FromDateTime(now);
+            TimeOnly nowTimeOnly = TimeOnly.FromDateTime(currentTime);
             if (nowTimeOnly < TRADING_START_UTC || nowTimeOnly > TRADING_FINISH_UTC)
             {
                 return false;
@@ -66,6 +66,37 @@ namespace UIPooc.Services
 
             return true;
         }
+
+        static public bool IsEquityUpToDate(DateTime equityDateTime)
+        {
+            if (equityDateTime.Date != DateTime.UtcNow.Date)
+            {
+                return false;
+            }
+
+            DayOfWeek day = equityDateTime.DayOfWeek;
+
+            if ((day == DayOfWeek.Saturday) || (day == DayOfWeek.Sunday))
+            {
+                return true;
+            }
+
+            // Weekday
+            TimeOnly equityTimeOnly = TimeOnly.FromDateTime(equityDateTime);
+
+            if (equityTimeOnly < TRADING_START_UTC || equityTimeOnly > TRADING_FINISH_UTC)
+            {
+                return true;
+            }
+
+            if (equityTimeOnly - TRADING_START_UTC < TimeSpan.FromHours(4))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
 
         static public async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, bool live = false)
         {
@@ -100,16 +131,16 @@ namespace UIPooc.Services
 
         static public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool live = false)
         {
-            if (!live && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var snapshot))
+            if (!live && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var cached))
             {
                 if (!IsTradingTime())
                 {
-                    return snapshot;
+                    return cached;
                 }
 
-                if ((DateTime.UtcNow - snapshot.LastUpdated).TotalMinutes < SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
+                if ((DateTime.UtcNow - cached.LastUpdated).TotalMinutes < SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
                 {
-                    return snapshot;
+                    return cached;
                 }
             }
 
@@ -122,32 +153,45 @@ namespace UIPooc.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("EquityMarketSyncService is starting.");
+            
+            await PereodicTask(stoppingToken, TimeSpan.FromMinutes(2));
 
+            _logger.LogInformation("EquityMarketSyncService is stopping.");
+        }
+
+        private async Task PereodicTask(CancellationToken stoppingToken, TimeSpan delay)
+        {
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    if (!IsTradingTime())
+                    if (IsTradingTime())
                     {
-                        await EtlEquityAsync(stoppingToken);
+                        //
                     }
+                    else // Only sync during non-trading hours to avoid hitting API rate limits and to ensure we get the closing price on weekedays
+                    {
+                        await UpdateEquityOneInTimeAsync(stoppingToken);
+                    }
+
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error occurred while syncing equity markets.");
                 }
 
-                await Task.Delay(_interval, stoppingToken);
+                await Task.Delay(delay, stoppingToken);
             }
-
-            _logger.LogInformation("EquityMarketSyncService is stopping.");
         }
 
-        private async Task EtlEquityAsync(CancellationToken cancellationToken)
+
+        private async Task UpdateEquityOneInTimeAsync(CancellationToken cancellationToken)
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            HoldingsDbContext dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
+            //HoldingsDbContext dbContext = scope.ServiceProvider.GetRequiredService<HoldingsDbContext>();
             //IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
+
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            IModelService modelService = scope.ServiceProvider.GetRequiredService<IModelService>();
 
             try
             {
@@ -159,7 +203,7 @@ namespace UIPooc.Services
 
                 if (_equities.Count == 0)
                 {
-                    this._equities = await dbContext.Equities.Distinct().ToListAsync(cancellationToken);
+                    this._equities = await modelService.GetAllEquitiesAsync();
                 }
 
                 if (!_equities.Any())
@@ -170,8 +214,8 @@ namespace UIPooc.Services
 
                 _logger.LogInformation("Syncing {Count} unique equity symbols...", _equities.Count);
 
-                int successCount = 0;
-                int failureCount = 0;
+                //int successCount = 0;
+                //int failureCount = 0;
 
                 //foreach (Equity equity in equities)
                 //{
@@ -180,53 +224,82 @@ namespace UIPooc.Services
                 {
                     return;
                 }
-                
+
                 Equity equity = this._equities[0];
 
-                try
-                {
-                    // GetQuoteAndCacheAsync will automatically add to EquityMarket if not exists
-                    // and update if it already exists
-                    //EquityMarket? equityMarket = await financeService.GetQuoteAndCacheAsync(equity.Symbol, equity.Market);
+                await EtlEquityAsync(cancellationToken, modelService, equity);
 
-                    //FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
-                    FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
-
-                    this._equities.RemoveAt(0);
-
-                    fullStockPrice.ToDatabaseEquity(equity);
-
-                    dbContext.Equities.Update(equity);
-                    await dbContext.SaveChangesAsync();
-
-
-                    //if (equityMarket != null)
-                    //{
-                    //    _logger.LogDebug("Successfully synced {Symbol} ({Market})", equity.Symbol, equity.Market);
-                    //    successCount++;
-                    //}
-                    //else
-                    //{
-                    //    _logger.LogWarning("Failed to fetch quote for {Symbol} ({Market})", equity.Symbol, equity.Market);
-                    //    failureCount++;
-                    //}
-
-                    // Small delay to avoid overwhelming the API
-                    await Task.Delay(100, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error syncing {Symbol} ({Market})", equity.Symbol, equity.Market);
-                    failureCount++;
-                }
-                //}
-
-                _logger.LogInformation("Equity market sync completed: {Success} successful, {Failures} failed", successCount, failureCount);
+                this._equities.RemoveAt(0);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in SyncEquityMarketsAsync");
+                _logger.LogError(ex, "Error in EtlEquityAsync");
+                //failureCount++;
             }
+
+            //_logger.LogInformation("Equity market sync completed: {Success} successful, {Failures} failed", successCount, failureCount);
+        }
+
+        private async Task<EquityMarket> AddEquityMarketAsync(CancellationToken cancellationToken, IModelService modelService, string symbol)
+        {
+            FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(symbol);
+
+            EquityMarket equityMarket = new EquityMarket
+            {
+                Symbol = symbol
+            };
+
+            fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+
+            //using IServiceScope scope = _serviceProvider.CreateScope();
+            //IModelService _modelService = scope.ServiceProvider.GetRequiredService<IModelService>();
+            await modelService.CreateEquityMarketAsync(equityMarket);
+
+            return equityMarket;
+        }
+
+
+        private async Task EtlEquityAsync(CancellationToken cancellationToken, IModelService modelService, Equity equity)
+        {
+            try
+            {
+                var equityMarket = await modelService.GetEquityMarketBySymbolAsync(equity.Symbol);
+
+                if (equityMarket == null)
+                {
+                    equityMarket = await AddEquityMarketAsync(cancellationToken, modelService, equity.Symbol);
+                }
+                else
+                {
+                    if( !IsEquityUpToDate(equityMarket.LastUpdated) )
+                    {
+                        FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
+                        fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+                        await modelService.UpdateEquityAsync(equity);
+                    }
+                }
+
+
+                //if (equityMarket != null)
+                //{
+                //    _logger.LogDebug("Successfully synced {Symbol} ({Market})", equity.Symbol, equity.Market);
+                //    successCount++;
+                //}
+                //else
+                //{
+                //    _logger.LogWarning("Failed to fetch quote for {Symbol} ({Market})", equity.Symbol, equity.Market);
+                //    failureCount++;
+                //}
+
+                // Small delay to avoid overwhelming the API
+                await Task.Delay(100, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error syncing {Symbol} ({Market})", equity.Symbol, equity.Market);
+                //failureCount++;
+            }
+            //}
         }
 
         public override async Task StopAsync(CancellationToken stoppingToken)

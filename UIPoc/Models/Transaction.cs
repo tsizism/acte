@@ -22,5 +22,6 @@ namespace UIPooc.Models
         public string? Notes { get; set; }
         public User User { get; set; } = null!;
         public Holding Holding { get; set; } = null!;
+        public bool IsDeleted { get; set; } = false;
     }
 }

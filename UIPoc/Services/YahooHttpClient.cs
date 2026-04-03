@@ -55,6 +55,9 @@ public class TickerPriceEntity
         equity.HoldingLow = equity.CurrentPrice;
         equity.HoldingLowAt = this.LastUpdated;
 
+        equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
+        equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
+
         return equity;
     }
 }
@@ -63,6 +66,7 @@ public class TickerPriceEntity
 // Financials-Full Stock Price - "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce" -38 keys
 //                               "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce.to"),  - 28 keys
 
+// $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 public class FullStockPriceEntity
 {
     public FullStockPriceEntityPrice? Price { get; set; }
@@ -75,6 +79,7 @@ public class FullStockPriceEntity
             throw new InvalidOperationException("FullStockPriceEntity.ToDatabaseEquity: Price is null.");
         }
 
+        equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
         equity.MarketPrice = Price.RegularMarketPrice;
         equity.CurrentPrice = Price.RegularMarketPrice;
 
@@ -92,6 +97,22 @@ public class FullStockPriceEntity
         }
 
         return equity;
+    }
+
+    internal void ToDatabaseEquityMarket(EquityMarket equityMarket)
+    {
+        equityMarket.Currency = Price!.Currency;
+        equityMarket.CurrentPrice = Price.RegularMarketPrice;
+        equityMarket.PreviousClose = Price.RegularMarketPreviousClose;
+        equityMarket.OpenPrice = Price.RegularMarketOpen;
+        equityMarket.DayHigh = Price.RegularMarketDayHigh;
+        equityMarket.DayLow = Price.RegularMarketDayLow;
+        equityMarket.Volume = Price.RegularMarketVolume;
+        equityMarket.MarketCap = Price.MarketCap;
+        equityMarket.Week52High = 0;
+        equityMarket.Week52Low = 0;
+        equityMarket.LastTradeTime = Price.RegularMarketTime;
+        equityMarket.LastUpdated = DateTime.UtcNow;
     }
 }
 public class FullStockPriceEntityPrice
@@ -123,8 +144,6 @@ public class FullStockPriceEntityPrice
     public string? ToCurrency { get; set; }//toCurrency:null
     public string? LastMarket { get; set; }//lastMarket:null
     public long MarketCap { get; set; } //marketCap:32843560960
-
-
 }
 
 
@@ -140,7 +159,7 @@ public class YahooHttpClient
 
 
         var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
-        // full
+        // full include 52weeks
         // https://yh-finance-complete.p.rapidapi.com/fullData?ticker=bce"),
 
 

@@ -12,5 +12,6 @@ namespace UIPooc.Models
         public DateTime? UpdatedAt { get; set; }
         public ICollection<Holding> Holdings { get; set; } = new List<Holding>();
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public bool IsDeleted { get; set; } = false;
     }
 }

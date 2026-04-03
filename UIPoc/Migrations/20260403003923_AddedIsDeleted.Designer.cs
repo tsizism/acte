@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UIPooc.Data;
 
@@ -11,9 +12,11 @@ using UIPooc.Data;
 namespace UIPooc.Migrations
 {
     [DbContext(typeof(HoldingsDbContext))]
-    partial class HoldingsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403003923_AddedIsDeleted")]
+    partial class AddedIsDeleted
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -286,8 +289,8 @@ namespace UIPooc.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<DateOnly>("RecordedAt")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("IndexHistoryId");
 
@@ -295,8 +298,7 @@ namespace UIPooc.Migrations
 
                     b.HasIndex("RecordedAt");
 
-                    b.HasIndex("HoldingId", "RecordedAt")
-                        .IsUnique();
+                    b.HasIndex("HoldingId", "RecordedAt");
 
                     b.ToTable("IndexHistories");
                 });

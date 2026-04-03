@@ -28,5 +28,6 @@ namespace UIPooc.Models
         public ICollection<Equity> Equities { get; set; } = new List<Equity>();
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
         public ICollection<IndexHistory> IndexHistories { get; set; } = new List<IndexHistory>();
+        public bool IsDeleted { get; set; } = false;
     }
 }

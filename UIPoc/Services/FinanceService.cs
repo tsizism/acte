@@ -3,6 +3,7 @@ using Radzen.Blazor.Rendering;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
@@ -87,7 +88,10 @@ public class FinanceService : IFinanceService
     public async Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding)
     {
         List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
-        
+        Dictionary<string, decimal> snapshotDict = new Dictionary<string, decimal>();
+
+        string snapshot = string.Empty;
+
         foreach (var equity in lst)
         {
             var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
@@ -101,6 +105,7 @@ public class FinanceService : IFinanceService
 
 
             tp.ToDatabaseEquity(equity);
+
 
             //equity.MarketPrice = tp.Price;
             //equity.Currency = tp.Currency;
@@ -117,6 +122,8 @@ public class FinanceService : IFinanceService
                 decimal exchangeRate = holding.Currency == "CAD" ?  await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
                 equity.CurrentPrice = tp.Price * exchangeRate;
             }
+
+            snapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
 
             //if (equity.Currency != holding.Currency)
             //{
@@ -145,7 +152,23 @@ public class FinanceService : IFinanceService
             //}
         }
 
-        holding.Index = (decimal)lst.Sum(e => e.Quantity * e.CurrentPrice);
+        holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
+
+        try
+        {
+            await _modelService.UpsertIndexHistoryAsync(new IndexHistory
+            {
+                HoldingId = holding.HoldingId,
+                Index = holding.Index,
+                HoldingSnapshot = JsonSerializer.Serialize(snapshotDict),
+                RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
+        }
+
         return lst;
     }
 
@@ -169,7 +192,7 @@ public class FinanceService : IFinanceService
     };
 
 
-    public async Task<Equity?> CreateEquityAsync(Equity equity)
+    public async Task<Equity?> AddsNewEquityAsync(Equity equity)
     {
         var result = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol);
 

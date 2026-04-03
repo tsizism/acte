@@ -5,7 +5,7 @@ namespace UIPooc.Services
     public interface IFinanceService
     {
         // Equity Operations
-        Task<Equity?> CreateEquityAsync(Equity equity);
+        Task<Equity?> AddsNewEquityAsync(Equity equity);
 
         // Quote Operations
         Task<decimal?> GetTickerPriceAsync(string ticker);

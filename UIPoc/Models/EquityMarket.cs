@@ -49,6 +49,7 @@ namespace UIPooc.Models
         public decimal? Week52Low { get; set; }
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
         public DateTime? LastTradeTime { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }
 

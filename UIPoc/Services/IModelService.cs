@@ -19,6 +19,7 @@ namespace UIPooc.Services
         Task DeleteHoldingAsync(int holdingId);
 
         // Equity operations
+        Task<List<Equity>> GetAllEquitiesAsync();
         Task<Equity?> GetEquityByIdAsync(int equityId);
         Task<List<Equity>> GetEquitiesByHoldingIdAsync(int holdingId);
         Task<List<Equity>> GetEquitiesBySymbolAsync(string symbol);
@@ -28,7 +29,7 @@ namespace UIPooc.Services
 
         // EquityMarket operations
         Task<EquityMarket?> GetEquityMarketByIdAsync(int equityMarketId);
-        Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market);
+        Task<EquityMarket?>GetEquityMarketBySymbolAsync(string symbol);
         Task<List<EquityMarket>> GetAllEquityMarketsAsync();
         Task<List<EquityMarket>> GetEquityMarketsByMarketAsync(string market);
         Task<EquityMarket> CreateEquityMarketAsync(EquityMarket equityMarket);
@@ -48,11 +49,13 @@ namespace UIPooc.Services
         Task<IndexHistory?> GetIndexHistoryByIdAsync(int indexHistoryId);
         Task<List<IndexHistory>> GetIndexHistoriesByHoldingIdAsync(int holdingId);
         Task<IndexHistory> CreateIndexHistoryAsync(IndexHistory indexHistory);
-        Task<List<IndexHistory>> GetIndexHistoriesForDateRangeAsync(int holdingId, DateTime startDate, DateTime endDate);
+        Task<IndexHistory> UpsertIndexHistoryAsync(IndexHistory indexHistory);
+        Task<List<IndexHistory>> GetIndexHistoriesForDateRangeAsync(int holdingId, DateOnly startDate, DateOnly endDate);
 
         // Aggregation operations
         Task<decimal> GetTotalPortfolioValueAsync(int holdingId);
         Task<int> GetEquityCountAsync(int holdingId);
         Task<Dictionary<string, int>> GetEquityCountByMarketAsync(int holdingId);
+
     }
 }

@@ -106,6 +106,16 @@ namespace UIPooc.Services
 
         #region Equity Operations
 
+        public async Task<List<Equity>> GetAllEquitiesAsync()  //, CancellationToken cancellationToken) int userId
+        {
+
+            //this._equities = await dbContext.Equities.Distinct().ToListAsync(cancellationToken);
+            return await _context.Equities
+                .OrderBy(e => e.Symbol)
+                .ToListAsync();
+        }
+
+
         public async Task<Equity?> GetEquityByIdAsync(int equityId)
         {
             return await _context.Equities
@@ -183,7 +193,7 @@ namespace UIPooc.Services
             return await _context.EquityMarkets.FindAsync(equityMarketId);
         }
 
-        public async Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol, string market)
+        public async Task<EquityMarket?> GetEquityMarketBySymbolAsync(string symbol) //, string market)
         {
             return await _context.EquityMarkets.FirstOrDefaultAsync(em => em.Symbol == symbol);
         }
@@ -230,7 +240,7 @@ namespace UIPooc.Services
 
         public async Task<EquityMarket> UpsertEquityMarketAsync(EquityMarket equityMarket)
         {
-            EquityMarket? existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol, "");
+            EquityMarket? existing = await GetEquityMarketBySymbolAsync(equityMarket.Symbol);
 
             if (existing != null)
             {
@@ -330,6 +340,25 @@ namespace UIPooc.Services
                 .ToListAsync();
         }
 
+        public async Task<IndexHistory> UpsertIndexHistoryAsync(IndexHistory indexHistory)
+        {
+            var existing = await _context.IndexHistories.FirstOrDefaultAsync(i => i.HoldingId == indexHistory.HoldingId && i.RecordedAt == indexHistory.RecordedAt);
+
+            if (existing != null)
+            {
+                existing.HoldingSnapshot = indexHistory.HoldingSnapshot;
+                existing.Index = indexHistory.Index;
+                _context.IndexHistories.Update(existing);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                await CreateIndexHistoryAsync(indexHistory);
+            }
+
+            return indexHistory;
+        }
+
         public async Task<IndexHistory> CreateIndexHistoryAsync(IndexHistory indexHistory)
         {
             _context.IndexHistories.Add(indexHistory);
@@ -337,7 +366,7 @@ namespace UIPooc.Services
             return indexHistory;
         }
 
-        public async Task<List<IndexHistory>> GetIndexHistoriesForDateRangeAsync(int holdingId, DateTime startDate, DateTime endDate)
+        public async Task<List<IndexHistory>> GetIndexHistoriesForDateRangeAsync(int holdingId, DateOnly startDate, DateOnly endDate)
         {
             return await _context.IndexHistories
                 .Where(i => i.HoldingId == holdingId 

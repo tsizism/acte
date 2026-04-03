@@ -28,6 +28,9 @@ namespace UIPooc.Models
         public string? FlagMessage { get; set; } = string.Empty;
         public DateTime? FlagDate { get; set; }
         public Holding Holding { get; set; } = null!;
+        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; } = false;
+
 
         public Equity() { }
 

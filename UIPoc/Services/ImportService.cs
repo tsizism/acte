@@ -363,7 +363,7 @@ namespace UIPooc.Services
                             continue;
                         }
 
-                        if (!double.TryParse(indexText, out double indexValue))
+                        if (!decimal.TryParse(indexText, out decimal indexValue))
                         {
                             result.Errors.Add($"Row {row}: Invalid index value");
                             result.ErrorCount++;
@@ -372,7 +372,7 @@ namespace UIPooc.Services
 
                         // Check for duplicates
                         var existingHistories = await _modelService.GetIndexHistoriesByHoldingIdAsync(holdingId);
-                        if (existingHistories.Any(h => h.RecordedAt.Date == recordedAt.Date))
+                        if (existingHistories.Any(h => h.RecordedAt == DateOnly.FromDateTime(recordedAt)))
                         {
                             result.Warnings.Add($"Row {row}: Index history for {recordedAt:yyyy-MM-dd} already exists. Skipping.");
                             result.SkippedCount++;
@@ -383,7 +383,7 @@ namespace UIPooc.Services
                         {
                             HoldingId = holdingId,
                             Index = indexValue,
-                            RecordedAt = recordedAt,
+                            RecordedAt = DateOnly.FromDateTime(recordedAt),
                             HoldingSnapshot = worksheet.Cells[row, 3].Text?.Trim()
                         };
 

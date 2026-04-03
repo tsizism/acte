@@ -81,6 +81,9 @@ namespace UIPooc.Data
                 entity.HasIndex(e => e.Email)
                     .IsUnique();
 
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
+
                 entity.HasMany(e => e.Holdings)
                     .WithOne(h => h.User)
                     .HasForeignKey(h => h.UserId)
@@ -174,6 +177,9 @@ namespace UIPooc.Data
                     .HasMaxLength(255);
 
                 entity.Property(e => e.FlagDate);
+
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
 
                 entity.HasIndex(p => p.Name).IsUnique();
 
@@ -269,7 +275,15 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.FlagDate);
 
-                entity.HasIndex(e => e.HoldingId);
+                entity.Property(e => e.LastUpdated)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
+
+
+        entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => new { e.HoldingId, e.Symbol });
                 entity.HasIndex(e => e.Symbol).IsUnique();
             });
@@ -328,6 +342,10 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.LastTradeTime);
 
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
+
+
                 entity.HasIndex(e => e.Symbol).IsUnique();
                 entity.HasIndex(e => e.LastUpdated);
             });
@@ -373,6 +391,9 @@ namespace UIPooc.Data
                 entity.Property(e => e.Notes)
                     .HasMaxLength(500);
 
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
+
                 entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.Symbol);
                 entity.HasIndex(e => e.TransactionDate);
@@ -390,6 +411,7 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.Property(e => e.Index)
+                    .HasColumnType("decimal(18,2)")
                     .IsRequired();
 
                 entity.Property(e => e.RecordedAt)
@@ -399,9 +421,12 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasColumnType("nvarchar(max)");
 
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired();
+
                 entity.HasIndex(e => e.HoldingId);
                 entity.HasIndex(e => e.RecordedAt);
-                entity.HasIndex(e => new { e.HoldingId, e.RecordedAt });
+                entity.HasIndex(e => new { e.HoldingId, e.RecordedAt }).IsUnique();
             });
         }
 

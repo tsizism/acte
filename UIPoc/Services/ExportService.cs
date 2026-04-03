@@ -331,12 +331,12 @@ namespace UIPooc.Services
             StyleHeader(worksheet, 1, 4);
 
             int row = 2;
-            double? previousIndex = null;
+            decimal? previousIndex = null;
 
             foreach (var history in indexHistories.OrderBy(h => h.RecordedAt))
             {
-                double? change = previousIndex.HasValue ? history.Index - previousIndex.Value : null;
-                double? changePercent = previousIndex.HasValue && previousIndex.Value != 0 
+                decimal? change = previousIndex.HasValue ? history.Index - previousIndex.Value : null;
+                decimal? changePercent = previousIndex.HasValue && previousIndex.Value != 0 
                     ? ((history.Index - previousIndex.Value) / previousIndex.Value) * 100 
                     : null;
 
