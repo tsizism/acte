@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Radzen.Blazor.Rendering;
 using UIPooc.Data;
 using UIPooc.Models;
+using UIPooc.Yahoo;
 
 namespace UIPooc.Services
 {

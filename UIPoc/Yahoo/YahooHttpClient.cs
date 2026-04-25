@@ -6,6 +6,8 @@ using System.Text.Json.Nodes;
 using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
+using UIPooc.Services;
+
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
 // https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
@@ -25,7 +27,7 @@ using UIPooc.Models;
 */
 
 
-namespace UIPooc.Services;
+namespace UIPooc.Yahoo;
 
 // DTO for stock ticker price information retrieved from Yahoo Finance API
 // Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
@@ -38,7 +40,8 @@ public class TickerPriceEntity
     public DateTime LastUpdated { get; set; }
     public string Error { get; set; } = string.Empty;
 
-    public Equity ToDatabaseEquity(Equity equity)
+    // TickerPriceEntity to Equity equity
+    public void PopulateDatabaseEquity(Equity equity)
     {
         var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
 
@@ -57,8 +60,6 @@ public class TickerPriceEntity
 
         equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
         equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
-
-        return equity;
     }
 }
 

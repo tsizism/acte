@@ -1,5 +1,6 @@
 using System.Reflection;
 using UIPooc.Attributes;
+using UIPooc.Models;
 
 namespace UIPooc.Helpers;
 
@@ -61,7 +62,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Populates an entity from a dictionary using DbProperty attributes
     /// </summary>
-    public static void PopulateFromDictionary<T>(T entity, Dictionary<string, object> data) where T : struct
+    private static void PopulateFromDictionary<T>(T entity, Dictionary<string, object> data) where T : struct
     {
         var type = typeof(T);
         var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
@@ -143,8 +144,10 @@ public static class DbEntityMapper
     /// <param name="data">Source data dictionary</param>
     /// <param name="metadata">PropertyMetadata dictionary defining the mapping rules</param>
     /// <returns>The populated entity (important for value types/structs)</returns>
-    public static T PopulateFromDictionary<T>(T entity, Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
+    public static T PopulateDbEntityFromDictionary<T>(Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
     {
+        T dbEquity = Activator.CreateInstance<T>();
+
         var type = typeof(T);
 
         // Create reverse lookup: sourceName -> PropertyMetadata
@@ -232,7 +235,7 @@ public static class DbEntityMapper
                         var convertedValue = converterMethod.Invoke(null, new[] { sourceValue });
                         if (convertedValue != null)
                         {
-                            property.SetValue(entity, convertedValue);
+                            property.SetValue(dbEquity, convertedValue);
                         }
                         continue;
                     }
@@ -242,7 +245,7 @@ public static class DbEntityMapper
                 var convertedVal = ConvertValue(sourceValue, property.PropertyType, meta.Format);
                 if (convertedVal != null)
                 {
-                    property.SetValue(entity, convertedVal);
+                    property.SetValue(dbEquity, convertedVal);
                 }
             }
             catch (Exception ex)
@@ -264,7 +267,7 @@ public static class DbEntityMapper
             }
         }
 
-        return entity;
+        return dbEquity;
     }
 
     /// <summary>
@@ -276,7 +279,7 @@ public static class DbEntityMapper
     /// <param name="data">Source data dictionary</param>
     /// <param name="metadata">PropertyMetadata dictionary defining the mapping rules</param>
     /// <returns>The populated entity (important for value types/structs)</returns>
-    public static T PopulateFromDictionaryBy2<T>(T entity, Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
+    private static T PopulateFromDictionaryBy2<T>(T entity, Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
     {
         var type = typeof(T);
 
@@ -480,7 +483,7 @@ public static class DbEntityMapper
     /// Extracts PropertyMetadata from DbProperty attributes (for hybrid approach)
     /// Allows using attributes to define metadata that can then be modified at runtime
     /// </summary>
-    public static Dictionary<string, PropertyMetadata> ExtractMetadata<T>()
+    private static Dictionary<string, PropertyMetadata> ExtractMetadata<T>()
     {
         var metadata = new Dictionary<string, PropertyMetadata>();
         var type = typeof(T);
@@ -512,7 +515,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets the database table name from DbEntity attribute
     /// </summary>
-    public static string? GetTableName<T>()
+    private static string? GetTableName<T>()
     {
         var type = typeof(T);
         var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
@@ -522,7 +525,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets the data source from DbEntity attribute
     /// </summary>
-    public static string? GetSource<T>()
+    private static string? GetSource<T>()
     {
         var type = typeof(T);
         var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
@@ -532,7 +535,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets all properties marked as required
     /// </summary>
-    public static List<PropertyInfo> GetRequiredProperties<T>()
+    private static List<PropertyInfo> GetRequiredProperties<T>()
     {
         var type = typeof(T);
         return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -543,7 +546,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets all properties NOT marked to ignore
     /// </summary>
-    public static List<PropertyInfo> GetMappableProperties<T>()
+    private static List<PropertyInfo> GetMappableProperties<T>()
     {
         var type = typeof(T);
         return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -554,7 +557,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets the database column name for a property
     /// </summary>
-    public static string GetColumnName(PropertyInfo property)
+    private static string GetColumnName(PropertyInfo property)
     {
         var propAttr = property.GetCustomAttribute<DbPropertyAttribute>();
         return propAttr?.ColumnName ?? property.Name;
@@ -563,7 +566,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Gets the source property name for API mapping
     /// </summary>
-    public static string GetSourceName(PropertyInfo property)
+    private static string GetSourceName(PropertyInfo property)
     {
         var propAttr = property.GetCustomAttribute<DbPropertyAttribute>();
         return propAttr?.SourceName ?? property.Name;
@@ -572,7 +575,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Validates an entity based on DbValidation attributes
     /// </summary>
-    public static (bool IsValid, List<string> Errors) ValidateEntity<T>(T entity)
+    private static (bool IsValid, List<string> Errors) ValidateEntity<T>(T entity)
     {
         var errors = new List<string>();
         var type = typeof(T);
@@ -641,7 +644,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Creates a mapping dictionary from entity properties to database columns
     /// </summary>
-    public static Dictionary<string, string> GetPropertyToColumnMap<T>()
+    private static Dictionary<string, string> GetPropertyToColumnMap2<T>()
     {
         var type = typeof(T);
         var map = new Dictionary<string, string>();
@@ -662,7 +665,7 @@ public static class DbEntityMapper
     /// <summary>
     /// Creates a mapping dictionary from API source names to entity properties
     /// </summary>
-    public static Dictionary<string, string> GetSourceToPropertyMap<T>()
+    private static Dictionary<string, string> GetSourceToPropertyMap2<T>()
     {
         var type = typeof(T);
         var map = new Dictionary<string, string>();

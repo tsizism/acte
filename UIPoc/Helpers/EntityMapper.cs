@@ -6,7 +6,7 @@ namespace UIPooc.Helpers;
 /// <summary>
 /// Provides reflection-based mapping using DbEntity attributes
 /// </summary>
-public static class EntityMapper
+public static class EntityMapperDepr
 {
     /// <summary>
     /// Populates an entity from a dictionary using DbProperty attributes

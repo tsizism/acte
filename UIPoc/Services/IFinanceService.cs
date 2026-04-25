@@ -11,15 +11,15 @@ namespace UIPooc.Services
         Task<decimal?> GetTickerPriceAsync(string ticker);
         Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US");
         Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US");
-        Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US");
-        Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US");
+        //Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US");
+        //Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US");
 
         // Historical Data
         Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US");
         Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US");
 
         // Market Summary
-        Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
+        //Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
 
         // Batch Operations
         Task EtlEquityPricesAsync(int holdingId);

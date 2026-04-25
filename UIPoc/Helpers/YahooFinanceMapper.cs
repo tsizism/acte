@@ -6,7 +6,7 @@ namespace UIPooc.Helpers;
 /// <summary>
 /// Maps Yahoo Finance API entities to database models
 /// </summary>
-public static class YahooFinanceMapper
+public static class YahooFinanceMapperDepr
 {
     #region EntityStockPrice to EquityMarket
 

@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
+using UIPooc.Yahoo;
 
 namespace UIPooc.Services;
 
@@ -95,7 +96,7 @@ public class FinanceService : IFinanceService
         foreach (var equity in lst)
         {
             var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
-            TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(symbol);
+            TickerPriceEntity tickerPrice = await EquityMarketSyncDaemon.RequestTickerPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
             //                    ""price"": 230.4584, 
@@ -104,7 +105,7 @@ public class FinanceService : IFinanceService
             //                    ""marketCap"": 3503912648704
 
 
-            tp.ToDatabaseEquity(equity);
+            tickerPrice.PopulateDatabaseEquity(equity);
 
 
             //equity.MarketPrice = tp.Price;
@@ -117,10 +118,10 @@ public class FinanceService : IFinanceService
             //    equity.Symbol += ".TO";
             //}
 
-            if (holding.Currency != tp.Currency)
+            if (holding.Currency != tickerPrice.Currency)
             {
                 decimal exchangeRate = holding.Currency == "CAD" ?  await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-                equity.CurrentPrice = tp.Price * exchangeRate;
+                equity.CurrentPrice = tickerPrice.Price * exchangeRate;
             }
 
             snapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
@@ -194,13 +195,12 @@ public class FinanceService : IFinanceService
 
     public async Task<Equity?> AddsNewEquityAsync(Equity equity)
     {
-        var result = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol);
+        var tickerPrice = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol);
 
-        if (result == null || !string.IsNullOrEmpty(result?.Error))
+        if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {
             return null;
         }
-
 
         //if (equity.Holding.Type == HoldingType.WatchList)
         //{
@@ -209,7 +209,7 @@ public class FinanceService : IFinanceService
 
         equity.LastTxnType = GetLastTxnType(equity.Holding.Type);
         equity.LastTxnAt = DateTime.UtcNow;
-        result!.ToDatabaseEquity(equity);
+        tickerPrice!.PopulateDatabaseEquity(equity);
 
         return await _modelService.CreateEquityAsync(equity);
     }
@@ -218,39 +218,40 @@ public class FinanceService : IFinanceService
 
     public async Task<EquityMarket?> GetStockFullInformationAsync(string symbol, string market = "US")
     {
-        EquityMarket dbEquityMarket = new EquityMarket() { };
-
         Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
 
-        EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, dict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+        EquityMarket dbEquityMarket = DbEntityMapper.PopulateDbEntityFromDictionary<EquityMarket>(
+            data: dict!, 
+            metadata: YahooFinanceMetadata.YahooFullPriceToEquityMarket);
 
-        if (equityMarket.Symbol != symbol)
+        if (dbEquityMarket.Symbol != symbol)
         {
-            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
+            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {dbEquityMarket.Symbol}");
             return null;
         }
 
         return dbEquityMarket;
     }
 
-    public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
-    {
-        (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
+    //public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
+    //{
+    //    (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
 
-        Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
+    //    Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
 
-        EquityMarket dbEquityMarket = new EquityMarket() { }; 
+    //    EquityMarket dbEquityMarket = new EquityMarket() { };
 
-        EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
-        equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+    //    EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+    //    equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
 
-        if (equityMarket.Symbol != symbol)
-        {             
-            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
-            return null;
-        }
+    //    if (equityMarket.Symbol != symbol)
+    //    {
+    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
+    //        return null;
+    //    }
 
-        return dbEquityMarket;
+    //    return dbEquityMarket;
+    //}
 
 
         //try
@@ -299,10 +300,10 @@ public class FinanceService : IFinanceService
         //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
         //    return null;
         //}
-    }
+    //}
 
 
-    public async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
+    private async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
     {
         //var quote = await GetMarketSummaryAsync(symbol, market);
         EquityMarket? quote = await GetStockFullInformationAsync(symbol, market);

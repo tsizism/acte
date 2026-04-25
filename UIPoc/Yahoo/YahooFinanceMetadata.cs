@@ -1,6 +1,6 @@
 using UIPooc.Helpers;
 
-namespace UIPooc.Helpers;
+namespace UIPooc.Yahoo;
 
 /// <summary>
 /// Metadata definitions for mapping Yahoo Finance API responses to database entities
