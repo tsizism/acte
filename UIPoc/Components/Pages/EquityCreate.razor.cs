@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Radzen;
 using UIPooc.Models;
 using UIPooc.Services;
+using UIPooc.Utils;
 
 namespace UIPooc.Components.Pages;
 
@@ -99,29 +100,7 @@ public partial class EquityCreate
 
     private bool ValidateSymbol()
     {
-        var symbol = _equity.Symbol?.Trim() ?? string.Empty;
-
-        if (symbol.Length is < 1 or > 5)
-        {
-            _symbolValidationMessage = "Symbol must be between 1 and 5 characters";
-            return false;
-        }
-
-        if (!symbol.All(c => char.IsLetterOrDigit(c) || c == '.' || c == '-'))
-        {
-            _symbolValidationMessage = "Symbol can only contain letters, digits, '.', or '-'";
-            return false;
-        }
-
-        //var tickerPrice = await FinanceService.GetTickerPriceAsync(symbol);
-        //if (tickerPrice == null)
-        //{
-        //    _symbolValidationMessage = $"Symbol '{symbol}' is not valid or not found.";
-        //    return false;
-        //}
-
-        _symbolValidationMessage = string.Empty;
-        return true;
+        return EquityUtils.ValidateSymbol(_equity, out _symbolValidationMessage);
     }
 
     private async Task OnValueChange(object obj)

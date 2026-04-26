@@ -11,7 +11,6 @@ using UIPooc.Yahoo;
 
 namespace UIPooc.Services;
 
-
 public class FinanceService : IFinanceService
 {
     private readonly HttpClient _httpClient;
@@ -76,7 +75,7 @@ public class FinanceService : IFinanceService
             ticker = ticker.Replace(".TO", "");
         }
         //string market = ticker.Contains(".TO") ? "CDN" : "US";
-        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, true);
+        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {

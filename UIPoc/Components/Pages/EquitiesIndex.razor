@@ -3,6 +3,7 @@
 @using UIPooc.Services
 @using UIPooc.Models
 @using Microsoft.JSInterop
+@using UIPooc.Utils
 @rendermode InteractiveServer
 @inject IExportService ExportService
 @inject IFinanceService FinanceService
@@ -356,10 +357,13 @@
     private void CalculateTotals()
     {
         _totalValue = (decimal)(_selectedHolding?.Index ?? 0);
-        _totalGainLoss = _equities.Sum(e => e.GainLoss!.Value);
-        
-        var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
-        _totalGainLossPercent = totalCost != 0 ? _totalGainLoss / totalCost : 0;
+    
+        // _totalGainLoss = _equities.Sum(e => e.GainLoss!.Value);
+        // var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
+        // _totalGainLossPercent = totalCost != 0 ? _totalGainLoss / totalCost : 0;
+
+        EquityUtils.CalculateGainLoss(_equities, out _totalGainLoss, out _totalGainLossPercent);
+
     }
 
     // private decimal CalculateGainLoss(Equity equity)
@@ -368,17 +372,6 @@
     //     var costBasis = equity.Quantity * equity.AverageCost;
     //     return currentValue - costBasis;
     // }
-
-    private decimal CalculateGainLossPercent(Equity equity)
-    {
-        var costBasis = equity.Quantity * equity.AverageCost;
-        if (costBasis == 0) 
-        {
-            return 0;
-        }
-        
-        return equity.GainLoss!.Value / costBasis;
-    }
 
     private void NavigateToAddEquity()
     {
