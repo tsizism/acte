@@ -356,39 +356,38 @@ public class YahooHttpClient
         //                    ""marketCap"": 3503912648704
         //                    }";
 
-        //PopulateEntityStockPrice(jsonResponse, stockTickerProps);
+        Dictionary<string, object>? stockSummaryDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
 
-        Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
-
-
-        if (dict == null)
+        if (stockSummaryDict == null)
         {
-            return (new Dictionary<string, object>() { { "Error", "Failed to deserialize JSON response" } }, new Dictionary<string, object>());
+            throw new InvalidOperationException("Failed to deserialize JSON response");
         }
 
-        object pricesJson = dict["price"];
-        //Dictionary<string, object>? priceDict = tmp as Dictionary<string, object>;
-        Dictionary<string, object> priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(pricesJson.ToString());
+        if (!stockSummaryDict.TryGetValue("price", out object? pricesJson) || pricesJson == null)
+        {
+            throw new InvalidOperationException("'Price' key not found in JSON response");
+        }
 
-        //Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
+        string nestedPriceJson = pricesJson.ToString() ?? throw new InvalidOperationException("Price value is null in JSON response");
 
-        //EquityMarket dbEquityMarket = new EquityMarket();
+        Dictionary<string, object>? priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(nestedPriceJson!);
 
-        //EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, metadata);
+        if (priceDict == null)
+        {
+            throw new InvalidOperationException("Failed to deserialize nested price JSON");
+        }
 
-        //EntityMapper.PopulateFromDictionary(stockTickerProps, priceDict!);
+        if ( !stockSummaryDict!.TryGetValue("summaryDetail", out var summaryDetailJson) || summaryDetailJson == null)
+        {
+            throw new InvalidOperationException("'SummaryDetail' key not found in price JSON response");
+        }
 
-        object summaryDetailJson = dict["summaryDetail"];
-        Dictionary<string, object> summaryDetailDict = JsonSerializer.Deserialize<Dictionary<string, object>>(summaryDetailJson.ToString());
+        var summaryDetailJsonTxt = summaryDetailJson.ToString() ?? throw new InvalidOperationException("SummaryDetail value is null in JSON response");
 
-        ///YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
-        //Console.WriteLine(stockTicker.ToString());
+        Dictionary<string, object>? summaryDetailDict = JsonSerializer.Deserialize<Dictionary<string, object>>(summaryDetailJsonTxt!);
 
-        return (priceDict, summaryDetailDict);
+        return (priceDict!, summaryDetailDict!);
     }
-
-
-
 
 
     public static async Task GetSymbolFullPriceAsync(string symbol, EntityYhFullStockPrice stockTickerProps)
@@ -407,7 +406,7 @@ public class YahooHttpClient
         //                    ""marketCap"": 3503912648704
         //                    }";
 
-        PopulateEntityStockPrice(jsonResponse, stockTickerProps);
+        PopulateEntityStockPriceFromJson(jsonResponse, stockTickerProps);
 
     }
 
@@ -460,15 +459,20 @@ public class YahooHttpClient
         }
     }
 
-    public static void PopulateEntityStockPrice(string jsonResponse, EntityYhFullStockPrice stockTicker)
+    public static void PopulateEntityStockPriceFromJson(string jsonResponse, EntityYhFullStockPrice stockTicker)
     {
         Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
 
         if (dict != null)
         {
-            object tmp = dict["price"];
-            //Dictionary<string, object>? priceDict = tmp as Dictionary<string, object>;
-            Dictionary<string, object>? priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(tmp.ToString());
+            if( !dict.TryGetValue("price", out var tmp) || tmp == null)
+            {
+                throw new InvalidOperationException("'Price' key not found in JSON response");    
+            }
+
+            string priceJson = tmp.ToString() ?? throw new InvalidOperationException("Price value is null in JSON response");
+
+            Dictionary<string, object>? priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(priceJson);
             YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
             Console.WriteLine(stockTicker.ToString());
         }

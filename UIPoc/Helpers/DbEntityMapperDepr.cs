@@ -54,7 +54,7 @@ public class PropertyMetadata
 /// <summary>
 /// Provides reflection-based mapping using DbEntity attributes or PropertyMetadata dictionaries
 /// </summary>
-public static class DbEntityMapper
+public static class DbEntityMapperDepr
 {
 
 
@@ -144,7 +144,7 @@ public static class DbEntityMapper
     /// <param name="data">Source data dictionary</param>
     /// <param name="metadata">PropertyMetadata dictionary defining the mapping rules</param>
     /// <returns>The populated entity (important for value types/structs)</returns>
-    public static T PopulateDbEntityFromDictionary<T>(Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
+    private static T PopulateDbEntityFromDictionary<T>(Dictionary<string, object> data, Dictionary<string, PropertyMetadata> metadata)
     {
         T dbEquity = Activator.CreateInstance<T>();
 
@@ -367,7 +367,7 @@ public static class DbEntityMapper
     private static object? ConvertValue(object? value, Type targetType, string? format = null)
     {
         if (value == null)
-            return null;
+            throw new ArgumentNullException(nameof(value));
 
         // Handle JsonElement from System.Text.Json
         if (value is System.Text.Json.JsonElement jsonElement)
@@ -399,7 +399,9 @@ public static class DbEntityMapper
 
         // String type
         if (underlyingType == typeof(string))
-            return value.ToString();
+        {
+            return value!.ToString();
+        }
 
         // Decimal type
         if (underlyingType == typeof(decimal))

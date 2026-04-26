@@ -216,22 +216,22 @@ public class FinanceService : IFinanceService
 
     #region Quote Operations
 
-    public async Task<EquityMarket?> GetStockFullInformationAsync(string symbol, string market = "US")
-    {
-        Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
+    //private async Task<EquityMarket?> GetStockFullInfoAsync(string symbol, string market = "US")
+    //{
+    //    Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
 
-        EquityMarket dbEquityMarket = DbEntityMapper.PopulateDbEntityFromDictionary<EquityMarket>(
-            data: dict!, 
-            metadata: YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+    //    EquityMarket dbEquityMarket = DbEntityMapper.PopulateDbEntityFromDictionary<EquityMarket>(
+    //        data: dict!, 
+    //        metadata: YahooFinanceMetadata.YahooFullPriceToEquityMarket);
 
-        if (dbEquityMarket.Symbol != symbol)
-        {
-            _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {dbEquityMarket.Symbol}");
-            return null;
-        }
+    //    if (dbEquityMarket.Symbol != symbol)
+    //    {
+    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {dbEquityMarket.Symbol}");
+    //        return null;
+    //    }
 
-        return dbEquityMarket;
-    }
+    //    return dbEquityMarket;
+    //}
 
     //public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
     //{
@@ -303,16 +303,16 @@ public class FinanceService : IFinanceService
     //}
 
 
-    private async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
-    {
-        //var quote = await GetMarketSummaryAsync(symbol, market);
-        EquityMarket? quote = await GetStockFullInformationAsync(symbol, market);
-        if (quote != null)
-        {
-            await _modelService.UpsertEquityMarketAsync(quote);
-        }
-        return quote;
-    }
+    //private async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
+    //{
+    //    //var quote = await GetMarketSummaryAsync(symbol, market);
+    //    EquityMarket? quote = await GetStockFullInfoAsync(symbol, market);
+    //    if (quote != null)
+    //    {
+    //        await _modelService.UpsertEquityMarketAsync(quote);
+    //    }
+    //    return quote;
+    //}
 
     public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
     {
