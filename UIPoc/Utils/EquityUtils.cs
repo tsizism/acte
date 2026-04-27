@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Radzen.Blazor.Rendering;
+using System.Timers;
 using UIPooc.Data;
 using UIPooc.Models;
 using UIPooc.Yahoo;
@@ -10,6 +11,25 @@ namespace UIPooc.Utils;
 
 static public class EquityUtils
 {
+
+    static public string GetSymbolAdjustedToMarket(Equity equity)
+    {
+        var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+        return symbol;
+    }
+
+    static public string GetMarketFromSymbol(string symbol, out string marker)
+    {
+        marker = "US";
+        if (symbol.EndsWith(".TO"))
+        {
+            marker = "CDN";
+            symbol = symbol.Replace(".TO", "");
+        }
+        return symbol;
+    }
+
+
     static public decimal CalculateGainLossPercent(Equity equity)
     {
         var costBasis = equity.Quantity * equity.AverageCost;

@@ -50,11 +50,6 @@ public class EquityMarketSyncDaemon : BackgroundService
             }
         }
 
-        //if (market == "CDN" && !ticker.EndsWith(".TO"))
-        //{
-        //    ticker += ".TO";
-        //}
-
         TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
 
         if (!string.IsNullOrEmpty(result.Error))
@@ -162,9 +157,13 @@ public class EquityMarketSyncDaemon : BackgroundService
                 return;
             }
 
-            Equity equity = this._equities[0];
+            Equity? equity = this._equities.FirstOrDefault();
+            //Equity? equity = this._equities.Find(e => e.Symbol.Equals("ENB", StringComparison.OrdinalIgnoreCase));
 
-            await EtlEquityAsync(cancellationToken, modelService, equity);
+            // Handle case where equity is not found (should not happen since we are iterating over the list)
+
+
+            await UpdateEquityAsync(cancellationToken, modelService, equity!);
 
             this._equities.RemoveAt(0);
         }
@@ -196,15 +195,16 @@ public class EquityMarketSyncDaemon : BackgroundService
     }
 
 
-    private async Task EtlEquityAsync(CancellationToken cancellationToken, IModelService modelService, Equity equity)
+    private async Task UpdateEquityAsync(CancellationToken cancellationToken, IModelService modelService, Equity equity)
     {
         try
         {
-            var equityMarket = await modelService.GetEquityMarketBySymbolAsync(equity.Symbol);
+            string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);  
+            var equityMarket = await modelService.GetEquityMarketBySymbolAsync(marketSymbol);
 
             if (equityMarket == null)
             {
-                equityMarket = await AddEquityMarketAsync(cancellationToken, modelService, equity.Symbol);
+                equityMarket = await AddEquityMarketAsync(cancellationToken, modelService, marketSymbol);
             }
             else
             {

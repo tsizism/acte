@@ -7,6 +7,7 @@ using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
 using UIPooc.Services;
+using UIPooc.Utils;
 
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
@@ -43,7 +44,7 @@ public class TickerPriceEntity
     // TickerPriceEntity to Equity equity
     public void PopulateDatabaseEquity(Equity equity)
     {
-        var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+        var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
         if (symbol != this.Symbol)
         {

@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using UIPooc.Attributes;
 using UIPooc.Helpers;
 using UIPooc.Models;
+using UIPooc.Utils;
 using UIPooc.Yahoo;
 
 namespace UIPooc.Services;
@@ -68,13 +69,9 @@ public class FinanceService : IFinanceService
         //return cad.Price;
     }
 
+    // BCE.TO or BCE
     public async Task<decimal?> GetTickerPriceAsync(string ticker)
     {
-        if (ticker.Contains(".TO"))
-        {
-            ticker = ticker.Replace(".TO", "");
-        }
-        //string market = ticker.Contains(".TO") ? "CDN" : "US";
         TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
@@ -94,7 +91,7 @@ public class FinanceService : IFinanceService
 
         foreach (var equity in lst)
         {
-            var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
             TickerPriceEntity tickerPrice = await EquityMarketSyncDaemon.RequestTickerPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
