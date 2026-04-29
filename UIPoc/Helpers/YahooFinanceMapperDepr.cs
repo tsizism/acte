@@ -37,25 +37,25 @@ public static class YahooFinanceMapperDepr
     /// <summary>
     /// Maps EntityStockPrice2 (short format from Yahoo Finance API) to EquityMarket database model
     /// </summary>
-    public static EquityMarket ToEquityMarket(this EntityYhStockPrice source, string market = "US")
-    {
-        return new EquityMarket
-        {
-            Symbol = source.symbol ?? string.Empty,
-            Currency = source.currency ?? "USD",
-            CurrentPrice = TryParseDecimal(source.price),
-            PreviousClose = 0,
-            OpenPrice = 0,
-            DayHigh = 0,
-            DayLow = 0,
-            Volume = 0,
-            MarketCap = TryParseNullableDecimal(source.marketCap),
-            Week52High = null,
-            Week52Low = null,
-            LastUpdated = DateTime.UtcNow,
-            LastTradeTime = null,
-        };
-    }
+    //public static EquityMarket ToEquityMarket(this EntityYhStockPrice source, string market = "US")
+    //{
+    //    return new EquityMarket
+    //    {
+    //        Symbol = source.symbol ?? string.Empty,
+    //        Currency = source.currency ?? "USD",
+    //        CurrentPrice = TryParseDecimal(source.price),
+    //        PreviousClose = 0,
+    //        OpenPrice = 0,
+    //        DayHigh = 0,
+    //        DayLow = 0,
+    //        Volume = 0,
+    //        MarketCap = TryParseNullableDecimal(source.marketCap),
+    //        Week52High = null,
+    //        Week52Low = null,
+    //        LastUpdated = DateTime.UtcNow,
+    //        LastTradeTime = null,
+    //    };
+    //}
 
     #endregion
 
@@ -87,25 +87,25 @@ public static class YahooFinanceMapperDepr
     /// <summary>
     /// Updates an existing Equity entity with data from EntityStockPrice2
     /// </summary>
-    public static void UpdateFromYahooPrice(this Equity equity, EntityYhStockPrice source)
-    {
-        equity.CurrentPrice = TryParseDecimal(source.price);
-        equity.Currency = source.currency ?? equity.Currency;
+    //public static void UpdateFromYahooPrice(this Equity equity, EntityYhStockPrice source)
+    //{
+    //    equity.CurrentPrice = TryParseDecimal(source.price);
+    //    equity.Currency = source.currency ?? equity.Currency;
 
-        // Update holding highs and lows
-        var currentPrice = equity.CurrentPrice;
-        if (currentPrice > equity.HoldingHigh || equity.HoldingHigh == 0)
-        {
-            equity.HoldingHigh = currentPrice;
-            equity.HoldingHighAt = DateTime.UtcNow;
-        }
+    //    // Update holding highs and lows
+    //    var currentPrice = equity.CurrentPrice;
+    //    if (currentPrice > equity.HoldingHigh || equity.HoldingHigh == 0)
+    //    {
+    //        equity.HoldingHigh = currentPrice;
+    //        equity.HoldingHighAt = DateTime.UtcNow;
+    //    }
 
-        if (currentPrice < equity.HoldingLow || equity.HoldingLow == 0)
-        {
-            equity.HoldingLow = currentPrice;
-            equity.HoldingLowAt = DateTime.UtcNow;
-        }
-    }
+    //    if (currentPrice < equity.HoldingLow || equity.HoldingLow == 0)
+    //    {
+    //        equity.HoldingLow = currentPrice;
+    //        equity.HoldingLowAt = DateTime.UtcNow;
+    //    }
+    //}
 
     #endregion
 
@@ -114,26 +114,26 @@ public static class YahooFinanceMapperDepr
     /// <summary>
     /// Updates an existing Equity entity with data from EquityMarket cache
     /// </summary>
-    public static void UpdateFromEquityMarket(this Equity equity, EquityMarket source)
-    {
-        equity.CurrentPrice = source.CurrentPrice;
-        equity.Currency = source.Currency;
-        //equity.CompanyName = source.CompanyName ?? equity.CompanyName;
+    //public static void UpdateFromEquityMarket(this Equity equity, EquityMarket source)
+    //{
+    //    equity.CurrentPrice = source.CurrentPrice;
+    //    equity.Currency = source.Currency;
+    //    //equity.CompanyName = source.CompanyName ?? equity.CompanyName;
 
-        // Update holding highs and lows
-        var currentPrice = equity.CurrentPrice;
-        if (currentPrice > equity.HoldingHigh || equity.HoldingHigh == 0)
-        {
-            equity.HoldingHigh = currentPrice;
-            equity.HoldingHighAt = DateTime.UtcNow;
-        }
+    //    // Update holding highs and lows
+    //    var currentPrice = equity.CurrentPrice;
+    //    if (currentPrice > equity.HoldingHigh || equity.HoldingHigh == 0)
+    //    {
+    //        equity.HoldingHigh = currentPrice;
+    //        equity.HoldingHighAt = DateTime.UtcNow;
+    //    }
 
-        if (currentPrice < equity.HoldingLow || equity.HoldingLow == 0)
-        {
-            equity.HoldingLow = currentPrice;
-            equity.HoldingLowAt = DateTime.UtcNow;
-        }
-    }
+    //    if (currentPrice < equity.HoldingLow || equity.HoldingLow == 0)
+    //    {
+    //        equity.HoldingLow = currentPrice;
+    //        equity.HoldingLowAt = DateTime.UtcNow;
+    //    }
+    //}
 
     #endregion
 
@@ -194,26 +194,26 @@ public static class YahooFinanceMapperDepr
     /// <summary>
     /// Maps a collection of EntityStockPrice2 to EquityMarket models
     /// </summary>
-    public static List<EquityMarket> ToEquityMarkets(this IEnumerable<EntityYhStockPrice> sources, string market = "US")
-    {
-        return sources.Select(s => s.ToEquityMarket(market)).ToList();
-    }
+    //public static List<EquityMarket> ToEquityMarkets(this IEnumerable<EntityYhStockPrice> sources, string market = "US")
+    //{
+    //    return sources.Select(s => s.ToEquityMarket(market)).ToList();
+    //}
 
     /// <summary>
     /// Updates a collection of Equity entities from EquityMarket cache data
     /// </summary>
-    public static void UpdateFromEquityMarkets(this IEnumerable<Equity> equities, IEnumerable<EquityMarket> marketData)
-    {
-        var marketDict = marketData.ToDictionary(m => m.Symbol, m => m);
+    //public static void UpdateFromEquityMarkets(this IEnumerable<Equity> equities, IEnumerable<EquityMarket> marketData)
+    //{
+    //    var marketDict = marketData.ToDictionary(m => m.Symbol, m => m);
 
-        foreach (var equity in equities)
-        {
-            if (marketDict.TryGetValue(equity.Symbol, out var market))
-            {
-                equity.UpdateFromEquityMarket(market);
-            }
-        }
-    }
+    //    foreach (var equity in equities)
+    //    {
+    //        if (marketDict.TryGetValue(equity.Symbol, out var market))
+    //        {
+    //            equity.UpdateFromEquityMarket(market);
+    //        }
+    //    }
+    //}
 
     #endregion
 }

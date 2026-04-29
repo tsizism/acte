@@ -202,19 +202,55 @@ public class EquityMarketSyncDaemon : BackgroundService
             string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);  
             var equityMarket = await modelService.GetEquityMarketBySymbolAsync(marketSymbol);
 
-            if (equityMarket == null)
+            if (true) // equityMarket == null || !TimeUtils.IsEquityUpToDate(equityMarket.LastUpdated))
             {
-                equityMarket = await AddEquityMarketAsync(cancellationToken, modelService, marketSymbol);
-            }
-            else
-            {
-                if( !TimeUtils.IsEquityUpToDate(equityMarket.LastUpdated) )
+                FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
+
+                bool newEquityMarket = equityMarket == null;
+                equityMarket ??= new EquityMarket {Symbol = marketSymbol };
+
+                fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+
+                if (newEquityMarket)
                 {
-                    FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
-                    fullStockPrice.ToDatabaseEquityMarket(equityMarket);
-                    await modelService.UpdateEquityAsync(equity);
+                    await modelService.CreateEquityMarketAsync(equityMarket);
+                }
+                else
+                {
+                    await modelService.UpdateEquityMarketAsync(equityMarket);
                 }
             }
+
+
+
+            //if (equityMarket == null)
+            //{
+            //    //equityMarket = await AddEquityMarketAsync(cancellationToken, modelService, marketSymbol);
+
+            //    FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
+
+            //    equityMarket = new EquityMarket
+            //    {
+            //        Symbol = marketSymbol
+            //    };
+
+            //    fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+
+            //    //using IServiceScope scope = _serviceProvider.CreateScope();
+            //    //IModelService _modelService = scope.ServiceProvider.GetRequiredService<IModelService>();
+            //    await modelService.CreateEquityMarketAsync(equityMarket);
+
+            //}
+            //else
+            //{
+            //    if( !TimeUtils.IsEquityUpToDate(equityMarket.LastUpdated) )
+            //    {
+            //        FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(equity.Symbol);
+            //        fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+            //        await modelService.UpdateEquityMarketAsync(equityMarket);
+            //        //await modelService.UpdateEquityAsync(equity);
+            //    }
+            //}
 
 
             //if (equityMarket != null)

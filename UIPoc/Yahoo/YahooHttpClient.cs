@@ -54,10 +54,19 @@ public class TickerPriceEntity
         equity.Currency = this.Currency;
         equity.MarketPrice = this.Price;
         equity.CurrentPrice = this.Price;
-        equity.HoldingHigh = equity.CurrentPrice;
-        equity.HoldingHighAt = this.LastUpdated;
-        equity.HoldingLow = equity.CurrentPrice;
-        equity.HoldingLowAt = this.LastUpdated;
+
+
+        if (equity.CurrentPrice > equity.HoldingHigh)
+        {
+            equity.HoldingHigh = equity.CurrentPrice;
+            equity.HoldingHighAt = DateTime.UtcNow;
+        }
+
+        if (equity.CurrentPrice < equity.HoldingLow)
+        {
+            equity.HoldingLow = equity.CurrentPrice;
+            equity.HoldingLowAt = DateTime.UtcNow;
+        }
 
         equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
         equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;

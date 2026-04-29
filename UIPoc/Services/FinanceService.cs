@@ -857,21 +857,21 @@ class FinanceServiceTest
 }
 
 
-[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Short format stock price from Yahoo Finance API")]
-public struct EntityYhStockPrice
-{
-    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, Description = "Stock ticker symbol")]
-    public string symbol { get; set; }
+//[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Short format stock price from Yahoo Finance API")]
+//public struct EntityYhStockPrice
+//{
+//    [DbProperty(SourceName = "symbol", ColumnName = "Symbol", IsRequired = true, Description = "Stock ticker symbol")]
+//    public string symbol { get; set; }
 
-    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)", Description = "Current stock price")]
-    public string price { get; set; }
+//    [DbProperty(SourceName = "price", ColumnName = "CurrentPrice", IsRequired = true, DbType = "decimal(18,2)", Description = "Current stock price")]
+//    public string price { get; set; }
 
-    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD", Description = "Currency code")]
-    public string currency { get; set; }
+//    [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD", Description = "Currency code")]
+//    public string currency { get; set; }
 
-    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)", Description = "Market capitalization")]
-    public string marketCap { get; set; }
-}
+//    [DbProperty(SourceName = "marketCap", ColumnName = "MarketCap", DbType = "decimal(18,2)", Description = "Market capitalization")]
+//    public string marketCap { get; set; }
+//}
 
 [DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
 public struct EntityYhFullStockPrice
