@@ -32,7 +32,31 @@ public class FinanceService : IFinanceService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
 
+    private async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, bool canUseCache = true)
+    {
+        if (canUseCache && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var _cachedPrice))
+        {
+            if (!TimeUtils.IsTradingTime())
+            {
+                return _cachedPrice;
+            }
 
+            if (!TimeUtils.IsTicketPriceCacheExpired(_cachedPrice.LastUpdated))
+            {
+                return _cachedPrice;
+            }
+        }
+
+        TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
+
+        if (!string.IsNullOrEmpty(result.Error))
+        {
+            return result;
+        }
+
+        EquityMarketSyncDaemon._priceCache[ticker] = result;
+        return result;
+    }
 
 
     /// <summary>
@@ -50,7 +74,7 @@ public class FinanceService : IFinanceService
         //currency: "USD"
 
 
-        var usd = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CADUSD=X");
+        var usd = await RequestTickerPriceAsync("CADUSD=X");
         return usd.Price;
 
     }
@@ -61,8 +85,8 @@ public class FinanceService : IFinanceService
         //price: 1.3723
         //currency: "CAD"
 
-        var cm = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM");
-        var cmto = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CM.TO");
+        var cm = await RequestTickerPriceAsync("CM");
+        var cmto = await RequestTickerPriceAsync("CM.TO");
         return cmto.Price / cm.Price;
 
         //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
@@ -72,7 +96,7 @@ public class FinanceService : IFinanceService
     // BCE.TO or BCE
     public async Task<decimal?> GetTickerPriceAsync(string ticker)
     {
-        TickerPriceEntity tp = await EquityMarketSyncDaemon.RequestTickerPriceAsync(ticker, canUseCache: false);
+        TickerPriceEntity tp = await RequestTickerPriceAsync(ticker, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -92,7 +116,7 @@ public class FinanceService : IFinanceService
         foreach (var equity in lst)
         {
             var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
-            TickerPriceEntity tickerPrice = await EquityMarketSyncDaemon.RequestTickerPriceAsync(symbol);
+            TickerPriceEntity tickerPrice = await RequestTickerPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
             //                    ""price"": 230.4584, 
@@ -191,7 +215,7 @@ public class FinanceService : IFinanceService
 
     public async Task<Equity?> AddsNewEquityAsync(Equity equity)
     {
-        var tickerPrice = await EquityMarketSyncDaemon.RequestTickerPriceAsync(equity.Symbol);
+        var tickerPrice = await RequestTickerPriceAsync(equity.Symbol);
 
         if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {

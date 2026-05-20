@@ -25,6 +25,7 @@ public class EquityMarketSyncDaemon : BackgroundService
     public static readonly Dictionary<string, Equity> _equity = new(StringComparer.OrdinalIgnoreCase);
 
     private List<Equity> _equities;
+    
     public EquityMarketSyncDaemon(IServiceProvider serviceProvider, ILogger<EquityMarketSyncDaemon> logger)
     {
         _serviceProvider = serviceProvider;
@@ -32,36 +33,7 @@ public class EquityMarketSyncDaemon : BackgroundService
         _equities = new List<Equity>();
     }
 
-
-
-
-    static public async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, bool canUseCache = true)
-    {
-        if (canUseCache && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var _cachedPrice))
-        {
-            if (!TimeUtils.IsTradingTime())
-            {
-                return _cachedPrice;
-            }
-
-            if (!TimeUtils.IsTicketPriceCacheExpired(_cachedPrice.LastUpdated))
-            {
-                return _cachedPrice;
-            }
-        }
-
-        TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
-
-        if (!string.IsNullOrEmpty(result.Error))
-        {
-            return result;
-        }
-
-        EquityMarketSyncDaemon._priceCache[ticker] = result;
-        return result;
-    }
-
-    static public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
+    static private async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
     {
         if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
         {
@@ -99,7 +71,8 @@ public class EquityMarketSyncDaemon : BackgroundService
             {
                 if (TimeUtils.IsTradingTime())
                 {
-                    //
+                    // Only update the price cache during trading hours to ensure we have the most up-to-date prices for any real-time features,
+                    // but avoid doing the full sync which is more resource intensive and not necessary during trading hours
                 }
                 else // Only sync during non-trading hours to avoid hitting API rate limits and to ensure we get the closing price on weekedays
                 {
@@ -204,6 +177,10 @@ public class EquityMarketSyncDaemon : BackgroundService
 
             if (true) // equityMarket == null || !TimeUtils.IsEquityUpToDate(equityMarket.LastUpdated))
             {
+                //using IServiceScope scope = _serviceProvider.CreateScope();
+                //IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
+                //financeService.RequestFullStockPriceAsync(marketSymbol);
+
                 FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
 
                 bool newEquityMarket = equityMarket == null;
