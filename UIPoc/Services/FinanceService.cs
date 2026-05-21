@@ -193,11 +193,13 @@ public class FinanceService : IFinanceService
             //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
             //}
 
-            await _modelService.UpdateEquityAsync(equity);
+            await _modelService.UpdateEquityAsync(equity); // needed?
 
         }
 
         holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
+
+        await _modelService.UpdateHoldingAsync(holding);
 
         try
         {
@@ -634,7 +636,7 @@ public class FinanceService : IFinanceService
                         equity.HoldingLowAt = DateTime.UtcNow;
                     }
 
-                    await _modelService.UpdateEquityAsync(equity);
+                    await _modelService.UpdateEquityAsync(equity); // needed?
                 }
             }
 

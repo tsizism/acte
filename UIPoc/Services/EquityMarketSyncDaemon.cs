@@ -115,7 +115,7 @@ public class EquityMarketSyncDaemon : BackgroundService
             // Handle case where equity is not found (should not happen since we are iterating over the list)
 
             string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity!);
-            await this.UpdateEquityAsync(cancellationToken, modelService, marketSymbol);
+            await this.CreateOrUpdateMarketEquityAsync(cancellationToken, modelService, marketSymbol);  // Needed?
 
             this._equities.RemoveAt(0);
         }
@@ -149,7 +149,7 @@ public class EquityMarketSyncDaemon : BackgroundService
 
     //string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-    private async Task UpdateEquityAsync(CancellationToken cancellationToken, IModelService modelService, string marketSymbol)
+    private async Task CreateOrUpdateMarketEquityAsync(CancellationToken cancellationToken, IModelService modelService, string marketSymbol)
     {
         try
         {

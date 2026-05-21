@@ -87,6 +87,7 @@ namespace UIPooc.Services
 
         public async Task<Holding> UpdateHoldingAsync(Holding holding)
         {
+            holding.LastUpdated = DateTime.UtcNow;
             _context.Holdings.Update(holding);
             await _context.SaveChangesAsync();
             return holding;
