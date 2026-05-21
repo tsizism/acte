@@ -169,6 +169,7 @@ namespace UIPooc.Services
 
         public async Task<Equity> UpdateEquityAsync(Equity equity)
         {
+            equity.LastUpdated = DateTime.UtcNow;
             _context.Equities.Update(equity);
             await _context.SaveChangesAsync();
             return equity;

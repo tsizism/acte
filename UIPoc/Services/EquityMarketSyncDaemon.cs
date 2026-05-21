@@ -33,27 +33,6 @@ public class EquityMarketSyncDaemon : BackgroundService
         _equities = new List<Equity>();
     }
 
-    static private async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
-    {
-        if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
-        {
-            if (!TimeUtils.IsTradingTime())
-            {
-                return _cachedFullStockPrice;
-            }
-
-            if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
-            {
-                return _cachedFullStockPrice;
-            }
-        }
-
-        FullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);
-        EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
-        return result;
-    }
-
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("EquityMarketSyncService is starting.");
@@ -135,8 +114,8 @@ public class EquityMarketSyncDaemon : BackgroundService
 
             // Handle case where equity is not found (should not happen since we are iterating over the list)
 
-
-            await UpdateEquityAsync(cancellationToken, modelService, equity!);
+            string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity!);
+            await this.UpdateEquityAsync(cancellationToken, modelService, marketSymbol);
 
             this._equities.RemoveAt(0);
         }
@@ -149,39 +128,40 @@ public class EquityMarketSyncDaemon : BackgroundService
         //_logger.LogInformation("Equity market sync completed: {Success} successful, {Failures} failed", successCount, failureCount);
     }
 
-    private async Task<EquityMarket> AddEquityMarketAsync(CancellationToken cancellationToken, IModelService modelService, string symbol)
-    {
-        FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(symbol);
+    //private async Task<EquityMarket> AddEquityMarketAsync(CancellationToken cancellationToken, IModelService modelService, string symbol)
+    //{
+    //    FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(symbol);
 
-        EquityMarket equityMarket = new EquityMarket
-        {
-            Symbol = symbol
-        };
+    //    EquityMarket equityMarket = new EquityMarket
+    //    {
+    //        Symbol = symbol
+    //    };
 
-        fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+    //    fullStockPrice.ToDatabaseEquityMarket(equityMarket);
 
-        //using IServiceScope scope = _serviceProvider.CreateScope();
-        //IModelService _modelService = scope.ServiceProvider.GetRequiredService<IModelService>();
-        await modelService.CreateEquityMarketAsync(equityMarket);
+    //    //using IServiceScope scope = _serviceProvider.CreateScope();
+    //    //IModelService _modelService = scope.ServiceProvider.GetRequiredService<IModelService>();
+    //    await modelService.CreateEquityMarketAsync(equityMarket);
 
-        return equityMarket;
-    }
+    //    return equityMarket;
+    //}
 
 
-    private async Task UpdateEquityAsync(CancellationToken cancellationToken, IModelService modelService, Equity equity)
+    //string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+
+    private async Task UpdateEquityAsync(CancellationToken cancellationToken, IModelService modelService, string marketSymbol)
     {
         try
         {
-            string marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);  
-            var equityMarket = await modelService.GetEquityMarketBySymbolAsync(marketSymbol);
+            EquityMarket? equityMarket = await modelService.GetEquityMarketBySymbolAsync(marketSymbol);
 
             if (true) // equityMarket == null || !TimeUtils.IsEquityUpToDate(equityMarket.LastUpdated))
             {
-                //using IServiceScope scope = _serviceProvider.CreateScope();
-                //IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
-                //financeService.RequestFullStockPriceAsync(marketSymbol);
+                using IServiceScope scope = _serviceProvider.CreateScope();
+                IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
+                FullStockPriceEntity? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
 
-                FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
+                //FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
 
                 bool newEquityMarket = equityMarket == null;
                 equityMarket ??= new EquityMarket {Symbol = marketSymbol };
@@ -246,7 +226,7 @@ public class EquityMarketSyncDaemon : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error syncing {Symbol} ({Market})", equity.Symbol, equity.Market);
+            _logger.LogError(ex, "Error syncing {Symbol} ({Market})", marketSymbol, marketSymbol);
             //failureCount++;
         }
         //}

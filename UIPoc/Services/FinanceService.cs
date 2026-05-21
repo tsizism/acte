@@ -58,6 +58,27 @@ public class FinanceService : IFinanceService
         return result;
     }
 
+    public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
+    {
+        if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
+        {
+            if (!TimeUtils.IsTradingTime())
+            {
+                return _cachedFullStockPrice;
+            }
+
+            if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
+            {
+                return _cachedFullStockPrice;
+            }
+        }
+
+        FullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);
+        EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
+        return result;
+    }
+
+
 
     /// <summary>
     /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
@@ -171,6 +192,9 @@ public class FinanceService : IFinanceService
             //    });
             //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
             //}
+
+            await _modelService.UpdateEquityAsync(equity);
+
         }
 
         holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);

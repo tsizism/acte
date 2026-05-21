@@ -1,4 +1,5 @@
 using UIPooc.Models;
+using UIPooc.Yahoo;
 
 namespace UIPooc.Services;
 
@@ -29,6 +30,7 @@ public interface IFinanceService
     // Search
     Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
     //Task<TickerPriceEntity> GetTickerPriceAsync(string ticker);
+    Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
     Task<decimal> GetCADUSDExchangeRateAsync();
     Task<decimal> GetCADExchangeRateAsync();
     Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding);
