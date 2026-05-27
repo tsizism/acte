@@ -48,7 +48,7 @@ public class TickerPriceEntity
 
         if (symbol != this.Symbol)
         {
-            throw new InvalidOperationException("FullStockPriceEntityPrice.ToEquity: Symbol mismatch.");
+            throw new InvalidOperationException("TickerPriceEntity.PopulateDatabaseEquity: Symbol mismatch.");
         }
 
         equity.Currency = this.Currency;
@@ -62,7 +62,7 @@ public class TickerPriceEntity
             equity.HoldingHighAt = DateTime.UtcNow;
         }
 
-        if (equity.CurrentPrice < equity.HoldingLow)
+        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
         {
             equity.HoldingLow = equity.CurrentPrice;
             equity.HoldingLowAt = DateTime.UtcNow;

@@ -148,16 +148,10 @@ public class FinanceService : IFinanceService
 
             tickerPrice.PopulateDatabaseEquity(equity);
 
-
-            //equity.MarketPrice = tp.Price;
-            //equity.Currency = tp.Currency;
-            //equity.CurrentPrice = tp.Price;
-            //equity.Symbol = tp.Symbol;
-
-            //if (tp.Currency == "CAD")
-            //{
-            //    equity.Symbol += ".TO";
-            //}
+            if(holding.Currency == null)
+            {
+                throw new Exception("Holding currency is null.");
+            }
 
             if (holding.Currency != tickerPrice.Currency)
             {
