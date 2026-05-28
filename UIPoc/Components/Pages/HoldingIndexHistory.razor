@@ -1,0 +1,125 @@
+@page "/holdings/{HoldingId:int}/history"
+@using UIPooc.Models
+@rendermode InteractiveServer
+
+<RadzenNotification />
+
+<PageTitle>Holding History</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                             Click="@GoBack" title="Back to Holdings" />
+                <RadzenText TextStyle="TextStyle.H3">Holding Index History</RadzenText>
+                @if (_holding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-left: 0.5rem;">— @_holding.Name</RadzenText>
+                }
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (_holding != null)
+    {
+        <RadzenCard>
+            <RadzenStack Gap="1rem">
+                <RadzenRow AlignItems="AlignItems.Center">
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Current Index: <strong>@_holding.Index.ToString("N2")</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Currency: <strong>@_holding.Currency</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_holding.Type)" Text="@_holding.Type.ToString()" />
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenText TextStyle="TextStyle.H6">
+                            Equities: <strong>@_holding.Equities.Count</strong>
+                        </RadzenText>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (_historyEntries != null && _historyEntries.Count > 0)
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H6">
+                Total History Entries: <strong>@_historyEntries.Count</strong>
+            </RadzenText>
+        </RadzenCard>
+
+        <RadzenDataGrid Data="@_historyEntries"
+                       TItem="IndexHistory"
+                       AllowFiltering="true"
+                       AllowSorting="true"
+                       AllowPaging="true"
+                       PageSize="20"
+                       PagerHorizontalAlign="HorizontalAlign.Center"
+                       FilterMode="FilterMode.Simple"
+                       Style="height: 800px">
+            <Columns>
+                <RadzenDataGridColumn TItem="IndexHistory" Property="RecordedAt" Title="Date" Width="180px" FormatString="{0:yyyy-MM-dd}" Frozen="true" SortOrder="SortOrder.Descending" />
+
+                <RadzenDataGridColumn TItem="IndexHistory" Property="Index" Title="Index Value" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="IndexHistory" Title="Change" Width="120px" TextAlign="TextAlign.Right" Sortable="false">
+                    <Template Context="history">
+                        @{
+                            var change = CalculateChange(history);
+                            var color = change >= 0 ? "green" : "red";
+                            var arrow = change >= 0 ? "↑" : "↓";
+                        }
+                        @if (change != 0)
+                        {
+                            <span style="color: @color; font-weight: bold;">@arrow @change.ToString("N2")</span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="IndexHistory" Title="Change %" Width="120px" TextAlign="TextAlign.Right" Sortable="false">
+                    <Template Context="history">
+                        @{
+                            var changePercent = CalculateChangePercent(history);
+                            var color = changePercent >= 0 ? "green" : "red";
+                        }
+                        @if (changePercent != 0)
+                        {
+                            <span style="color: @color; font-weight: bold;">@changePercent.ToString("P2")</span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="IndexHistory" Property="HoldingSnapshot" Title="Snapshot" Width="300px" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenText>No history entries found for this holding.</RadzenText>
+        </RadzenAlert>
+    }
+</RadzenStack>

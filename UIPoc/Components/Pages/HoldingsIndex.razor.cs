@@ -73,6 +73,11 @@ public partial class HoldingsIndex
         NavigationManager.NavigateTo($"/equities/{holdingId}");
     }
 
+    private void ViewHoldingHistory(int holdingId)
+    {
+        NavigationManager.NavigateTo($"/holdings/{holdingId}/history");
+    }
+
     private void CreateNewHolding()
     {
         NavigationManager.NavigateTo("/holdings/create");

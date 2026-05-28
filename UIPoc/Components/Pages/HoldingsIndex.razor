@@ -89,11 +89,15 @@
 
                 <RadzenDataGridColumn TItem="Holding" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
-                <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="150px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                     <Template Context="holding">
                         <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => ViewEquities(holding.HoldingId))"
-                                     title="View Equities" />
+                                     title="View Equities" 
+                                     Style="margin-right: 0.25rem" />
+                        <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                     Click="@(() => ViewHoldingHistory(holding.HoldingId))"
+                                     title="View History" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
