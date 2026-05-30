@@ -32,7 +32,7 @@ public class FinanceService : IFinanceService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
 
-    private async Task<TickerPriceEntity> RequestTickerPriceAsync(string ticker, bool canUseCache = true)
+    private async Task<YhTickerPriceEntity> RequestTickerPriceAsync(string ticker, bool canUseCache = true)
     {
         if (canUseCache && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var _cachedPrice))
         {
@@ -47,7 +47,7 @@ public class FinanceService : IFinanceService
             }
         }
 
-        TickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
+        YhTickerPriceEntity result = await YahooHttpClient.GetYhTickerPriceAsync(ticker);
 
         if (!string.IsNullOrEmpty(result.Error))
         {
@@ -58,7 +58,7 @@ public class FinanceService : IFinanceService
         return result;
     }
 
-    public async Task<FullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
+    public async Task<YhFullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
     {
         if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
         {
@@ -73,7 +73,7 @@ public class FinanceService : IFinanceService
             }
         }
 
-        FullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);
+        YhFullStockPriceEntity result = await YahooHttpClient.GetYhFullStockPrice(symbol);
         EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
         return result;
     }
@@ -117,7 +117,7 @@ public class FinanceService : IFinanceService
     // BCE.TO or BCE
     public async Task<decimal?> GetTickerPriceAsync(string ticker)
     {
-        TickerPriceEntity tp = await RequestTickerPriceAsync(ticker, canUseCache: false);
+        YhTickerPriceEntity tp = await RequestTickerPriceAsync(ticker, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -137,7 +137,7 @@ public class FinanceService : IFinanceService
         foreach (var equity in lst)
         {
             var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
-            TickerPriceEntity tickerPrice = await RequestTickerPriceAsync(symbol);
+            YhTickerPriceEntity tickerPrice = await RequestTickerPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
             //                    ""price"": 230.4584, 
@@ -357,7 +357,7 @@ public class FinanceService : IFinanceService
     public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
     {
         // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
-        EntityYhFullStockPrice entityStockPrice = new EntityYhFullStockPrice();
+        EntityYhFullStockPrice entityStockPrice = new();
         await YahooHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
 
         // Use mapper to convert Yahoo API entity to database model
@@ -662,6 +662,13 @@ public class FinanceService : IFinanceService
             throw;
         }
     }
+
+    /// <summary>
+    /// NOT CALLED! by the daemon, but can be used to manually refresh the cache for a specific symbol.
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="market"></param>
+    /// <returns></returns>
 
     public async Task<bool> RefreshMarketCacheAsync(string symbol, string market)
     {
