@@ -19,7 +19,7 @@ public interface IFinanceService
     Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US");
     Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US");
 
-    // Market Summary
+    // Market Summary 
     //Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
 
     // Batch Operations

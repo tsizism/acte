@@ -47,7 +47,7 @@ public class FinanceService : IFinanceService
             }
         }
 
-        YhStockPriceResult result = await YahooHttpClient.YhGetStockPriceAsync(ticker);
+        YhStockPriceResult result = await YhHttpClient.YhGetStockPriceAsync(ticker);
 
         if (!string.IsNullOrEmpty(result.Error))
         {
@@ -73,7 +73,7 @@ public class FinanceService : IFinanceService
             }
         }
 
-        YhGetFullStockPriceResult result = await YahooHttpClient.YhGetFullStockPrice(symbol);
+        YhGetFullStockPriceResult result = await YhHttpClient.YhGetFullStockPrice(symbol);
         EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
         return result;
     }
@@ -354,11 +354,13 @@ public class FinanceService : IFinanceService
     //    return quote;
     //}
 
+
+    
     public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
     {
         // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         EntityYhFullStockPrice entityStockPrice = new();
-        await YahooHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
+        await YhHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
 
         // Use mapper to convert Yahoo API entity to database model
         
@@ -402,6 +404,7 @@ public class FinanceService : IFinanceService
         //    return null;
         //}
     }
+    
 
     //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
     //{

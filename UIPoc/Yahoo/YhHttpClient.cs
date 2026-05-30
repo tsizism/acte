@@ -1,4 +1,5 @@
 using Microsoft.VisualBasic;
+using Microsoft.VisualBasic;
 using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -166,7 +167,7 @@ public class YhGetFullStockPricePriceResult
 }
 
 
-public class YahooHttpClient
+public class YhHttpClient
 {
     /// <summary>
     /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
@@ -368,7 +369,7 @@ public class YahooHttpClient
 
         return dict;
     }
-    */
+    
 
     public static async Task<(Dictionary<string, object>, Dictionary<string, object>)> GetStockSummaryDetailAsync(string symbol)
     {
@@ -419,12 +420,10 @@ public class YahooHttpClient
 
         return (priceDict!, summaryDetailDict!);
     }
-
+    */
 
     public static async Task GetSymbolFullPriceAsync(string symbol, EntityYhFullStockPrice stockTickerProps)
     {
-        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
-        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
         string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 
         //Dictionary<string, object>? dict = await Get(url
@@ -448,7 +447,7 @@ public class YahooHttpClient
 
         if (dict != null)
         {
-            YahooHttpClient.PopulateEntityFromDict(entity, dict);
+            YhHttpClient.PopulateEntityFromDict(entity, dict);
             Console.WriteLine(entity.ToString());
         }
 
@@ -485,7 +484,7 @@ public class YahooHttpClient
 
         if (dict != null)
         {
-            YahooHttpClient.PopulateEntityFromDict(stockTicker, dict);
+            YhHttpClient.PopulateEntityFromDict(stockTicker, dict);
             Console.WriteLine(stockTicker.ToString());
         }
     }
@@ -504,7 +503,7 @@ public class YahooHttpClient
             string priceJson = tmp.ToString() ?? throw new InvalidOperationException("Price value is null in JSON response");
 
             Dictionary<string, object>? priceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(priceJson);
-            YahooHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
+            YhHttpClient.PopulateEntityFromDict(stockTicker, priceDict!);
             Console.WriteLine(stockTicker.ToString());
         }
     }
