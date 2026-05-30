@@ -32,7 +32,13 @@ public class FinanceService : IFinanceService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
 
-    private async Task<YhStockPriceResult> RequestTickerPriceAsync(string ticker, bool canUseCache = true)
+    /// <summary>
+    /// Requests the stock price for a given ticker symbol - S(mall) result
+    /// </summary>
+    /// <param name="ticker"></param>
+    /// <param name="canUseCache"></param>
+    /// <returns></returns>
+    private async Task<YhStockPriceResult> RequestStockPriceAsync(string ticker, bool canUseCache = true)
     {
         if (canUseCache && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var _cachedPrice))
         {
@@ -58,6 +64,12 @@ public class FinanceService : IFinanceService
         return result;
     }
 
+    /// <summary>
+    /// M(edium) result - 34 keys
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="canUseCache"></param>
+    /// <returns></returns>
     public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
     {
         if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
@@ -95,7 +107,7 @@ public class FinanceService : IFinanceService
         //currency: "USD"
 
 
-        var usd = await RequestTickerPriceAsync("CADUSD=X");
+        var usd = await RequestStockPriceAsync("CADUSD=X");
         return usd.Price;
 
     }
@@ -106,18 +118,21 @@ public class FinanceService : IFinanceService
         //price: 1.3723
         //currency: "CAD"
 
-        var cm = await RequestTickerPriceAsync("CM");
-        var cmto = await RequestTickerPriceAsync("CM.TO");
+        var cm = await RequestStockPriceAsync("CM");
+        var cmto = await RequestStockPriceAsync("CM.TO");
         return cmto.Price / cm.Price;
 
         //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
         //return cad.Price;
     }
 
+    ////////////////////////  Fetch //////////////////////////////////////////////
+
+
     // BCE.TO or BCE
-    public async Task<decimal?> GetTickerPriceAsync(string ticker)
+    public async Task<decimal?> FetchTickerPriceAsync(string ticker)
     {
-        YhStockPriceResult tp = await RequestTickerPriceAsync(ticker, canUseCache: false);
+        YhStockPriceResult tp = await RequestStockPriceAsync(ticker, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -127,7 +142,7 @@ public class FinanceService : IFinanceService
         return tp?.Price;
     }
 
-    public async Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding)
+    public async Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding)
     {
         List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
         Dictionary<string, decimal> snapshotDict = new Dictionary<string, decimal>();
@@ -137,7 +152,7 @@ public class FinanceService : IFinanceService
         foreach (var equity in lst)
         {
             var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
-            YhStockPriceResult tickerPrice = await RequestTickerPriceAsync(symbol);
+            YhStockPriceResult tickerPrice = await RequestStockPriceAsync(symbol);
 
             //string ticker = @"{""symbol"": ""AAPL"", 
             //                    ""price"": 230.4584, 
@@ -213,11 +228,12 @@ public class FinanceService : IFinanceService
         return lst;
     }
 
-    public async Task<List<Holding>> GetHoldingsAsync()
+    public async Task<List<Holding>> FetchHoldingsAsync()
     {
         return await _modelService.GetAllHoldingsAsync();
     }
-    public async Task<Holding?> GetHoldingAsync(int holdingId)
+
+    public async Task<Holding?> FetchHoldingAsync(int holdingId)
     {
         return await _modelService.GetHoldingByIdAsync(holdingId);
     }
@@ -233,9 +249,9 @@ public class FinanceService : IFinanceService
     };
 
 
-    public async Task<Equity?> AddsNewEquityAsync(Equity equity)
+    public async Task<Equity?> CreateEquityAsync(Equity equity)
     {
-        var tickerPrice = await RequestTickerPriceAsync(equity.Symbol);
+        var tickerPrice = await RequestStockPriceAsync(equity.Symbol);
 
         if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {

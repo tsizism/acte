@@ -6,10 +6,10 @@ namespace UIPooc.Services;
 public interface IFinanceService
 {
     // Equity Operations
-    Task<Equity?> AddsNewEquityAsync(Equity equity);
+    Task<Equity?> CreateEquityAsync(Equity equity);
 
     // Quote Operations
-    Task<decimal?> GetTickerPriceAsync(string ticker);
+    Task<decimal?> FetchTickerPriceAsync(string ticker);
     Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US");
     Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US");
     //Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US");
@@ -33,9 +33,9 @@ public interface IFinanceService
     Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
     Task<decimal> GetCADUSDExchangeRateAsync();
     Task<decimal> GetCADExchangeRateAsync();
-    Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding);
-    Task<List<Holding>> GetHoldingsAsync();
-    Task<Holding?> GetHoldingAsync(int holdingId);
+    Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding);
+    Task<List<Holding>> FetchHoldingsAsync();
+    Task<Holding?> FetchHoldingAsync(int holdingId);
 }
 
 public class StockHistoricalData

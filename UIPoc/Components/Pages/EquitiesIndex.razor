@@ -261,7 +261,7 @@
     {
         try
         {
-            _holdings = await FinanceService.GetHoldingsAsync();
+            _holdings = await FinanceService.FetchHoldingsAsync();
         }
         catch (InvalidOperationException ex)
         {
@@ -305,7 +305,7 @@
         {
             try
             {
-                _selectedHolding = await FinanceService.GetHoldingAsync(_selectedHoldingId.Value);
+                _selectedHolding = await FinanceService.FetchHoldingAsync(_selectedHoldingId.Value);
 
                 if (_selectedHolding == null)
                 {
@@ -321,7 +321,7 @@
                     return;
                 }
 
-                _equities = await FinanceService.GetEquitiesForHoldingAsync(_selectedHolding);
+                _equities = await FinanceService.FetchEquitiesForHoldingAsync(_selectedHolding);
             }
             catch (Exception ex)
             {

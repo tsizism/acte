@@ -37,7 +37,7 @@ public partial class EquityCreate
 
         try
         {
-            _holding = await FinanceService.GetHoldingAsync(HoldingId);
+            _holding = await FinanceService.FetchHoldingAsync(HoldingId);
             _equity.Holding = _holding!;
             //_holding = await ModelService.GetHoldingByIdAsync(HoldingId);
             //_existingEquities = await ModelService.GetEquitiesByHoldingIdAsync(HoldingId);
@@ -59,7 +59,7 @@ public partial class EquityCreate
         _isSaving = true;
         try
         {
-            await FinanceService.AddsNewEquityAsync(_equity);
+            await FinanceService.CreateEquityAsync(_equity);
 
             NotificationService.Notify(new NotificationMessage
             {
@@ -106,7 +106,7 @@ public partial class EquityCreate
     private async Task OnValueChange(object obj)
     {
         string symbol = obj?.ToString()?.Trim() ?? string.Empty;
-        var tickerPrice = await FinanceService.GetTickerPriceAsync(symbol);
+        var tickerPrice = await FinanceService.FetchTickerPriceAsync(symbol);
 
         _symbolValidationMessage = tickerPrice == null ? string.Empty : $"Symbol '{symbol}' is not valid or not found.";
 
