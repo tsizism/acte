@@ -30,7 +30,7 @@ public interface IFinanceService
     // Search
     Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
     //Task<TickerPriceEntity> GetTickerPriceAsync(string ticker);
-    Task<YhFullStockPriceEntity> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
+    Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
     Task<decimal> GetCADUSDExchangeRateAsync();
     Task<decimal> GetCADExchangeRateAsync();
     Task<List<Equity>> GetEquitiesForHoldingAsync(Holding holding);

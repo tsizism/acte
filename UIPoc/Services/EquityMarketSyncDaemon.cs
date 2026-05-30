@@ -1,12 +1,56 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using Radzen.Blazor.Markdown;
 using Radzen.Blazor.Rendering;
+using System.Collections;
+using System.Timers;
 using UIPooc.Data;
 using UIPooc.Models;
 using UIPooc.Utils;
 using UIPooc.Yahoo;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace UIPooc.Services;
+
+
+/*
+For your case, I would usually combine:
+1.	Component Diagram → high-level architecture 
+2.	Activity Diagram → scheduling logic/runtime flow
+
+Good tools
+•	draw.io (diagrams.net) 
+•	Lucidchart 
+•	PlantUML 
+•	Mermaid
+
+
+Write Component Diagram using mermaid for software scheduler of 3 workers. Trading worker - time (9:30 -16:00 est), Overnight worker- Between trading days, OffTrading worker – weekend or holiday
+Scheduler maintains cache which is a dictionary with market ticker as key. Value has Market previous day price, current price, market currency, Update Time, day high day low and TTL. 
+Trading worker checks cache with Trading TTL, database with Trading TTL, last resort queries Yh client for Stock Price (short result) and update cache and db.
+Overnight worker checks cache with Overnight TTL, database with Overnight TTL, last resort queries Yh client for Full Stock Price (full result) and update cache and db.
+OffTrading worker – checks Stock Full Information and updates summary,52 weeks, 50day, 200day etc info in stock market table
+
+flowchart TD
+    Start([Ticker Request])
+    MarketOpen{Market Open?}
+    Trading["Trading Worker"]
+    Overnight{Trading Day
+    After Close?}
+    OvernightWorker["Overnight Worker"]
+    OffTrading["OffTrading Worker"]
+    End([Process Complete])
+    Start --> MarketOpen
+    MarketOpen -->|Yes| Trading
+    MarketOpen -->|No| Overnight
+    Overnight -->|Yes| OvernightWorker
+    Overnight -->|No| OffTrading
+    Trading --> End
+    OvernightWorker --> End
+    OffTrading --> End
+
+*/
 
 public readonly struct StockPriceSnapshot(decimal price, DateTime lastUpdated)
 {
@@ -19,8 +63,8 @@ public class EquityMarketSyncDaemon : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     //private readonly IModelService _modelService;
     private readonly ILogger<EquityMarketSyncDaemon> _logger;
-    public static readonly Dictionary<string, YhTickerPriceEntity>    _priceCache = new(StringComparer.OrdinalIgnoreCase);
-    public static readonly Dictionary<string, YhFullStockPriceEntity> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhStockPriceResult>    _priceCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhGetFullStockPriceResult> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
 
     public static readonly Dictionary<string, Equity> _equity = new(StringComparer.OrdinalIgnoreCase);
 
@@ -159,7 +203,7 @@ public class EquityMarketSyncDaemon : BackgroundService
             {
                 using IServiceScope scope = _serviceProvider.CreateScope();
                 IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
-                YhFullStockPriceEntity? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
+                YhGetFullStockPriceResult? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
 
                 //FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
 

@@ -28,12 +28,19 @@ using UIPooc.Utils;
  * 
 */
 
+// Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
+// Stock Full Information - "https://yh-finance-complete.p.rapidapi.com/fullData?ticker=bce"), 85 keys
+// Stock Full Information - "https://yh-finance-complete.p.rapidapi.com/fullData?ticker=bce.to"), 81 keys
+// Stock Summary Detail - https://yh-finance-complete.p.rapidapi.com/yhf?ticker=bce, 40 + 45 keys (price + summaryDetail)
+// Financials-Full Stock Price - "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce" -38 keys
+//                               "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce.to"),  - 28 keys
+
 
 namespace UIPooc.Yahoo;
 
 // DTO for stock ticker price information retrieved from Yahoo Finance API
 // Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
-public class YhTickerPriceEntity
+public class YhStockPriceResult
 {
     public string Symbol { get; set; } = string.Empty;
     public decimal Price { get; set; }
@@ -79,9 +86,9 @@ public class YhTickerPriceEntity
 //                               "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce.to"),  - 28 keys
 
 // $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
-public class YhFullStockPriceEntity
+public class YhGetFullStockPriceResult
 {
-    public YhFullStockPriceEntityPrice? Price { get; set; }
+    public YhGetFullStockPricePriceResult? Price { get; set; }
     public DateTime LastUpdated { get; set; }
 
     public Equity ToDatabaseEquity(Equity equity)
@@ -127,7 +134,7 @@ public class YhFullStockPriceEntity
         equityMarket.LastUpdated = DateTime.UtcNow;
     }
 }
-public class YhFullStockPriceEntityPrice
+public class YhGetFullStockPricePriceResult
 {
     public int MaxAge { get; set; }//maxAge:1
     public decimal RegularMarketChangePercent { get; set; } //regularMarketChangePercent:-0.009003931
@@ -161,10 +168,6 @@ public class YhFullStockPriceEntityPrice
 
 public class YahooHttpClient
 {
-    //public static async Task<Dictionary<string, object>?> Get(string url)
-
-
-
     /// <summary>
     /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
     /// GET Stock Price
@@ -172,7 +175,7 @@ public class YahooHttpClient
     /// </summary>
     /// <param name="ticker"></param>
     /// <returns></returns>
-    public static async Task<YhTickerPriceEntity> GetYhTickerPriceAsync(string ticker)
+    public static async Task<YhStockPriceResult> YhGetStockPriceAsync(string ticker)
     {
         var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
         // full include 52weeks
@@ -184,7 +187,7 @@ public class YahooHttpClient
 
         if (jsonResponse == null)
         {
-            return new YhTickerPriceEntity() { Error = "GetYhTickerPriceAsync: Get returned empty string" };
+            return new YhStockPriceResult() { Error = "YhGetStockPriceAsync: Get returned empty string" };
         }
 
         if (jsonResponse.Contains("error"))
@@ -193,12 +196,12 @@ public class YahooHttpClient
 
             if (dict1 == null)
             {
-                return new YhTickerPriceEntity() { Error = "GetYhTickerPriceAsync: Failed to parse JSON response" };
+                return new YhStockPriceResult() { Error = "YhGetStockPriceAsync: Failed to parse JSON response" };
             }
 
             string errorMessage = dict1.ContainsKey("error") ? dict1["error"].ToString() ?? "Unknown error" : "Undefined error";    
 
-            return new YhTickerPriceEntity() { Error = errorMessage };
+            return new YhStockPriceResult() { Error = errorMessage };
         }
 
         //string ticker = @"{""symbol"": ""AAPL"", 
@@ -208,23 +211,28 @@ public class YahooHttpClient
         //                    ""marketCap"": 3503912648704
         //                    }";
 
-        YhTickerPriceEntity? result = JsonSerializer.Deserialize<YhTickerPriceEntity>(jsonResponse, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+        YhStockPriceResult? result = JsonSerializer.Deserialize<YhStockPriceResult>(jsonResponse, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
 
         if (result == null)
         {
-            result=  new YhTickerPriceEntity();
+            result=  new YhStockPriceResult();
         }
         result.LastUpdated = DateTime.UtcNow;
         return result;
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////
+
     /// <summary>
-    /// Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
-    /// </summary>
+    /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
+    /// GET Stock Price
+    /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"),
+    /// <summary>
     /// <param name="ticker"></param>
     /// <param name="stockTickerProps"></param>
     /// <returns></returns>
-    public static async Task GetTickerPriceInfoAsync(string ticker, YhTickerPriceEntity entityYhPrice)
+    /*
+    public static async Task GetTickerPriceInfoAsyncDepr(string ticker, YhStockPriceResult entityYhPrice)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
         // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
@@ -248,15 +256,21 @@ public class YahooHttpClient
 
         FromJson(jsonResponse, entityYhPrice);
     }
+    */
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
 
-    public static async Task<YhFullStockPriceEntity> GetYhFullStockPrice(string symbol)
+    /// <summary>
+    /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
+    /// GET Full Stock Price
+    /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/price?symbol=bce"),
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+
+    public static async Task<YhGetFullStockPriceResult> YhGetFullStockPrice(string symbol)
     {
-        // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
-        // Short stock price endpoint: https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=AAPL
-        //string urlYhComplete =       $"https://yh-finance-complete.p.rapidapi.com/price?symbol={ticker}";
-
-
         var url = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 
 
@@ -270,24 +284,24 @@ public class YahooHttpClient
         //                    ""marketCap"": 3503912648704
         //                    }";
 
-        YhFullStockPriceEntity? result = JsonSerializer.Deserialize<YhFullStockPriceEntity>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        YhGetFullStockPriceResult? result = JsonSerializer.Deserialize<YhGetFullStockPriceResult>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         if (result == null)
         {
-            result = new YhFullStockPriceEntity();
+            result = new YhGetFullStockPriceResult();
         }
         result.LastUpdated = DateTime.UtcNow;
         return result;
     }
-    // Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
-    // Stock Full Information - "https://yh-finance-complete.p.rapidapi.com/fullData?ticker=bce"), 85 keys
-    // Stock Full Information - "https://yh-finance-complete.p.rapidapi.com/fullData?ticker=bce.to"), 81 keys
-    // Stock Summary Detail - https://yh-finance-complete.p.rapidapi.com/yhf?ticker=bce, 40 + 45 keys (price + summaryDetail)
-    // Financials-Full Stock Price - "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce" -38 keys
-    //                               "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce.to"),  - 28 keys
 
-
-    public static bool FromJson(string json, YhTickerPriceEntity entityYhPrice)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="json"></param>
+    /// <param name="entityYhPrice"></param>
+    /// <returns></returns>
+    public static bool FromJson(string json, YhStockPriceResult entityYhPrice)
     {
         Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         if (dict == null)
@@ -295,7 +309,7 @@ public class YahooHttpClient
             return false;
         }
 
-        foreach (FieldInfo field in typeof(YhTickerPriceEntity).GetFields(BindingFlags.Public | BindingFlags.Instance))
+        foreach (FieldInfo field in typeof(YhStockPriceResult).GetFields(BindingFlags.Public | BindingFlags.Instance))
         {
             if (dict.TryGetValue(field.Name, out var value))
             {
@@ -305,7 +319,7 @@ public class YahooHttpClient
         return true;
     }
 
-
+    /*
     public static async Task<Dictionary<string, object>> GetStockFullInformationAsync(string symbol)
     {
         // Full stock price endpoint:  https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
@@ -354,7 +368,7 @@ public class YahooHttpClient
 
         return dict;
     }
-
+    */
 
     public static async Task<(Dictionary<string, object>, Dictionary<string, object>)> GetStockSummaryDetailAsync(string symbol)
     {
