@@ -43,20 +43,43 @@ namespace UIPooc.Yahoo;
 // Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
 
 
+
+
 public class YhHttpClient
 {
+    private static string? _httpToken;
+    private static readonly object _tokenLock = new object();
+
+    /// <summary>
+    /// Gets the HTTP token from file, cached after first read
+    /// </summary>
+    public static string HttpToken
+    {
+        get
+        {
+            if (_httpToken == null)
+            {
+                lock (_tokenLock)
+                {
+                    if (_httpToken == null)
+                    {
+                        _httpToken = File.ReadAllText("cfg.user");
+                    }
+                }
+            }
+            return _httpToken;
+        }
+    }
+
     static public async Task<string> HttpGet(string url)
     {
-        //  Secret Manager
-        string token = File.ReadAllText("cfg.user");
+        string token = HttpToken;
 
         HttpClient client = new HttpClient();
         HttpRequestMessage request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(url),
-
-
 
             Headers =
                 {

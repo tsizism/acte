@@ -33,7 +33,7 @@ Overnight worker checks cache with Overnight TTL, database with Overnight TTL, l
 OffTrading worker – checks Stock Full Information and updates summary,52 weeks, 50day, 200day etc info in stock market table
 
 flowchart TD
-    Start([Ticker Request])
+    Start([Ticker Price Request])
     MarketOpen{Market Open?}
     Trading["Trading Worker"]
     Overnight{Trading Day
@@ -49,6 +49,69 @@ flowchart TD
     Trading --> End
     OvernightWorker --> End
     OffTrading --> End
+
+Write Activity Diagram using mermaid for software scheduler of 3 workers. Trading worker - time (9:30 -16:00 est), Overnight worker- Between trading days, OffTrading worker – weekend or holiday
+Scheduler maintains cache which is a dictionary with market ticker as key. Value has Market previous day price, current price, market currency, Update Time, day high day low and TTL. 
+Trading worker checks cache with Trading TTL, database with Trading TTL, last resort queries Yh client for Stock Price (short result) and update cache and db.
+Overnight worker checks cache with Overnight TTL, database with Overnight TTL, last resort queries Yh client for Full Stock Price (full result) and update cache and db.
+OffTrading worker – checks Stock Full Information and updates summary,52 weeks, 50day, 200day etc info in stock market table
+
+---
+config:
+  layout: fixed
+---
+flowchart TD
+    Start([Ticker Price Request])
+    SelectWorker{Current Time?}
+    Trading["Trading Worker
+    09:30 - 16:00 EST"]
+    Overnight["Overnight Worker
+    Between Trading Days"]
+    OffTrading["OffTrading Worker
+    Weekend / Holiday"]
+    Start --> SelectWorker
+    SelectWorker -->|Market Open| Trading
+    SelectWorker -->|After Close| Overnight
+    SelectWorker -->|Weekend/Holiday| OffTrading
+
+    %% Trading Worker Flow
+    Trading --> TCache{"Cache Entry
+    Trading TTL Valid?"}
+    TCache -->|Yes| ReturnTrading["Return Price"]
+    TCache -->|No| TDB{"Database Entry
+    Trading TTL Valid?"}
+    TDB -->|Yes| UpdateTradingCache["Refresh Cache"]
+    UpdateTradingCache --> ReturnTrading
+    TDB -->|No| TYH["Yahoo Finance 
+    Get Stock Price (Short)"]
+    TYH --> UpdateTrading["Update Cache & DB"]
+    UpdateTrading --> ReturnTrading
+
+    %% Overnight Worker Flow
+    Overnight --> OCache{"Cache Entry
+    Overnight TTL Valid?"}
+    OCache -->|Yes| ReturnOvernight["Return Full Price"]
+    OCache -->|No| ODB{"Database Entry
+    Overnight TTL Valid?"}
+    ODB -->|Yes| UpdateOvernightCache["Refresh Cache"]
+    UpdateOvernightCache --> ReturnOvernight
+    ODB -->|No| OYH["Yahoo Finance
+    Get Stock Price (Medium)"]
+    OYH --> UpdateOvernight["Update Cache & DB"]
+    UpdateOvernight --> ReturnOvernight
+
+    %% OffTrading Worker Flow
+    OffTrading --> FullInfo["Yahoo Finance
+    Get Full Stock Information"]
+    FullInfo --> UpdateMarketTable["Update Stock Table
+    • Summary
+    • 52 Week High/Low
+    • 50 Day Average
+    • 200 Day Average
+    • Market Statistics"]
+    UpdateMarketTable --> End([Complete])
+    ReturnTrading --> End
+    ReturnOvernight --> End
 
 */
 
