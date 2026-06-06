@@ -1,0 +1,52 @@
+flowchart TD
+    Start([Ticker Request])
+    SelectWorker{Current Time?}
+    Trading["Trading Worker
+    09:30 - 16:00 EST"]
+    Overnight["Overnight Worker
+    Between Trading Days"]
+    OffTrading["OffTrading Worker
+    Weekend / Holiday"]
+    Start --> SelectWorker
+    SelectWorker -->|Market Open| Trading
+    SelectWorker -->|After Close| Overnight
+    SelectWorker -->|Weekend/Holiday| OffTrading
+
+    %% Trading Worker Flow
+    Trading --> TCache{"Cache Entry
+    Trading TTL Valid?"}
+    TCache -->|Yes| ReturnTrading["Return Price"]
+    TCache -->|No| TDB{"Database Entry
+    Trading TTL Valid?"}
+    TDB -->|Yes| UpdateTradingCache["Refresh Cache"]
+    UpdateTradingCache --> ReturnTrading
+    TDB -->|No| TYH["Yahoo Finance
+    Short Stock Price"]
+    TYH --> UpdateTrading["Update Cache & DB"]
+    UpdateTrading --> ReturnTrading
+
+    %% Overnight Worker Flow
+    Overnight --> OCache{"Cache Entry
+    Overnight TTL Valid?"}
+    OCache -->|Yes| ReturnOvernight["Return Full Price"]
+    OCache -->|No| ODB{"Database Entry
+    Overnight TTL Valid?"}
+    ODB -->|Yes| UpdateOvernightCache["Refresh Cache"]
+    UpdateOvernightCache --> ReturnOvernight
+    ODB -->|No| OYH["Yahoo Finance
+    Full Stock Price"]
+    OYH --> UpdateOvernight["Update Cache & DB"]
+    UpdateOvernight --> ReturnOvernight
+
+    %% OffTrading Worker Flow
+    OffTrading --> FullInfo["Yahoo Finance
+    Full Stock Information"]
+    FullInfo --> UpdateMarketTable["Update Stock Table
+    • Summary
+    • 52 Week High/Low
+    • 50 Day Average
+    • 200 Day Average
+    • Market Statistics"]
+    UpdateMarketTable --> End([Complete])
+    ReturnTrading --> End
+    ReturnOvernight --> End

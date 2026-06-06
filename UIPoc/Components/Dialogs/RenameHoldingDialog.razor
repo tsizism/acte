@@ -1,0 +1,30 @@
+@using UIPooc.Models
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem" Style="padding: 1rem;">
+    <RadzenFormField Text="New Holding Name" Style="width: 100%;">
+        <RadzenTextBox @bind-Value="@HoldingName" Style="width: 100%;" Placeholder="Enter new holding name" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public string HoldingName { get; set; } = string.Empty;
+
+    private async Task Save()
+    {
+        DialogService.Close(HoldingName);
+        await Task.CompletedTask;
+    }
+
+    private async Task Cancel()
+    {
+        DialogService.Close(null);
+        await Task.CompletedTask;
+    }
+}

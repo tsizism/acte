@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Radzen;
 using UIPooc.Models;
 using UIPooc.Services;
+using UIPooc.Components.Dialogs;
 
 namespace UIPooc.Components.Pages;
 
@@ -16,11 +17,15 @@ public partial class HoldingsIndex
     [Inject]
     private NotificationService NotificationService { get; set; } = default!;
 
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
+
     private List<Holding> _holdings = [];
     private IList<Holding>? _selectedHoldings;
     private bool _isLoading;
     private int _totalEquities;
     private decimal _averageIndex;
+    private string _renameInput = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,6 +121,81 @@ public partial class HoldingsIndex
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
                 Detail = $"Failed to clone holding: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
+    private async Task RenameHolding(Holding holding)
+    {
+        _renameInput = holding.Name;
+
+        var parameters = new Dictionary<string, object>
+        {
+            { "HoldingName", holding.Name }
+        };
+
+        var result = await DialogService.OpenAsync<RenameHoldingDialog>(
+            "Rename Holding", 
+            parameters!, 
+            new DialogOptions { Width = "400px", Resizable = false, Draggable = false });
+
+        if (result == null)
+        {
+            return; // User cancelled
+        }
+
+        var newName = result.ToString()?.Trim();
+
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Warning",
+                Detail = "Holding name cannot be empty.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        // Check if name already exists
+        if (_holdings.Any(h => h.Name.Equals(newName, StringComparison.OrdinalIgnoreCase) && h.HoldingId != holding.HoldingId))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Warning",
+                Detail = $"A holding with the name '{newName}' already exists.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        try
+        {
+            var originalHolding = _holdings.First(h => h.HoldingId == holding.HoldingId);
+            var oldName = originalHolding.Name;
+            originalHolding.Name = newName;
+            await ModelService.UpdateHoldingAsync(originalHolding);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Holding renamed from '{oldName}' to '{newName}'.",
+                Duration = 4000
+            });
+
+            await LoadHoldingsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to rename holding: {ex.Message}",
                 Duration = 4000
             });
         }

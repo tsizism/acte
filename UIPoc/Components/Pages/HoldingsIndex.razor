@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 
 <RadzenNotification />
+<RadzenDialog />
 
 <PageTitle>Holdings</PageTitle>
 
@@ -89,7 +90,7 @@
 
                 <RadzenDataGridColumn TItem="Holding" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
-                <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="200px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="250px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                     <Template Context="holding">
                         <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => ViewEquities(holding.HoldingId))"
@@ -98,6 +99,10 @@
                         <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => ViewHoldingHistory(holding.HoldingId))"
                                      title="View History" 
+                                     Style="margin-right: 0.25rem" />
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                     Click="@(() => RenameHolding(holding))"
+                                     title="Rename Holding" 
                                      Style="margin-right: 0.25rem" />
                         <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => CloneHolding(holding))"
