@@ -182,7 +182,6 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.HasIndex(p => p.Name).IsUnique();
-
             });
         }
 
@@ -282,10 +281,8 @@ namespace UIPooc.Data
                 entity.Property(e => e.IsDeleted)
                     .IsRequired();
 
-
-        entity.HasIndex(e => e.HoldingId);
-                entity.HasIndex(e => new { e.HoldingId, e.Symbol });
-                entity.HasIndex(e => e.Symbol).IsUnique();
+                entity.HasIndex(e => e.HoldingId);
+                entity.HasIndex(e => new { e.HoldingId, e.Symbol }).IsUnique();
             });
         }
 
@@ -298,7 +295,6 @@ namespace UIPooc.Data
                 entity.Property(e => e.Symbol)
                     .IsRequired()
                     .HasMaxLength(10);
-
 
                 entity.Property(e => e.Currency)
                     .IsRequired()
@@ -336,7 +332,6 @@ namespace UIPooc.Data
                 entity.Property(e => e.Week52Low)
                     .HasColumnType("decimal(18,2)");
 
-
                 entity.Property(e => e.LastUpdated)
                     .IsRequired();
 
@@ -345,9 +340,7 @@ namespace UIPooc.Data
                 entity.Property(e => e.IsDeleted)
                     .IsRequired();
 
-
                 entity.HasIndex(e => e.Symbol).IsUnique();
-                entity.HasIndex(e => e.LastUpdated);
             });
         }
 

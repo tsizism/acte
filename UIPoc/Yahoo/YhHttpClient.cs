@@ -1,15 +1,6 @@
-using Microsoft.VisualBasic;
-using Microsoft.VisualBasic;
-using System.Collections;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using UIPooc.Attributes;
-using UIPooc.Helpers;
-using UIPooc.Models;
 using UIPooc.Services;
-using UIPooc.Utils;
 
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.

@@ -126,9 +126,6 @@ public class EquityMarketSyncDaemon : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     //private readonly IModelService _modelService;
     private readonly ILogger<EquityMarketSyncDaemon> _logger;
-    public static readonly Dictionary<string, YhStockPriceResult>    _priceCache = new(StringComparer.OrdinalIgnoreCase);
-    public static readonly Dictionary<string, YhGetFullStockPriceResult> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
-
     public static readonly Dictionary<string, Equity> _equity = new(StringComparer.OrdinalIgnoreCase);
 
     private List<Equity> _equities;
@@ -266,9 +263,8 @@ public class EquityMarketSyncDaemon : BackgroundService
             {
                 using IServiceScope scope = _serviceProvider.CreateScope();
                 IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
-                YhGetFullStockPriceResult? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
 
-                //FullStockPriceEntity? fullStockPrice = await RequestFullStockPriceAsync(marketSymbol);
+                YhGetFullStockPriceResult? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
 
                 bool newEquityMarket = equityMarket == null;
                 equityMarket ??= new EquityMarket {Symbol = marketSymbol };

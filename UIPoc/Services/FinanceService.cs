@@ -23,6 +23,10 @@ public class FinanceService : IFinanceService
     private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
     private const string YahooFinanceSearchUrl = "https://query1.finance.yahoo.com/v1/finance/search";
 
+    public static readonly Dictionary<string, YhStockPriceResult> _priceCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhGetFullStockPriceResult> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
+
+
     public FinanceService(HttpClient httpClient, IModelService modelService, ILogger<FinanceService> logger)
     {
         _httpClient = httpClient;
@@ -32,6 +36,8 @@ public class FinanceService : IFinanceService
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
 
+    /// Requests
+
     /// <summary>
     /// Requests the stock price for a given ticker symbol - S(mall) result
     /// </summary>
@@ -40,7 +46,7 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     private async Task<YhStockPriceResult> RequestStockPriceAsync(string ticker, bool canUseCache = true)
     {
-        if (canUseCache && EquityMarketSyncDaemon._priceCache.TryGetValue(ticker, out var _cachedPrice))
+        if (canUseCache && FinanceService._priceCache.TryGetValue(ticker, out var _cachedPrice))
         {
             if (!TimeUtils.IsTradingTime())
             {
@@ -60,7 +66,7 @@ public class FinanceService : IFinanceService
             return result;
         }
 
-        EquityMarketSyncDaemon._priceCache[ticker] = result;
+        FinanceService._priceCache[ticker] = result;
         return result;
     }
 
@@ -72,7 +78,7 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
     {
-        if (canUseCache && EquityMarketSyncDaemon._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
+        if (canUseCache && FinanceService._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
         {
             if (!TimeUtils.IsTradingTime())
             {
@@ -86,7 +92,7 @@ public class FinanceService : IFinanceService
         }
 
         YhGetFullStockPriceResult result = await YhHttpClient.YhGetFullStockPrice(symbol);
-        EquityMarketSyncDaemon._fullStockPriceCache[symbol] = result;
+        FinanceService._fullStockPriceCache[symbol] = result;
         return result;
     }
 

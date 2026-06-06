@@ -103,6 +103,56 @@ namespace UIPooc.Services
             }
         }
 
+        public async Task<Holding> 
+            CloneHoldingAsync(int sourceHoldingId, string newHoldingName, bool cloneEquities = true)
+        {
+            var sourceHolding = await _context.Holdings
+                .Include(h => h.Equities)
+                .FirstOrDefaultAsync(h => h.HoldingId == sourceHoldingId);
+
+            if (sourceHolding == null)
+            {
+                throw new InvalidOperationException($"Holding with ID {sourceHoldingId} not found.");
+            }
+
+            // Create new holding with copied properties
+            var clonedHolding = new Holding
+            {
+                Name = newHoldingName,
+                CallName = newHoldingName,
+                UserId = sourceHolding.UserId,
+                Type = sourceHolding.Type,
+                Index = sourceHolding.Index,
+                Currency = sourceHolding.Currency,
+                FlagMaxIndex = sourceHolding.FlagMaxIndex,
+                FlagMinIndex = sourceHolding.FlagMinIndex,
+                CreatedAt = DateTime.UtcNow,
+                LastUpdated = DateTime.UtcNow,
+                Flag = sourceHolding.Flag,
+                FlagMessage = sourceHolding.FlagMessage,
+                FlagDate = sourceHolding.FlagDate,
+                IsDeleted = false
+            };
+
+            if (cloneEquities && sourceHolding.Equities.Any())
+            {
+                foreach (var sourceEquity in sourceHolding.Equities)
+                {
+                    var clonedEquity = new Equity(sourceEquity)
+                    {
+                        EquityId = 0, // Reset ID for new entity
+                        HoldingId = 0 // Will be set when holding is saved
+                    };
+                    clonedHolding.Equities.Add(clonedEquity);
+                }
+            }
+
+            _context.Holdings.Add(clonedHolding);
+            await _context.SaveChangesAsync();
+
+            return clonedHolding;
+        }
+
         #endregion
 
         #region Equity Operations

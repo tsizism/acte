@@ -83,6 +83,44 @@ public partial class HoldingsIndex
         NavigationManager.NavigateTo("/holdings/create");
     }
 
+    private async Task CloneHolding(Holding holding)
+    {
+        try
+        {
+            var clonedHoldingName = $"{holding.Name}-Copy";
+            var counter = 1;
+
+            // Check if name already exists and increment counter
+            while (_holdings.Any(h => h.Name == clonedHoldingName))
+            {
+                counter++;
+                clonedHoldingName = $"{holding.Name} - Copy ({counter})";
+            }
+
+            var clonedHolding = await ModelService.CloneHoldingAsync(holding.HoldingId, clonedHoldingName, cloneEquities: true);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Holding '{holding.Name}' cloned as '{clonedHoldingName}' with {clonedHolding.Equities.Count} equities.",
+                Duration = 4000
+            });
+
+            await LoadHoldingsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to clone holding: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
     private static BadgeStyle GetHoldingTypeBadgeStyle(HoldingType type) => type switch
     {
         HoldingType.Active => BadgeStyle.Success,
