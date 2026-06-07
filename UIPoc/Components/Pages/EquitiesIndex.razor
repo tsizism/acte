@@ -7,6 +7,7 @@
 @rendermode InteractiveServer
 @inject IExportService ExportService
 @inject IFinanceService FinanceService
+@inject IModelService ModelService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject IJSRuntime JSInterop
@@ -20,6 +21,7 @@
         <RadzenColumn Size="12" SizeMD="6">
             <RadzenText TextStyle="TextStyle.H3">Equities Portfolio</RadzenText>
         </RadzenColumn>
+
         <RadzenColumn Size="12" SizeMD="6" class="rz-text-align-end">
             @if (_selectedHoldingId.HasValue)
             {
@@ -62,7 +64,7 @@
                 }
             </RadzenColumn> *@
 
-            <RadzenColumn Size="12" SizeMD="2">
+            <RadzenColumn Size="4" SizeMD="2">
                 @if (_selectedHolding != null)
                 {
                     <RadzenText TextStyle="TextStyle.H6">
@@ -71,8 +73,7 @@
                 }
             </RadzenColumn>
 
-
-            <RadzenColumn Size="12" SizeMD="2">
+            <RadzenColumn Size="4" SizeMD="2">
                 @if (_selectedHolding != null)
                 {
                     <RadzenText TextStyle="TextStyle.H6">
@@ -81,12 +82,26 @@
                 }
             </RadzenColumn>
 
-            <RadzenColumn Size="12" SizeMD="4">
+            <RadzenColumn Size="4" SizeMD="4">
                 @if (_selectedHolding != null)
                 {
-                    <RadzenText TextStyle="TextStyle.H6">
-                        Holding Type: <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
-                    </RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.H6">Call Name:</RadzenText>
+                        <RadzenTextBox @bind-Value="_selectedHolding.CallName"
+                                       Style="width: 200px;"
+                                       Placeholder="Call Name"
+                                       Change="@UpdateHoldingCallName" />
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+
+            <RadzenColumn Size="4" SizeMD="2">
+                @if (_selectedHolding != null)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.H6">Holding Type:</RadzenText>
+                        <RadzenBadge BadgeStyle="@GetHoldingTypeBadgeStyle(_selectedHolding!.Type)" Text="@_selectedHolding!.Type.ToString()" />
+                    </RadzenStack>
                 }
             </RadzenColumn>
 
@@ -420,8 +435,40 @@
     {
         var base64 = Convert.ToBase64String(fileData);
         var dataUrl = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
-        
+
         await JSInterop.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
+
+    private async Task UpdateHoldingCallName()
+    {
+        if (_selectedHolding == null)
+            return;
+
+        try
+        {
+            await ModelService.UpdateHoldingAsync(_selectedHolding);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Call Name updated for '{_selectedHolding.Name}'.",
+                Duration = 2000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to update Call Name: {ex.Message}",
+                Duration = 4000
+            });
+
+            // Reload to revert the change
+            await LoadEquitiesAsync();
+        }
     }
 
     private static BadgeStyle GetHoldingTypeBadgeStyle(HoldingType type) => type switch
