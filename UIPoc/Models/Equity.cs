@@ -27,17 +27,19 @@ public class Equity
     public bool Flag { get; set; } = false;
     public string? FlagMessage { get; set; } = string.Empty;
     public DateTime? FlagDate { get; set; }
-    public Holding Holding { get; set; } = null!;
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     public bool IsDeleted { get; set; } = false;
+    public Holding Holding { get; set; } = null!;
 
 
     public Equity() { }
 
     public Equity(Equity other)
     {
-        EquityId = other.EquityId;
-        HoldingId = other.HoldingId;
+        //EquityId = other.EquityId;
+        //HoldingId = other.HoldingId;
+        EquityId = 0;
+        HoldingId = 0;
         Currency = other.Currency;
         Market = other.Market;
         Symbol = other.Symbol;

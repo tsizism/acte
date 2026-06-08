@@ -103,8 +103,7 @@ namespace UIPooc.Services
             }
         }
 
-        public async Task<Holding> 
-            CloneHoldingAsync(int sourceHoldingId, string newHoldingName, bool cloneEquities = true)
+        public async Task<Holding> CloneHoldingAsync(int sourceHoldingId, string newHoldingName, bool cloneEquities = true)
         {
             var sourceHolding = await _context.Holdings
                 .Include(h => h.Equities)
@@ -138,12 +137,12 @@ namespace UIPooc.Services
             {
                 foreach (var sourceEquity in sourceHolding.Equities)
                 {
-                    var clonedEquity = new Equity(sourceEquity)
-                    {
-                        EquityId = 0, // Reset ID for new entity
-                        HoldingId = 0 // Will be set when holding is saved
-                    };
-                    clonedHolding.Equities.Add(clonedEquity);
+                    //var clonedEquity = new Equity(sourceEquity)
+                    //{
+                    //    EquityId = 0, // Reset ID for new entity
+                    //    HoldingId = 0 // Will be set when holding is saved
+                    //};
+                    clonedHolding.Equities.Add(new Equity(sourceEquity));
                 }
             }
 

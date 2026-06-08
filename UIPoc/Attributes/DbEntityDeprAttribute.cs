@@ -6,7 +6,7 @@ namespace UIPooc.Attributes;
 /// Marks a struct or class as a database entity that can be mapped to/from external APIs
 /// </summary>
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class, AllowMultiple = false)]
-public class DbEntityAttribute : Attribute
+public class DbEntityDeprAttribute : Attribute
 {
     /// <summary>
     /// The name of the database table this entity maps to
@@ -23,11 +23,11 @@ public class DbEntityAttribute : Attribute
     /// </summary>
     public string? Description { get; set; }
 
-    public DbEntityAttribute()
+    public DbEntityDeprAttribute()
     {
     }
 
-    public DbEntityAttribute(string tableName)
+    public DbEntityDeprAttribute(string tableName)
     {
         TableName = tableName;
     }

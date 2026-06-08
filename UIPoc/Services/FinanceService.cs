@@ -949,7 +949,7 @@ class FinanceServiceTest
 //    public string marketCap { get; set; }
 //}
 
-[DbEntity(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
+[DbEntityDepr(TableName = "EquityMarket", Source = "YahooFinance", Description = "Full format stock price from Yahoo Finance API")]
 public struct EntityYhFullStockPrice
 {
     [DbProperty(SourceName = "currency", ColumnName = "Currency", IsRequired = true, DefaultValue = "USD")]

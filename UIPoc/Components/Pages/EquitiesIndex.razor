@@ -10,9 +10,11 @@
 @inject IModelService ModelService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
+@inject DialogService DialogService
 @inject IJSRuntime JSInterop
 
 <RadzenNotification />
+<RadzenDialog />
 
 <PageTitle>Equities</PageTitle>
 
@@ -229,6 +231,14 @@
             <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 
             <RadzenDataGridColumn TItem="Equity" Property="HoldingLow" Title="Holding Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                    <Template Context="equity">
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                     Click="@(() => DeleteEquity(equity))"
+                                     title="Delete Equity" />
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     }
@@ -468,6 +478,45 @@
 
             // Reload to revert the change
             await LoadEquitiesAsync();
+        }
+    }
+
+    private async Task DeleteEquity(Equity equity)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete equity '{equity.Symbol}'? This action cannot be undone.",
+            "Delete Equity",
+            new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" });
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelService.DeleteEquityAsync(equity.EquityId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Equity '{equity.Symbol}' has been deleted.",
+                Duration = 3000
+            });
+
+            // Reload equities list
+            await LoadEquitiesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to delete equity: {ex.Message}",
+                Duration = 4000
+            });
         }
     }
 

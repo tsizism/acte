@@ -65,7 +65,7 @@ public static class DbEntityMapperDepr
     private static void PopulateFromDictionary<T>(T entity, Dictionary<string, object> data) where T : struct
     {
         var type = typeof(T);
-        var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
+        var entityAttr = type.GetCustomAttribute<DbEntityDeprAttribute>();
 
         if (entityAttr == null)
         {
@@ -520,7 +520,7 @@ public static class DbEntityMapperDepr
     private static string? GetTableName<T>()
     {
         var type = typeof(T);
-        var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
+        var entityAttr = type.GetCustomAttribute<DbEntityDeprAttribute>();
         return entityAttr?.TableName;
     }
 
@@ -530,7 +530,7 @@ public static class DbEntityMapperDepr
     private static string? GetSource<T>()
     {
         var type = typeof(T);
-        var entityAttr = type.GetCustomAttribute<DbEntityAttribute>();
+        var entityAttr = type.GetCustomAttribute<DbEntityDeprAttribute>();
         return entityAttr?.Source;
     }
 
