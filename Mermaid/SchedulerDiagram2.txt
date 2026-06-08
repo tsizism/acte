@@ -1,0 +1,60 @@
+---
+config:
+  layout: fixed
+---
+flowchart TB
+    Start(["Ticker Request"]) --> SelectWorker{"Current Time?"}
+    SelectWorker -- Market Open --> Trading["Trading Worker
+    09:30 - 16:00 EST"]
+    SelectWorker -- After Close --> Overnight["Overnight Worker
+    Between Trading Days"]
+    Trading --> TCache{"Cache Equity
+    Trading TTL Valid?"}
+    TCache -- Yes --> ReturnTrading["Return Price"]
+    TCache -- No --> TDB{"DB Equity Entry
+    Trading TTL Valid?"}
+    TDB -- Yes --> UpdateTradingCache["Update Equity <br>Cache"]
+    UpdateTradingCache --> ReturnTrading
+    TDB -- No --> TYH["Yahoo Finance Stock Price (Short)"]
+    TYH --> UpdateTrading["Update Equty <br>Cache &amp; DB"]
+    UpdateTrading --> ReturnTrading
+    OYH["Yahoo Finance
+    Full Stock Price"] --> UpdateOvernight["Update Cache & DB"]
+    UpdateOvernight --> ReturnOvernight["Return Full Price"]
+    OffTrading["Check TTL & Update Equity"] --> FullInfo["Yahoo Finance
+    Full Stock Information"]
+    FullInfo --> UpdateMarketTable["Update Stock Table
+    • Summary
+    • 52 Week High/Low
+    • 50 Day Average
+    • 200 Day Average
+    • Market Statistics"]
+    UpdateMarketTable --> End(["Complete"])
+    ReturnTrading --> End
+    ReturnOvernight --> End
+    SelectWorker -- Weekend/Holiday --> n1["OffTrading Worker
+    Weekend / Holiday"]
+    n1 --> n2["Check TTL & Update EquityMarket"]
+    n2 --> OffTrading
+    Overnight --> n5["Check TTL &amp;<br>Update <br>DB EquityMarket"]
+    n5 --> OYH
+    n6(["UI"]) --> n7["Update <br>Equity Cache"]
+    n7 --> n8["Update DB Equity"]
+    n8 --> n9["Update DB <br>MarketEquity"]
+    n9 --> n10["Yahoo Finance<br>Full Stock Price<br><br>"]
+    n3["`**EquityMarket:
+Symbol,Currency,CurrentPrice
+PreviousClose,OpenPrice
+DayHigh,DayLow
+Volume,MarketCap
+Week52High,Week52Low
+LastUpdated,LastTradeTime
+IsDeleted**`"]
+    n4@{ label: "**<span style=\"padding-left:\">Equity:<br></span><span style=\"padding-left:\">Symbol,Quantity,AverageCost,<br>CurrentPrice,</span><span style=\"padding-left:\">LastTxnPrice,<br>LastTxnQuantity,<br></span><span style=\"padding-left:\">HoldingHigh,HoldingHighAt,HoldingLow,HoldingLowAt</span><span style=\"padding-left:\">FlagMax,<br>FlagMin,Currency,Market,LastTxnAt,<br>LastTxnType</span><span style=\"padding-left:\">Keywords,IndexWeight,Flag,<br>FlagMessage,FlagDate</span><span style=\"padding-left:\">GainLoss,MarketPrice,IsDeleted,LastUpdated</span>**" }
+
+    n1@{ shape: rect}
+    n2@{ shape: rect}
+    n3@{ shape: rect}
+    n4@{ shape: rect}
+    style n3 font-size:14px
+    style n4 font-size:14px
