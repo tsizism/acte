@@ -193,6 +193,10 @@ namespace UIPooc.Services
         {
             _context.Equities.Add(equity);
             await _context.SaveChangesAsync();
+
+            // Mark all index histories as deleted when equity composition changes
+            await MarkIndexHistoriesAsDeletedAsync(equity.HoldingId);
+
             return equity;
         }
 
@@ -230,8 +234,12 @@ namespace UIPooc.Services
             var equity = await _context.Equities.FindAsync(equityId);
             if (equity != null)
             {
+                var holdingId = equity.HoldingId;
                 _context.Equities.Remove(equity);
                 await _context.SaveChangesAsync();
+
+                // Mark all index histories as deleted when equity composition changes
+                await MarkIndexHistoriesAsDeletedAsync(holdingId);
             }
         }
 
@@ -380,13 +388,14 @@ namespace UIPooc.Services
         {
             return await _context.IndexHistories
                 .Include(i => i.Holding)
+                .Where(i => !i.IsDeleted)
                 .FirstOrDefaultAsync(i => i.IndexHistoryId == indexHistoryId);
         }
 
         public async Task<List<IndexHistory>> GetIndexHistoriesByHoldingIdAsync(int holdingId)
         {
             return await _context.IndexHistories
-                .Where(i => i.HoldingId == holdingId)
+                .Where(i => i.HoldingId == holdingId && !i.IsDeleted)
                 .OrderByDescending(i => i.RecordedAt)
                 .ToListAsync();
         }
@@ -425,6 +434,23 @@ namespace UIPooc.Services
                     && i.RecordedAt <= endDate)
                 .OrderBy(i => i.RecordedAt)
                 .ToListAsync();
+        }
+
+        private async Task MarkIndexHistoriesAsDeletedAsync(int holdingId)
+        {
+            var indexHistories = await _context.IndexHistories
+                .Where(i => i.HoldingId == holdingId && !i.IsDeleted)
+                .ToListAsync();
+
+            foreach (var history in indexHistories)
+            {
+                history.IsDeleted = true;
+            }
+
+            if (indexHistories.Count > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
         }
 
         #endregion
