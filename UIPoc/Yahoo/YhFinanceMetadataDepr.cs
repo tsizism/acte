@@ -6,7 +6,7 @@ namespace UIPooc.Yahoo;
 /// Metadata definitions for mapping Yahoo Finance API responses to database entities
 /// These dictionaries define field mappings without depending on EntityYh structs
 /// </summary>
-public static class YhFinanceMetadata
+public static class YhFinanceMetadataDepr
 {
     /// <summary>
     /// Metadata for Yahoo Finance Short Price endpoint: /yhprice?ticker=AAPL

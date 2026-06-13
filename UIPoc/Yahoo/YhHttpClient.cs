@@ -157,7 +157,7 @@ public class YhHttpClient
     /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
     /// GET Full Stock Price
     /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/price?symbol=bce"),
-    /// M(edium) Size Result - Price 34 keys, 
+    /// M(edium) Size Result - Price  more than 34 keys, 
     /// </summary>
     /// <param name="symbol"></param>
     /// <returns></returns>

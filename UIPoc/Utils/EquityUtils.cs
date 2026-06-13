@@ -14,8 +14,7 @@ static public class EquityUtils
 
     static public string GetSymbolAdjustedToMarket(Equity equity)
     {
-        var symbol = equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
-        return symbol;
+        return equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
     }
 
     static public string GetMarketFromSymbol(string symbol, out string marker)
@@ -75,7 +74,19 @@ static public class EquityUtils
         return true;
     }
 
+    public static string GetYahooFinanceUrl(string marketSymbol)
+    {
+        if (string.IsNullOrWhiteSpace(marketSymbol))
+        {
+            return "#"; // Return a non-functional link if symbol is missing
+        }
 
+        // Normalize market to uppercase for reliable comparison
+        var normalizedMarket = marketSymbol.Trim().ToUpperInvariant();
 
+        var baseUrl = normalizedMarket.EndsWith(".TO") ? "https://ca.finance.yahoo.com/quote/" : "https://finance.yahoo.com/quote/";
+
+        return $"{baseUrl}{marketSymbol}";
+    }
 }
 

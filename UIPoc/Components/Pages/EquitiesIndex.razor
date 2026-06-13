@@ -161,7 +161,9 @@
             <Columns>
                 <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="100px" Frozen="true">
                     <Template Context="equity">
-                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@equity.Symbol" />
+                    <a href="@EquityUtils.GetYahooFinanceUrl(@EquityUtils.GetSymbolAdjustedToMarket(equity))" target="_blank">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@EquityUtils.GetSymbolAdjustedToMarket(equity)" />
+                        </a>
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -173,10 +175,6 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
-                {
-                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
-                }
 
                 <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -186,12 +184,17 @@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Market Currency" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" /> *@
 
-                <RadzenDataGridColumn Property="CurrentPrice" Title="Current Price" Width="120px" Sortable="false" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+            <RadzenDataGridColumn Property="CurrentPrice" Title=@($"Current Price ({_selectedHolding!.Currency})") Width="120px" Sortable="false" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
 
                 <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+                @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
+                {
+                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                }
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
                     <Template Context="equity">
