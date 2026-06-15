@@ -14,7 +14,7 @@ namespace UIPooc.Services;
 
 public class FinanceService : IFinanceService
 {
-    private readonly HttpClient _httpClient;
+    private readonly YhHttpClient _yhHttpClient;
     private readonly IModelService _modelService;
     private readonly ILogger<FinanceService> _logger;
 
@@ -27,741 +27,16 @@ public class FinanceService : IFinanceService
     public static readonly Dictionary<string, YhGetFullStockPriceResult> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
 
 
-    public FinanceService(HttpClient httpClient, IModelService modelService, ILogger<FinanceService> logger)
+    public FinanceService(YhHttpClient yhHttpClient, IModelService modelService, ILogger<FinanceService> logger)
     {
-        _httpClient = httpClient;
+        _yhHttpClient = yhHttpClient;
         _modelService = modelService;
         _logger = logger;
             
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+        //_httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
     }
 
-    /// Requests
-
-    /// <summary>
-    /// Requests the stock price for a given ticker symbol - S(mall) result
-    /// </summary>
-    /// <param name="ticker"></param>
-    /// <param name="canUseCache"></param>
-    /// <returns></returns>
-    private async Task<YhStockPriceResult> RequestStockPriceAsync(string ticker, bool canUseCache = true)
-    {
-        if (canUseCache && FinanceService._priceCache.TryGetValue(ticker, out var _cachedPrice))
-        {
-            if (!TimeUtils.IsTradingTime())
-            {
-                return _cachedPrice;
-            }
-
-            if (!TimeUtils.IsTicketPriceCacheExpired(_cachedPrice.LastUpdated))
-            {
-                return _cachedPrice;
-            }
-        }
-
-        YhStockPriceResult result = await YhHttpClient.YhGetStockPriceAsync(ticker);
-
-        if (!string.IsNullOrEmpty(result.Error))
-        {
-            return result;
-        }
-
-        FinanceService._priceCache[ticker] = result;
-        return result;
-    }
-
-    /// <summary>
-    /// M(edium) result - 34 keys
-    /// </summary>
-    /// <param name="symbol"></param>
-    /// <param name="canUseCache"></param>
-    /// <returns></returns>
-    public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
-    {
-        if (canUseCache && FinanceService._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
-        {
-            if (!TimeUtils.IsTradingTime())
-            {
-                return _cachedFullStockPrice;
-            }
-
-            if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
-            {
-                return _cachedFullStockPrice;
-            }
-        }
-
-        YhGetFullStockPriceResult result = await YhHttpClient.YhGetFullStockPrice(symbol);
-        FinanceService._fullStockPriceCache[symbol] = result;
-        return result;
-    }
-
-
-
-    /// <summary>
-    /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
-    /// This assumes that both tickers are available and that their prices are up to date. 
-    /// In a real implementation, you would want to add error handling and caching to avoid making too many API calls.
-    /// CAD/USD (CADUSD=X) 0.7287 USD --> CM(USD)/CM.TO(CAD) USD
-    /// USD/CAD (CAD=X)    1.3723 CAD  --> CM.TO(CAD)/CM(USD) CAD
-    /// </summary>
-    /// <returns></returns>
-    public async Task<decimal> GetCADUSDExchangeRateAsync()
-    {
-        //symbol: "CADUSD=X"
-        //price: 0.7287036
-        //currency: "USD"
-
-
-        var usd = await RequestStockPriceAsync("CADUSD=X");
-        return usd.Price;
-
-    }
-
-    public async Task<decimal> GetCADExchangeRateAsync()
-    {
-        //symbol: "CAD=X"
-        //price: 1.3723
-        //currency: "CAD"
-
-        var cm = await RequestStockPriceAsync("CM");
-        var cmto = await RequestStockPriceAsync("CM.TO");
-        return cmto.Price / cm.Price;
-
-        //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
-        //return cad.Price;
-    }
-
-    ////////////////////////  Fetch //////////////////////////////////////////////
-
-
-    // BCE.TO or BCE
-    public async Task<decimal?> FetchTickerPriceAsync(string ticker)
-    {
-        YhStockPriceResult tp = await RequestStockPriceAsync(ticker, canUseCache: false);
-
-        if (!string.IsNullOrEmpty(tp?.Error))
-        {
-            return null;
-        }
-
-        return tp?.Price;
-    }
-
-    public async Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding)
-    {
-        List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
-        Dictionary<string, decimal> snapshotDict = new Dictionary<string, decimal>();
-
-        string snapshot = string.Empty;
-
-        foreach (var equity in lst)
-        {
-            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
-            YhStockPriceResult tickerPrice = await RequestStockPriceAsync(symbol);
-
-            //string ticker = @"{""symbol"": ""AAPL"", 
-            //                    ""price"": 230.4584, 
-            //                    ""currency"": ""USD"",
-            //                    ""symbolName"": ""Apple"",
-            //                    ""marketCap"": 3503912648704
-
-
-            tickerPrice.PopulateDatabaseEquity(equity);
-
-            if(holding.Currency == null)
-            {
-                throw new Exception("Holding currency is null.");
-            }
-
-            if (holding.Currency != tickerPrice.Currency)
-            {
-                decimal exchangeRate = holding.Currency == "CAD" ?  await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-                equity.CurrentPrice = tickerPrice.Price * exchangeRate;
-            }
-
-            snapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
-
-            //if (equity.Currency != holding.Currency)
-            //{
-            //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
-            //}
-
-            equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
-
-            //if (holding.Currency == equity.Currency)
-
-            //try
-            //{
-            //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
-            //}
-            //catch (Exception ex)
-            //{
-            //    NotificationService.Notify(new NotificationMessage
-            //    {
-            //        Severity = NotificationSeverity.Warning,
-            //        Summary = "Price Fetch Warning",
-            //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
-            //        Duration = 3000,
-            //        CloseOnClick = true
-            //    });
-            //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
-            //}
-
-            await _modelService.UpdateEquityAsync(equity); // needed?
-
-        }
-
-        holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
-
-        await _modelService.UpdateHoldingAsync(holding);
-
-        try
-        {
-            await _modelService.UpsertIndexHistoryAsync(new IndexHistory
-            {
-                HoldingId = holding.HoldingId,
-                Index = holding.Index,
-                HoldingSnapshot = JsonSerializer.Serialize(snapshotDict),
-                RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
-        }
-
-        return lst;
-    }
-
-    public async Task<List<Holding>> FetchHoldingsAsync()
-    {
-        return await _modelService.GetAllHoldingsAsync();
-    }
-
-    public async Task<Holding?> FetchHoldingAsync(int holdingId)
-    {
-        return await _modelService.GetHoldingByIdAsync(holdingId);
-    }
-
-    private static TransactionType GetLastTxnType(HoldingType type) => type switch
-    {
-        HoldingType.Active => TransactionType.Buy,
-        HoldingType.WatchList => TransactionType.Watch,
-
-        //HoldingType.Listless => BadgeStyle.Warning,
-        //HoldingType.CustomIndex => BadgeStyle.Primary,
-        _ => TransactionType.Watch
-    };
-
-
-    public async Task<Equity?> CreateEquityAsync(Equity equity)
-    {
-        var tickerPrice = await RequestStockPriceAsync(equity.Symbol);
-
-        if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
-        {
-            return null;
-        }
-
-        //if (equity.Holding.Type == HoldingType.WatchList)
-        //{
-        //    equity.LastTxnType = TransactionType.Watch;
-        //}
-
-        equity.LastTxnType = GetLastTxnType(equity.Holding.Type);
-        equity.LastTxnAt = DateTime.UtcNow;
-        tickerPrice!.PopulateDatabaseEquity(equity);
-
-        return await _modelService.CreateEquityAsync(equity);
-    }
-
-    #region Quote Operations
-
-    //private async Task<EquityMarket?> GetStockFullInfoAsync(string symbol, string market = "US")
-    //{
-    //    Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
-
-    //    EquityMarket dbEquityMarket = DbEntityMapper.PopulateDbEntityFromDictionary<EquityMarket>(
-    //        data: dict!, 
-    //        metadata: YahooFinanceMetadata.YahooFullPriceToEquityMarket);
-
-    //    if (dbEquityMarket.Symbol != symbol)
-    //    {
-    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {dbEquityMarket.Symbol}");
-    //        return null;
-    //    }
-
-    //    return dbEquityMarket;
-    //}
-
-    //public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
-    //{
-    //    (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
-
-    //    Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
-
-    //    EquityMarket dbEquityMarket = new EquityMarket() { };
-
-    //    EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
-    //    equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
-
-    //    if (equityMarket.Symbol != symbol)
-    //    {
-    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
-    //        return null;
-    //    }
-
-    //    return dbEquityMarket;
-    //}
-
-
-        //try
-        //{
-        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
-        //    var response = await _httpClient.GetAsync(url);
-
-        //    if (!response.IsSuccessStatusCode)
-        //    {
-        //        _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
-        //        return null;
-        //    }
-
-        //    var content = await response.Content.ReadAsStringAsync();
-        //    var jsonDoc = JsonDocument.Parse(content);
-
-        //    var result = jsonDoc.RootElement
-        //        .GetProperty("quoteResponse")
-        //        .GetProperty("result");
-
-        //    if (result.GetArrayLength() == 0)
-        //        return null;
-
-        //    var quote = result[0];
-
-        //    return new MarketSummary
-        //    {
-        //        Symbol = GetStringValue(quote, "symbol"),
-        //        ShortName = GetStringValue(quote, "shortName"),
-        //        LongName = GetStringValue(quote, "longName"),
-        //        RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
-        //        RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
-        //        RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
-        //        RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
-        //        MarketCap = GetNullableDecimalValue(quote, "marketCap"),
-        //        FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
-        //        FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
-        //        TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
-        //        DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
-        //        Currency = GetStringValue(quote, "currency"),
-        //        Exchange = GetStringValue(quote, "exchange")
-        //    };
-        //}
-        //catch (Exception ex)
-        //{
-        //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
-        //    return null;
-        //}
-    //}
-
-
-    //private async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
-    //{
-    //    //var quote = await GetMarketSummaryAsync(symbol, market);
-    //    EquityMarket? quote = await GetStockFullInfoAsync(symbol, market);
-    //    if (quote != null)
-    //    {
-    //        await _modelService.UpsertEquityMarketAsync(quote);
-    //    }
-    //    return quote;
-    //}
-
-
-    
-    public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
-    {
-        // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
-        EntityYhFullStockPrice entityStockPrice = new();
-        await YhHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
-
-        // Use mapper to convert Yahoo API entity to database model
-        
-        
-        var equityMarket = entityStockPrice.ToEquityMarket(market);
-        //if (equityMarket != null)
-        //{
-        //    EquityMarketSyncDaemon._priceCache[symbol] = new StockPriceSnapshot(equityMarket.CurrentPrice, DateTime.UtcNow);
-        //}
-        return equityMarket;
-
-
-        //try
-        //{
-        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
-        //    var response = await _httpClient.GetAsync(url);
-
-        //    if (!response.IsSuccessStatusCode)
-        //    {
-        //        _logger.LogWarning($"Failed to fetch quote for {symbol}. Status: {response.StatusCode}");
-        //        return null;
-        //    }
-
-        //    var content = await response.Content.ReadAsStringAsync();
-        //    var jsonDoc = JsonDocument.Parse(content);
-
-        //    var result = jsonDoc.RootElement
-        //        .GetProperty("quoteResponse")
-        //        .GetProperty("result");
-
-        //    if (result.GetArrayLength() == 0)
-        //        return null;
-
-        //    var quote = result[0];
-
-        //    return MapToEquityMarket(quote, market);
-        //}
-        //catch (Exception ex)
-        //{
-        //    _logger.LogError(ex, $"Error fetching quote for {symbol}");
-        //    return null;
-        //}
-    }
-    
-
-    //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
-    //{
-    //    Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
-
-    //    if (dict != null)
-    //    {
-    //        ApiAdapterHttpClient.PopulateEntityFromDict(stockTickerProps, dict);
-    //        Console.WriteLine(stockTickerProps.ToString());
-    //    }
-    //}
-
-    public async Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US")
-    {
-        var results = new List<EquityMarket>();
-
-        try
-        {
-            string symbolsString = string.Join(",", symbols);
-            string url = $"{YahooFinanceQuoteUrl}?symbols={symbolsString}";
-            HttpResponseMessage response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to fetch quotes. Status: {response.StatusCode}");
-                return results;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
-
-            var quotesArray = jsonDoc.RootElement
-                .GetProperty("quoteResponse")
-                .GetProperty("result");
-
-            foreach (var quote in quotesArray.EnumerateArray())
-            {
-                var equityMarket = MapToEquityMarket(quote, market);
-                if (equityMarket != null)
-                {
-                    results.Add(equityMarket);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching multiple quotes");
-        }
-
-        return results;
-    }
-
-
-    public async Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US")
-    {
-        var quotes = await GetQuotesAsync(symbols, market);
-            
-        foreach (var quote in quotes)
-        {
-            try
-            {
-                await _modelService.UpsertEquityMarketAsync(quote);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error caching quote for {quote.Symbol}");
-            }
-        }
-
-        return quotes;
-    }
-
-    #endregion
-
-    #region Historical Data
-
-    public async Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US")
-    {
-        var results = new List<StockHistoricalData>();
-
-        try
-        {
-            var period1 = new DateTimeOffset(startDate).ToUnixTimeSeconds();
-            var period2 = new DateTimeOffset(endDate).ToUnixTimeSeconds();
-                
-            var url = $"{YahooFinanceChartUrl}/{symbol}?period1={period1}&period2={period2}&interval=1d";
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to fetch historical data for {symbol}. Status: {response.StatusCode}");
-                return results;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
-
-            var chart = jsonDoc.RootElement
-                .GetProperty("chart")
-                .GetProperty("result")[0];
-
-            var timestamps = chart.GetProperty("timestamp");
-            var quotes = chart.GetProperty("indicators").GetProperty("quote")[0];
-            var adjClose = chart.GetProperty("indicators").GetProperty("adjclose")[0].GetProperty("adjclose");
-
-            int index = 0;
-            foreach (var timestamp in timestamps.EnumerateArray())
-            {
-                var date = DateTimeOffset.FromUnixTimeSeconds(timestamp.GetInt64()).DateTime;
-                    
-                var historicalData = new StockHistoricalData
-                {
-                    Date = date,
-                    Open = GetDecimalFromArray(quotes, "open", index),
-                    High = GetDecimalFromArray(quotes, "high", index),
-                    Low = GetDecimalFromArray(quotes, "low", index),
-                    Close = GetDecimalFromArray(quotes, "close", index),
-                    AdjustedClose = GetDecimalFromJsonElement(adjClose[index]),
-                    Volume = GetLongFromArray(quotes, "volume", index)
-                };
-
-                results.Add(historicalData);
-                index++;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error fetching historical data for {symbol}");
-        }
-
-        return results;
-    }
-
-    public async Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US")
-    {
-        var results = new List<StockHistoricalData>();
-
-        try
-        {
-            var url = $"{YahooFinanceChartUrl}/{symbol}?range={period}&interval={interval}";
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to fetch historical data for {symbol}. Status: {response.StatusCode}");
-                return results;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
-
-            var chart = jsonDoc.RootElement
-                .GetProperty("chart")
-                .GetProperty("result")[0];
-
-            var timestamps = chart.GetProperty("timestamp");
-            var quotes = chart.GetProperty("indicators").GetProperty("quote")[0];
-                
-            int index = 0;
-            foreach (var timestamp in timestamps.EnumerateArray())
-            {
-                var date = DateTimeOffset.FromUnixTimeSeconds(timestamp.GetInt64()).DateTime;
-                    
-                var historicalData = new StockHistoricalData
-                {
-                    Date = date,
-                    Open = GetDecimalFromArray(quotes, "open", index),
-                    High = GetDecimalFromArray(quotes, "high", index),
-                    Low = GetDecimalFromArray(quotes, "low", index),
-                    Close = GetDecimalFromArray(quotes, "close", index),
-                    AdjustedClose = GetDecimalFromArray(quotes, "close", index),
-                    Volume = GetLongFromArray(quotes, "volume", index)
-                };
-
-                results.Add(historicalData);
-                index++;
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error fetching historical data for {symbol}");
-        }
-
-        return results;
-    }
-
-    #endregion
-
-    #region Market Summary
-
-
-    #endregion
-
-    #region Batch Operations
-
-
-    public async Task EtlEquityPricesAsync(int holdingId)
-    {
-        try
-        {
-            var equities = await _modelService.GetEquitiesByHoldingIdAsync(holdingId);
-            var symbols = equities.Select(e => e.Symbol).Distinct().ToList();
-
-            if (symbols.Count == 0)
-                return;
-
-            List<EquityMarket> quotes = await GetQuotesAndCacheAsync(symbols);
-
-            foreach (var equity in equities)
-            {
-                var quote = quotes.FirstOrDefault(q => q.Symbol == equity.Symbol);
-                if (quote != null)
-                {
-                    equity.CurrentPrice = quote.CurrentPrice;
-                        
-                    // Update highs and lows if necessary
-                    if (quote.CurrentPrice > equity.HoldingHigh)
-                    {
-                        equity.HoldingHigh = quote.CurrentPrice;
-                        equity.HoldingHighAt = DateTime.UtcNow;
-                    }
-                        
-                    if (quote.CurrentPrice < equity.HoldingLow || equity.HoldingLow == 0)
-                    {
-                        equity.HoldingLow = quote.CurrentPrice;
-                        equity.HoldingLowAt = DateTime.UtcNow;
-                    }
-
-                    await _modelService.UpdateEquityAsync(equity); // needed?
-                }
-            }
-
-            _logger.LogInformation($"Updated prices for {equities.Count} equities in holding {holdingId}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error updating equity prices for holding {holdingId}");
-            throw;
-        }
-    }
-
-    public async Task UpdateAllEquityPricesAsync()
-    {
-        try
-        {
-            var holdings = await _modelService.GetAllHoldingsAsync();
-                
-            foreach (var holding in holdings)
-            {
-                await EtlEquityPricesAsync(holding.HoldingId);
-            }
-
-            _logger.LogInformation($"Updated prices for all holdings");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating all equity prices");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// NOT CALLED! by the daemon, but can be used to manually refresh the cache for a specific symbol.
-    /// </summary>
-    /// <param name="symbol"></param>
-    /// <param name="market"></param>
-    /// <returns></returns>
-
-    public async Task<bool> RefreshMarketCacheAsync(string symbol, string market)
-    {
-        try
-        {
-            var quote = await GetQuoteAsync(symbol, market);
-            if (quote != null)
-            {
-                await _modelService.UpsertEquityMarketAsync(quote);
-                return true;
-            }
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error refreshing market cache for {symbol}");
-            return false;
-        }
-    }
-
-    #endregion
-
-
-    #region Search
-
-
-    public async Task<List<EquitySearchResult>> SearchSymbolsAsync(string query)
-    {
-        var results = new List<EquitySearchResult>();
-
-        try
-        {
-            var url = $"{YahooFinanceSearchUrl}?q={Uri.EscapeDataString(query)}";
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning($"Failed to search for {query}. Status: {response.StatusCode}");
-                return results;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
-
-            var quotes = jsonDoc.RootElement.GetProperty("quotes");
-
-            foreach (var quote in quotes.EnumerateArray())
-            {
-                results.Add(new EquitySearchResult
-                {
-                    Symbol = GetStringValue(quote, "symbol"),
-                    Name = GetStringValue(quote, "longname") ?? GetStringValue(quote, "shortname"),
-                    Exchange = GetStringValue(quote, "exchange"),
-                    Type = GetStringValue(quote, "quoteType")
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error searching for {query}");
-        }
-
-        return results;
-    }
-
-    #endregion
-
-    #region Helper Methods
+    #region Utils Methods
 
     private EquityMarket MapToEquityMarket(JsonElement quote, string market)
     {
@@ -875,9 +150,740 @@ public class FinanceService : IFinanceService
         return 0;
     }
 
-    
+
 
     #endregion
+
+    #region Requests
+
+    /// <summary>
+    /// Requests the stock price for a given ticker symbol - S(mall) result
+    /// </summary>
+    /// <param name="ticker"></param>
+    /// <param name="canUseCache"></param>
+    /// <returns></returns>
+    private async Task<YhStockPriceResult> RequestStockPriceAsync(string ticker, bool canUseCache = true)
+    {
+        if (canUseCache && FinanceService._priceCache.TryGetValue(ticker, out var _cachedPrice))
+        {
+            if (!TimeUtils.IsTradingTime())
+            {
+                return _cachedPrice;
+            }
+
+            if (!TimeUtils.IsTicketPriceCacheExpired(_cachedPrice.LastUpdated))
+            {
+                return _cachedPrice;
+            }
+        }
+
+
+        YhStockPriceResult result = await _yhHttpClient.YhGetStockPriceAsync(ticker);
+
+        if (!string.IsNullOrEmpty(result.Error))
+        {
+            return result;
+        }
+
+        FinanceService._priceCache[ticker] = result;
+        return result;
+    }
+
+    /// <summary>
+    /// M(edium) result - 34 keys
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="canUseCache"></param>
+    /// <returns></returns>
+    public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
+    {
+        if (canUseCache && FinanceService._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
+        {
+            if (!TimeUtils.IsTradingTime())
+            {
+                return _cachedFullStockPrice;
+            }
+
+            if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
+            {
+                return _cachedFullStockPrice;
+            }
+        }
+
+        YhGetFullStockPriceResult result = await _yhHttpClient.YhGetFullStockPrice(symbol);
+        FinanceService._fullStockPriceCache[symbol] = result;
+        return result;
+    }
+
+    /// <summary>
+    /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
+    /// This assumes that both tickers are available and that their prices are up to date. 
+    /// In a real implementation, you would want to add error handling and caching to avoid making too many API calls.
+    /// CAD/USD (CADUSD=X) 0.7287 USD --> CM(USD)/CM.TO(CAD) USD
+    /// USD/CAD (CAD=X)    1.3723 CAD  --> CM.TO(CAD)/CM(USD) CAD
+    /// </summary>
+    /// <returns></returns>
+    public async Task<decimal> GetCADUSDExchangeRateAsync()
+    {
+        //symbol: "CADUSD=X"
+        //price: 0.7287036
+        //currency: "USD"
+
+
+        var usd = await RequestStockPriceAsync("CADUSD=X");
+        return usd.Price;
+
+    }
+
+    public async Task<decimal> GetCADExchangeRateAsync()
+    {
+        //symbol: "CAD=X"
+        //price: 1.3723
+        //currency: "CAD"
+
+        var cm = await RequestStockPriceAsync("CM");
+        var cmto = await RequestStockPriceAsync("CM.TO");
+        return cmto.Price / cm.Price;
+
+        //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
+        //return cad.Price;
+    }
+
+    #endregion
+
+    ////////////////////////  Fetch/Create  //////////////////////////////////////////////
+    #region Fetch Methods
+
+    // BCE.TO or BCE
+    public async Task<decimal?> FetchTickerPriceAsync(string ticker)
+    {
+        YhStockPriceResult tp = await RequestStockPriceAsync(ticker, canUseCache: false);
+
+        if (!string.IsNullOrEmpty(tp?.Error))
+        {
+            return null;
+        }
+
+        return tp?.Price;
+    }
+
+    public async Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding, bool alwaysRealTime = false)
+    {
+        List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
+        Dictionary<string, decimal> holdingIndexSnapshotDict = new Dictionary<string, decimal>();
+
+        string snapshot = string.Empty;
+
+        foreach (var equity in lst)
+        {
+            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+            if (!TimeUtils.IsEquityUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
+            {
+                YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
+
+                //string ticker = @"{""symbol"": ""AAPL"", 
+                //                    ""price"": 230.4584, 
+                //                    ""currency"": ""USD"",
+                //                    ""symbolName"": ""Apple"",
+                //                    ""marketCap"": 3503912648704
+
+                tickerPrice.PopulateDatabaseEntity(equity);
+
+                if (holding.Currency == null)
+                {
+                    throw new Exception("Holding currency is null.");
+                }
+
+                if (holding.Currency != tickerPrice.Currency)
+                {
+                    decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
+                }
+
+                equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
+                await _modelService.UpdateEquityAsync(equity);
+            }
+
+            holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
+
+            //if (equity.Currency != holding.Currency)
+            //{
+            //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
+            //}
+
+
+            //if (holding.Currency == equity.Currency)
+
+            //try
+            //{
+            //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
+            //}
+            //catch (Exception ex)
+            //{
+            //    NotificationService.Notify(new NotificationMessage
+            //    {
+            //        Severity = NotificationSeverity.Warning,
+            //        Summary = "Price Fetch Warning",
+            //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
+            //        Duration = 3000,
+            //        CloseOnClick = true
+            //    });
+            //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
+            //}
+
+
+        }
+
+        if (!TimeUtils.IsEquityUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+        {
+            holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
+
+            await _modelService.UpdateHoldingAsync(holding);
+
+            try
+            {
+                await _modelService.UpsertIndexHistoryAsync(new IndexHistory
+                {
+                    HoldingId = holding.HoldingId,
+                    Index = holding.Index,
+                    HoldingSnapshot = JsonSerializer.Serialize(holdingIndexSnapshotDict),
+                    RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
+            }
+        }
+
+        return lst;
+    }
+
+    public async Task<List<Holding>> FetchHoldingsAsync()
+    {
+        return await _modelService.GetAllHoldingsAsync();
+    }
+
+    public async Task<Holding?> FetchHoldingAsync(int holdingId)
+    {
+        return await _modelService.GetHoldingByIdAsync(holdingId);
+    }
+
+#endregion
+
+
+    private static TransactionType GetLastTxnType(HoldingType type) => type switch
+    {
+        HoldingType.Active => TransactionType.Buy,
+        HoldingType.WatchList => TransactionType.Watch,
+
+        //HoldingType.Listless => BadgeStyle.Warning,
+        //HoldingType.CustomIndex => BadgeStyle.Primary,
+        _ => TransactionType.Watch
+    };
+
+
+    public async Task<Equity?> CreateAndFetchEquityAsync(Equity equity)
+    {
+        var tickerPrice = await RequestStockPriceAsync(equity.Symbol);
+
+        if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
+        {
+            return null;
+        }
+
+        //if (equity.Holding.Type == HoldingType.WatchList)
+        //{
+        //    equity.LastTxnType = TransactionType.Watch;
+        //}
+
+        equity.LastTxnType = GetLastTxnType(equity.Holding.Type);
+        equity.LastTxnAt = DateTime.UtcNow;
+        tickerPrice!.PopulateDatabaseEntity(equity);
+
+        return await _modelService.CreateEquityAsync(equity);
+    }
+
+    #region Quote Operations
+
+    //private async Task<EquityMarket?> GetStockFullInfoAsync(string symbol, string market = "US")
+    //{
+    //    Dictionary<string, object> dict = await YahooHttpClient.GetStockFullInformationAsync(symbol);
+
+    //    EquityMarket dbEquityMarket = DbEntityMapper.PopulateDbEntityFromDictionary<EquityMarket>(
+    //        data: dict!, 
+    //        metadata: YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+
+    //    if (dbEquityMarket.Symbol != symbol)
+    //    {
+    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {dbEquityMarket.Symbol}");
+    //        return null;
+    //    }
+
+    //    return dbEquityMarket;
+    //}
+
+    //public async Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US")
+    //{
+    //    (Dictionary<string, object> priceDict, Dictionary<string, object> summaryDetailDict) = await YahooHttpClient.GetStockSummaryDetailAsync(symbol);
+
+    //    Dictionary<string, PropertyMetadata> metadata = YahooFinanceMetadata.YahooFullPriceToEquityMarket;
+
+    //    EquityMarket dbEquityMarket = new EquityMarket() { };
+
+    //    EquityMarket equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, priceDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+    //    equityMarket = DbEntityMapper.PopulateFromDictionary(dbEquityMarket, summaryDetailDict!, YahooFinanceMetadata.YahooFullPriceToEquityMarket);
+
+    //    if (equityMarket.Symbol != symbol)
+    //    {
+    //        _logger.LogWarning($"Symbol mismatch: expected {symbol}, got {equityMarket.Symbol}");
+    //        return null;
+    //    }
+
+    //    return dbEquityMarket;
+    //}
+
+
+        //try
+        //{
+        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
+        //    var response = await _httpClient.GetAsync(url);
+
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
+        //        return null;
+        //    }
+
+        //    var content = await response.Content.ReadAsStringAsync();
+        //    var jsonDoc = JsonDocument.Parse(content);
+
+        //    var result = jsonDoc.RootElement
+        //        .GetProperty("quoteResponse")
+        //        .GetProperty("result");
+
+        //    if (result.GetArrayLength() == 0)
+        //        return null;
+
+        //    var quote = result[0];
+
+        //    return new MarketSummary
+        //    {
+        //        Symbol = GetStringValue(quote, "symbol"),
+        //        ShortName = GetStringValue(quote, "shortName"),
+        //        LongName = GetStringValue(quote, "longName"),
+        //        RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
+        //        RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
+        //        RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
+        //        RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
+        //        MarketCap = GetNullableDecimalValue(quote, "marketCap"),
+        //        FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
+        //        FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
+        //        TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
+        //        DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
+        //        Currency = GetStringValue(quote, "currency"),
+        //        Exchange = GetStringValue(quote, "exchange")
+        //    };
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
+        //    return null;
+        //}
+    //}
+
+
+    //private async Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US")
+    //{
+    //    //var quote = await GetMarketSummaryAsync(symbol, market);
+    //    EquityMarket? quote = await GetStockFullInfoAsync(symbol, market);
+    //    if (quote != null)
+    //    {
+    //        await _modelService.UpsertEquityMarketAsync(quote);
+    //    }
+    //    return quote;
+    //}
+
+
+    
+    public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
+    {
+        // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
+        EntityYhFullStockPrice entityStockPrice = new();
+        await _yhHttpClient.GetSymbolFullPriceAsync(symbol, entityStockPrice);
+
+        // Use mapper to convert Yahoo API entity to database model
+        
+        
+        var equityMarket = entityStockPrice.ToEquityMarket(market);
+        //if (equityMarket != null)
+        //{
+        //    EquityMarketSyncDaemon._priceCache[symbol] = new StockPriceSnapshot(equityMarket.CurrentPrice, DateTime.UtcNow);
+        //}
+        return equityMarket;
+
+
+        //try
+        //{
+        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
+        //    var response = await _httpClient.GetAsync(url);
+
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        _logger.LogWarning($"Failed to fetch quote for {symbol}. Status: {response.StatusCode}");
+        //        return null;
+        //    }
+
+        //    var content = await response.Content.ReadAsStringAsync();
+        //    var jsonDoc = JsonDocument.Parse(content);
+
+        //    var result = jsonDoc.RootElement
+        //        .GetProperty("quoteResponse")
+        //        .GetProperty("result");
+
+        //    if (result.GetArrayLength() == 0)
+        //        return null;
+
+        //    var quote = result[0];
+
+        //    return MapToEquityMarket(quote, market);
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError(ex, $"Error fetching quote for {symbol}");
+        //    return null;
+        //}
+    }
+    
+
+    //public static void PopulateStockTickerProps(string jsonResponse, StockTickerProperties stockTickerProps)
+    //{
+    //    Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+
+    //    if (dict != null)
+    //    {
+    //        ApiAdapterHttpClient.PopulateEntityFromDict(stockTickerProps, dict);
+    //        Console.WriteLine(stockTickerProps.ToString());
+    //    }
+    //}
+
+    //public async Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US")
+    //{
+    //    var results = new List<EquityMarket>();
+
+    //    try
+    //    {
+    //        string symbolsString = string.Join(",", symbols);
+    //        string url = $"{YahooFinanceQuoteUrl}?symbols={symbolsString}";
+    //        HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            _logger.LogWarning($"Failed to fetch quotes. Status: {response.StatusCode}");
+    //            return results;
+    //        }
+
+    //        var content = await response.Content.ReadAsStringAsync();
+    //        var jsonDoc = JsonDocument.Parse(content);
+
+    //        var quotesArray = jsonDoc.RootElement
+    //            .GetProperty("quoteResponse")
+    //            .GetProperty("result");
+
+    //        foreach (var quote in quotesArray.EnumerateArray())
+    //        {
+    //            var equityMarket = MapToEquityMarket(quote, market);
+    //            if (equityMarket != null)
+    //            {
+    //                results.Add(equityMarket);
+    //            }
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error fetching multiple quotes");
+    //    }
+
+    //    return results;
+    //}
+
+
+    //public async Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US")
+    //{
+    //    var quotes = await GetQuotesAsync(symbols, market);
+            
+    //    foreach (var quote in quotes)
+    //    {
+    //        try
+    //        {
+    //            await _modelService.UpsertEquityMarketAsync(quote);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            _logger.LogError(ex, $"Error caching quote for {quote.Symbol}");
+    //        }
+    //    }
+
+    //    return quotes;
+    //}
+
+    #endregion
+
+    #region Historical Data
+
+    //public async Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US")
+    //{
+    //    var results = new List<StockHistoricalData>();
+
+    //    try
+    //    {
+    //        var period1 = new DateTimeOffset(startDate).ToUnixTimeSeconds();
+    //        var period2 = new DateTimeOffset(endDate).ToUnixTimeSeconds();
+                
+    //        var url = $"{YahooFinanceChartUrl}/{symbol}?period1={period1}&period2={period2}&interval=1d";
+    //        var response = await _httpClient.GetAsync(url);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            _logger.LogWarning($"Failed to fetch historical data for {symbol}. Status: {response.StatusCode}");
+    //            return results;
+    //        }
+
+    //        var content = await response.Content.ReadAsStringAsync();
+    //        var jsonDoc = JsonDocument.Parse(content);
+
+    //        var chart = jsonDoc.RootElement
+    //            .GetProperty("chart")
+    //            .GetProperty("result")[0];
+
+    //        var timestamps = chart.GetProperty("timestamp");
+    //        var quotes = chart.GetProperty("indicators").GetProperty("quote")[0];
+    //        var adjClose = chart.GetProperty("indicators").GetProperty("adjclose")[0].GetProperty("adjclose");
+
+    //        int index = 0;
+    //        foreach (var timestamp in timestamps.EnumerateArray())
+    //        {
+    //            var date = DateTimeOffset.FromUnixTimeSeconds(timestamp.GetInt64()).DateTime;
+                    
+    //            var historicalData = new StockHistoricalData
+    //            {
+    //                Date = date,
+    //                Open = GetDecimalFromArray(quotes, "open", index),
+    //                High = GetDecimalFromArray(quotes, "high", index),
+    //                Low = GetDecimalFromArray(quotes, "low", index),
+    //                Close = GetDecimalFromArray(quotes, "close", index),
+    //                AdjustedClose = GetDecimalFromJsonElement(adjClose[index]),
+    //                Volume = GetLongFromArray(quotes, "volume", index)
+    //            };
+
+    //            results.Add(historicalData);
+    //            index++;
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, $"Error fetching historical data for {symbol}");
+    //    }
+
+    //    return results;
+    //}
+
+    //public async Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US")
+    //{
+    //    var results = new List<StockHistoricalData>();
+
+    //    try
+    //    {
+    //        var url = $"{YahooFinanceChartUrl}/{symbol}?range={period}&interval={interval}";
+    //        var response = await _httpClient.GetAsync(url);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            _logger.LogWarning($"Failed to fetch historical data for {symbol}. Status: {response.StatusCode}");
+    //            return results;
+    //        }
+
+    //        var content = await response.Content.ReadAsStringAsync();
+    //        var jsonDoc = JsonDocument.Parse(content);
+
+    //        var chart = jsonDoc.RootElement
+    //            .GetProperty("chart")
+    //            .GetProperty("result")[0];
+
+    //        var timestamps = chart.GetProperty("timestamp");
+    //        var quotes = chart.GetProperty("indicators").GetProperty("quote")[0];
+                
+    //        int index = 0;
+    //        foreach (var timestamp in timestamps.EnumerateArray())
+    //        {
+    //            var date = DateTimeOffset.FromUnixTimeSeconds(timestamp.GetInt64()).DateTime;
+                    
+    //            var historicalData = new StockHistoricalData
+    //            {
+    //                Date = date,
+    //                Open = GetDecimalFromArray(quotes, "open", index),
+    //                High = GetDecimalFromArray(quotes, "high", index),
+    //                Low = GetDecimalFromArray(quotes, "low", index),
+    //                Close = GetDecimalFromArray(quotes, "close", index),
+    //                AdjustedClose = GetDecimalFromArray(quotes, "close", index),
+    //                Volume = GetLongFromArray(quotes, "volume", index)
+    //            };
+
+    //            results.Add(historicalData);
+    //            index++;
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, $"Error fetching historical data for {symbol}");
+    //    }
+
+    //    return results;
+    //}
+
+    #endregion
+
+    #region Batch Operations
+
+    //public async Task EtlEquityPricesAsync(int holdingId)
+    //{
+    //    try
+    //    {
+    //        var equities = await _modelService.GetEquitiesByHoldingIdAsync(holdingId);
+    //        var symbols = equities.Select(e => e.Symbol).Distinct().ToList();
+
+    //        if (symbols.Count == 0)
+    //            return;
+
+    //        List<EquityMarket> quotes = await GetQuotesAndCacheAsync(symbols);
+
+    //        foreach (var equity in equities)
+    //        {
+    //            var quote = quotes.FirstOrDefault(q => q.Symbol == equity.Symbol);
+    //            if (quote != null)
+    //            {
+    //                equity.CurrentPrice = quote.CurrentPrice;
+                        
+    //                // Update highs and lows if necessary
+    //                if (quote.CurrentPrice > equity.HoldingHigh)
+    //                {
+    //                    equity.HoldingHigh = quote.CurrentPrice;
+    //                    equity.HoldingHighAt = DateTime.UtcNow;
+    //                }
+                        
+    //                if (quote.CurrentPrice < equity.HoldingLow || equity.HoldingLow == 0)
+    //                {
+    //                    equity.HoldingLow = quote.CurrentPrice;
+    //                    equity.HoldingLowAt = DateTime.UtcNow;
+    //                }
+
+    //                await _modelService.UpdateEquityAsync(equity); // needed?
+    //            }
+    //        }
+
+    //        _logger.LogInformation($"Updated prices for {equities.Count} equities in holding {holdingId}");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, $"Error updating equity prices for holding {holdingId}");
+    //        throw;
+    //    }
+    //}
+
+    //public async Task UpdateAllEquityPricesAsync()
+    //{
+    //    try
+    //    {
+    //        var holdings = await _modelService.GetAllHoldingsAsync();
+                
+    //        foreach (var holding in holdings)
+    //        {
+    //            await EtlEquityPricesAsync(holding.HoldingId);
+    //        }
+
+    //        _logger.LogInformation($"Updated prices for all holdings");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error updating all equity prices");
+    //        throw;
+    //    }
+    //}
+
+    /// <summary>
+    /// NOT CALLED! by the daemon, but can be used to manually refresh the cache for a specific symbol.
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="market"></param>
+    /// <returns></returns>
+
+    //public async Task<bool> RefreshMarketCacheAsync(string symbol, string market)
+    //{
+    //    try
+    //    {
+    //        var quote = await GetQuoteAsync(symbol, market);
+    //        if (quote != null)
+    //        {
+    //            await _modelService.UpsertEquityMarketAsync(quote);
+    //            return true;
+    //        }
+    //        return false;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, $"Error refreshing market cache for {symbol}");
+    //        return false;
+    //    }
+    //}
+
+    #endregion
+
+
+    #region Search
+
+
+    //public async Task<List<EquitySearchResult>> SearchSymbolsAsync(string query)
+    //{
+    //    var results = new List<EquitySearchResult>();
+
+    //    try
+    //    {
+    //        var url = $"{YahooFinanceSearchUrl}?q={Uri.EscapeDataString(query)}";
+    //        var response = await _httpClient.GetAsync(url);
+
+    //        if (!response.IsSuccessStatusCode)
+    //        {
+    //            _logger.LogWarning($"Failed to search for {query}. Status: {response.StatusCode}");
+    //            return results;
+    //        }
+
+    //        var content = await response.Content.ReadAsStringAsync();
+    //        var jsonDoc = JsonDocument.Parse(content);
+
+    //        var quotes = jsonDoc.RootElement.GetProperty("quotes");
+
+    //        foreach (var quote in quotes.EnumerateArray())
+    //        {
+    //            results.Add(new EquitySearchResult
+    //            {
+    //                Symbol = GetStringValue(quote, "symbol"),
+    //                Name = GetStringValue(quote, "longname") ?? GetStringValue(quote, "shortname"),
+    //                Exchange = GetStringValue(quote, "exchange"),
+    //                Type = GetStringValue(quote, "quoteType")
+    //            });
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, $"Error searching for {query}");
+    //    }
+
+    //    return results;
+    //}
+
+    #endregion
+
+
 }
 
 class FinanceServiceTest

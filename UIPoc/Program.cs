@@ -9,6 +9,7 @@ using System.Runtime.ConstrainedExecution;
 using UIPooc.Components;
 using UIPooc.Data;
 using UIPooc.Services;
+using UIPooc.Yahoo;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
@@ -37,11 +38,27 @@ namespace UIPooc
                 //    }
                 //)
             );
+
+            //var yhFinanceApiSettings = builder.Configuration.GetSection(YhFinanceApiSettings.SectionName).Get<YhFinanceApiSettings>();
+
+            //if (yhFinanceApiSettings is null || string.IsNullOrEmpty(yhFinanceApiSettings.ApiKey))
+            //{
+            //    throw new InvalidOperationException("YhFinanceApi settings are missing or incomplete in configuration.");
+            //}
+
+            builder.Services.AddHttpClient<YhHttpClient>();
+            //    (client =>
+            //{
+            //    client.BaseAddress = new Uri(yhFinanceApiSettings.BaseUrl);
+            //    client.DefaultRequestHeaders.Add("x-rapidapi-key", yhFinanceApiSettings.ApiKey);
+            //    client.DefaultRequestHeaders.Add("x-rapidapi-host", yhFinanceApiSettings.ApiHost);
+            //});
+
             builder.Services.AddScoped<IModelService, ModelService>();
             builder.Services.AddScoped<IImportService, ImportService>();
             builder.Services.AddScoped<IExportService, ExportService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddHttpClient<IFinanceService, FinanceService>();
+            builder.Services.AddScoped<IFinanceService, FinanceService>();
             builder.Services.AddHostedService<EquityMarketSyncDaemon>();
             builder.Services.AddRadzenComponents();
 

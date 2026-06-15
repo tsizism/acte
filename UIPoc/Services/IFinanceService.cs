@@ -6,34 +6,34 @@ namespace UIPooc.Services;
 public interface IFinanceService
 {
     // Equity Operations
-    Task<Equity?> CreateEquityAsync(Equity equity);
+    Task<Equity?> CreateAndFetchEquityAsync(Equity equity);
 
     // Quote Operations
     Task<decimal?> FetchTickerPriceAsync(string ticker);
     Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US");
-    Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US");
+    //Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US");
     //Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US");
     //Task<List<EquityMarket>> GetQuotesAndCacheAsync(List<string> symbols, string market = "US");
 
     // Historical Data
-    Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US");
-    Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US");
+    //Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, DateTime startDate, DateTime endDate, string market = "US");
+    //Task<List<StockHistoricalData>> GetHistoricalDataAsync(string symbol, string period = "1mo", string interval = "1d", string market = "US");
 
     // Market Summary 
     //Task<EquityMarket?> GetMarketSummaryAsync(string symbol, string market = "US");
 
     // Batch Operations
-    Task EtlEquityPricesAsync(int holdingId);
+    //Task EtlEquityPricesAsync(int holdingId);
 
-    Task<bool> RefreshMarketCacheAsync(string symbol, string market);
+    //Task<bool> RefreshMarketCacheAsync(string symbol, string market);
 
     // Search
-    Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
+    //Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
     //Task<TickerPriceEntity> GetTickerPriceAsync(string ticker);
     Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
     Task<decimal> GetCADUSDExchangeRateAsync();
     Task<decimal> GetCADExchangeRateAsync();
-    Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding);
+    Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding, bool alwaysRealTime = false);
     Task<List<Holding>> FetchHoldingsAsync();
     Task<Holding?> FetchHoldingAsync(int holdingId);
 }

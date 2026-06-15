@@ -229,7 +229,10 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+
+            <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
             <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 

@@ -59,7 +59,7 @@ public partial class EquityCreate
         _isSaving = true;
         try
         {
-            await FinanceService.CreateEquityAsync(_equity);
+            await FinanceService.CreateAndFetchEquityAsync(_equity);
 
             NotificationService.Notify(new NotificationMessage
             {

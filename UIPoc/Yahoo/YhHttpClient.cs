@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using UIPooc.Services;
+using System.Net.Http.Headers;
 
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
@@ -30,14 +31,20 @@ using UIPooc.Services;
 
 namespace UIPooc.Yahoo;
 
+public class YhFinanceApiSettings
+{
+    public const string SectionName = "YhFinanceApi";
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiHost { get; set; } = string.Empty;
+    public string BaseUrl { get; set; } = string.Empty;
+}
+
+
 // DTO for stock ticker price information retrieved from Yahoo Finance API
 // Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
-
-
-
-
 public class YhHttpClient
 {
+    private readonly HttpClient _httpClient;
     private static string? _httpToken;
     private static readonly object _tokenLock = new object();
 
@@ -62,25 +69,51 @@ public class YhHttpClient
         }
     }
 
-    static public async Task<string> HttpGet(string url)
+
+    public YhHttpClient(HttpClient httpClient)
     {
-        string token = HttpToken;
+        _httpClient = httpClient;
+        _httpClient.BaseAddress = new Uri("https://yh-finance-complete.p.rapidapi.com");
+        _httpClient.DefaultRequestHeaders.Add("x-rapidapi-key", HttpToken);
+        _httpClient.DefaultRequestHeaders.Add("x-rapidapi-host", "yh-finance-complete.p.rapidapi.com");
 
-        HttpClient client = new HttpClient();
-        HttpRequestMessage request = new HttpRequestMessage
-        {
-            Method = HttpMethod.Get,
-            RequestUri = new Uri(url),
 
-            Headers =
-                {
-                    { "x-rapidapi-key", token },
-                    { "x-rapidapi-host", "yh-finance-complete.p.rapidapi.com" },
-                },
-        };
+        //var yhFinanceApiSettings = builder.Configuration.GetSection(YhFinanceApiSettings.SectionName).Get<YhFinanceApiSettings>();
+
+        //if (yhFinanceApiSettings is null || string.IsNullOrEmpty(yhFinanceApiSettings.ApiKey))
+        //{
+        //    throw new InvalidOperationException("YhFinanceApi settings are missing or incomplete in configuration.");
+        //}
+
+        //builder.Services.AddHttpClient<YhHttpClient>();
+        //    (client =>
+        //{
+        //    client.BaseAddress = new Uri(yhFinanceApiSettings.BaseUrl);
+        //    client.DefaultRequestHeaders.Add("x-rapidapi-key", yhFinanceApiSettings.ApiKey);
+        //    client.DefaultRequestHeaders.Add("x-rapidapi-host", yhFinanceApiSettings.ApiHost);
+        //});
+
+    }
+
+    private async Task<string> HttpGet(string url)
+    {
+
+
+        //HttpClient client = new HttpClient();
+        //HttpRequestMessage request = new HttpRequestMessage
+        //{
+        //    Method = HttpMethod.Get,
+        //    RequestUri = new Uri(url),
+
+        //    Headers =
+        //        {
+        //            { "x-rapidapi-key", token },
+        //            { "x-rapidapi-host", "yh-finance-complete.p.rapidapi.com" },
+        //        },
+        //};
 
         string bodyJson = string.Empty;
-        using (HttpResponseMessage response = await client.SendAsync(request))
+        using (HttpResponseMessage response = await _httpClient.GetAsync(url))
         {
             //HttpResponseMessage result = response.EnsureSuccessStatusCode();
             bodyJson = await response.Content.ReadAsStringAsync();
@@ -112,9 +145,10 @@ public class YhHttpClient
     /// </summary>
     /// <param name="ticker"></param>
     /// <returns></returns>
-    public static async Task<YhStockPriceResult> YhGetStockPriceAsync(string ticker)
+    public async Task<YhStockPriceResult> YhGetStockPriceAsync(string ticker)
     {
-        var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+        //var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
+        var url = $"yhprice?ticker={ticker}";
 
         string jsonResponse = await HttpGet(url);
 
@@ -162,7 +196,7 @@ public class YhHttpClient
     /// <param name="symbol"></param>
     /// <returns></returns>
 
-    public static async Task<YhGetFullStockPriceResult> YhGetFullStockPrice(string symbol)
+    public async Task<YhGetFullStockPriceResult> YhGetFullStockPrice(string symbol)
     {
         var url = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 
@@ -331,7 +365,7 @@ public class YhHttpClient
     /// <param name="symbol"></param>
     /// <param name="stockTickerProps"></param>
     /// <returns></returns>
-    public static async Task GetSymbolFullPriceAsync(string symbol, EntityYhFullStockPrice stockTickerProps)
+    public async Task GetSymbolFullPriceAsync(string symbol, EntityYhFullStockPrice stockTickerProps)
     {
         string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 

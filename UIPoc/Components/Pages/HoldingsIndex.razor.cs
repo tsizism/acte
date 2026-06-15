@@ -145,7 +145,7 @@ public partial class HoldingsIndex
             return; // User cancelled
         }
 
-        var newName = result.ToString()?.Trim();
+        string newName = result.ToString().Trim();
 
         if (string.IsNullOrWhiteSpace(newName))
         {

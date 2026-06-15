@@ -41,7 +41,7 @@ public class YhStockPriceResult
     public string Error { get; set; } = string.Empty;
 
     // TickerPriceEntity to Equity equity
-    public void PopulateDatabaseEquity(Equity equity)
+    public void PopulateDatabaseEntity(Equity equity)
     {
         var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 

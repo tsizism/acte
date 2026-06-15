@@ -53,6 +53,11 @@ static public class TimeUtils
 
     static public bool IsEquityUpToDate(DateTime equityDateTime)
     {
+        if (!IsTradingTime())
+        {
+            return true;
+        }
+
         if (equityDateTime.Date != DateTime.UtcNow.Date)
         {
             return false;
