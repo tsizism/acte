@@ -2,6 +2,7 @@
 @page "/equities/{HoldingId:int}"
 @using UIPooc.Services
 @using UIPooc.Models
+@using UIPooc.Components.Dialogs
 @using Microsoft.JSInterop
 @using UIPooc.Utils
 @rendermode InteractiveServer
@@ -30,6 +31,11 @@
                 <RadzenButton Icon="add" Text="Add Equity" 
                              Click="@NavigateToAddEquity" 
                              ButtonStyle="ButtonStyle.Primary" 
+                             Size="ButtonSize.Medium"
+                             Style="margin-right: 0.5rem" />
+                <RadzenButton Icon="flag" Text="Flag Settings" 
+                             Click="@OpenFlagSettingsDialog" 
+                             ButtonStyle="ButtonStyle.Info" 
                              Size="ButtonSize.Medium"
                              Style="margin-right: 0.5rem" />
                 <RadzenButton Icon="download" Text="Export to Excel" 
@@ -240,7 +246,7 @@
 
                 <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                     <Template Context="equity">
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
                                      Click="@(() => DeleteEquity(equity))"
                                      title="Delete Equity" />
                     </Template>
@@ -276,6 +282,9 @@
     private decimal _totalGainLossPercent = 0;
     private decimal _cadUsdRate = 0;
     private decimal _usdCadRate = 0;
+
+    private decimal? _flagMinValue = null;
+    private decimal? _flagMaxValue = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -484,6 +493,62 @@
 
             // Reload to revert the change
             await LoadEquitiesAsync();
+        }
+    }
+
+    private async Task OpenFlagSettingsDialog()
+    {
+        if (_selectedHolding == null)
+            return;
+
+        // Initialize the values from the current holding
+        _flagMinValue = _selectedHolding.FlagMinIndex;
+        _flagMaxValue = _selectedHolding.FlagMaxIndex;
+
+        var result = await DialogService.OpenAsync<FlagSettingsDialog>(
+            "Flag Settings",
+            new Dictionary<string, object>
+            {
+                { "FlagMinValue", _flagMinValue },
+                { "FlagMaxValue", _flagMaxValue }
+            },
+            new DialogOptions { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
+
+        if (result is ValueTuple<decimal?, decimal?> tuple)
+        {
+            await SaveFlagSettings(tuple.Item1, tuple.Item2);
+        }
+    }
+
+    private async Task SaveFlagSettings(decimal? flagMinIndex, decimal? flagMaxIndex)
+    {
+        if (_selectedHolding == null)
+            return;
+
+        try
+        {
+            _selectedHolding.FlagMinIndex = flagMinIndex;
+            _selectedHolding.FlagMaxIndex = flagMaxIndex;
+
+            await ModelService.UpdateHoldingAsync(_selectedHolding);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Flag settings updated: Min = {flagMinIndex?.ToString("C2") ?? "N/A"}, Max = {flagMaxIndex?.ToString("C2") ?? "N/A"}",
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to update flag settings: {ex.Message}",
+                Duration = 4000
+            });
         }
     }
 

@@ -369,9 +369,6 @@ public class FinanceService : IFinanceService
         return await _modelService.GetHoldingByIdAsync(holdingId);
     }
 
-#endregion
-
-
     private static TransactionType GetLastTxnType(HoldingType type) => type switch
     {
         HoldingType.Active => TransactionType.Buy,
@@ -403,6 +400,7 @@ public class FinanceService : IFinanceService
 
         return await _modelService.CreateEquityAsync(equity);
     }
+    #endregion
 
     #region Quote Operations
 
@@ -444,52 +442,52 @@ public class FinanceService : IFinanceService
     //}
 
 
-        //try
-        //{
-        //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
-        //    var response = await _httpClient.GetAsync(url);
+    //try
+    //{
+    //    var url = $"{YahooFinanceQuoteUrl}?symbols={symbol}";
+    //    var response = await _httpClient.GetAsync(url);
 
-        //    if (!response.IsSuccessStatusCode)
-        //    {
-        //        _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
-        //        return null;
-        //    }
+    //    if (!response.IsSuccessStatusCode)
+    //    {
+    //        _logger.LogWarning($"Failed to fetch market summary for {symbol}. Status: {response.StatusCode}");
+    //        return null;
+    //    }
 
-        //    var content = await response.Content.ReadAsStringAsync();
-        //    var jsonDoc = JsonDocument.Parse(content);
+    //    var content = await response.Content.ReadAsStringAsync();
+    //    var jsonDoc = JsonDocument.Parse(content);
 
-        //    var result = jsonDoc.RootElement
-        //        .GetProperty("quoteResponse")
-        //        .GetProperty("result");
+    //    var result = jsonDoc.RootElement
+    //        .GetProperty("quoteResponse")
+    //        .GetProperty("result");
 
-        //    if (result.GetArrayLength() == 0)
-        //        return null;
+    //    if (result.GetArrayLength() == 0)
+    //        return null;
 
-        //    var quote = result[0];
+    //    var quote = result[0];
 
-        //    return new MarketSummary
-        //    {
-        //        Symbol = GetStringValue(quote, "symbol"),
-        //        ShortName = GetStringValue(quote, "shortName"),
-        //        LongName = GetStringValue(quote, "longName"),
-        //        RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
-        //        RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
-        //        RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
-        //        RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
-        //        MarketCap = GetNullableDecimalValue(quote, "marketCap"),
-        //        FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
-        //        FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
-        //        TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
-        //        DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
-        //        Currency = GetStringValue(quote, "currency"),
-        //        Exchange = GetStringValue(quote, "exchange")
-        //    };
-        //}
-        //catch (Exception ex)
-        //{
-        //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
-        //    return null;
-        //}
+    //    return new MarketSummary
+    //    {
+    //        Symbol = GetStringValue(quote, "symbol"),
+    //        ShortName = GetStringValue(quote, "shortName"),
+    //        LongName = GetStringValue(quote, "longName"),
+    //        RegularMarketPrice = GetDecimalValue(quote, "regularMarketPrice"),
+    //        RegularMarketChange = GetDecimalValue(quote, "regularMarketChange"),
+    //        RegularMarketChangePercent = GetDecimalValue(quote, "regularMarketChangePercent"),
+    //        RegularMarketVolume = GetLongValue(quote, "regularMarketVolume"),
+    //        MarketCap = GetNullableDecimalValue(quote, "marketCap"),
+    //        FiftyTwoWeekHigh = GetNullableDecimalValue(quote, "fiftyTwoWeekHigh"),
+    //        FiftyTwoWeekLow = GetNullableDecimalValue(quote, "fiftyTwoWeekLow"),
+    //        TrailingPE = GetNullableDecimalValue(quote, "trailingPE"),
+    //        DividendYield = GetNullableDecimalValue(quote, "trailingAnnualDividendYield"),
+    //        Currency = GetStringValue(quote, "currency"),
+    //        Exchange = GetStringValue(quote, "exchange")
+    //    };
+    //}
+    //catch (Exception ex)
+    //{
+    //    _logger.LogError(ex, $"Error fetching market summary for {symbol}");
+    //    return null;
+    //}
     //}
 
 
@@ -505,7 +503,7 @@ public class FinanceService : IFinanceService
     //}
 
 
-    
+
     public async Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US")
     {
         // Full stock price endpoint: https://yh-finance-complete.p.rapidapi.com/price?ticker=AAPL
