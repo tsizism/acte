@@ -1,5 +1,6 @@
 @page "/holdings"
 @using UIPooc.Models
+@using UIPooc.Components.Dialogs
 @rendermode InteractiveServer
 
 <RadzenNotification />
@@ -99,6 +100,10 @@
                         <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => ViewHoldingHistory(holding.HoldingId))"
                                      title="View History" 
+                                     Style="margin-right: 0.25rem" />
+                        <RadzenButton Icon="flag" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                     Click="@(() => OpenFlagSettingsDialog(holding))"
+                                     title="Set Flag Min/Max" 
                                      Style="margin-right: 0.25rem" />
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => RenameHolding(holding))"

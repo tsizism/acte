@@ -255,6 +255,12 @@ public class FinanceService : IFinanceService
     #region Fetch Methods
 
     // BCE.TO or BCE
+
+    /// <summary>
+    /// Called by UI
+    /// </summary>
+    /// <param name="ticker"></param>
+    /// <returns></returns>
     public async Task<decimal?> FetchTickerPriceAsync(string ticker)
     {
         YhStockPriceResult tp = await RequestStockPriceAsync(ticker, canUseCache: false);
@@ -267,6 +273,13 @@ public class FinanceService : IFinanceService
         return tp?.Price;
     }
 
+    /// <summary>
+    /// Called by UI
+    /// </summary>
+    /// <param name="holding"></param>
+    /// <param name="alwaysRealTime"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding, bool alwaysRealTime = false)
     {
         List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
@@ -359,11 +372,28 @@ public class FinanceService : IFinanceService
         return lst;
     }
 
+    /// <summary>
+    /// Called by UI
+    /// </summary>
+    /// <returns></returns>
     public async Task<List<Holding>> FetchHoldingsAsync()
     {
-        return await _modelService.GetAllHoldingsAsync();
+        var lst = await _modelService.GetAllHoldingsAsync();
+
+        foreach (var holding in lst)
+        {
+            /// TBD
+        }
+
+
+        return lst;
     }
 
+    /// <summary>
+    /// Called by UI
+    /// </summary>
+    /// <param name="holdingId"></param>
+    /// <returns></returns>
     public async Task<Holding?> FetchHoldingAsync(int holdingId)
     {
         return await _modelService.GetHoldingByIdAsync(holdingId);
@@ -380,6 +410,11 @@ public class FinanceService : IFinanceService
     };
 
 
+    /// <summary>
+    /// Called by UI - creates the equity in the database and populates it with the latest price and other info from Yahoo Finance.
+    /// </summary>
+    /// <param name="equity"></param>
+    /// <returns></returns>
     public async Task<Equity?> CreateAndFetchEquityAsync(Equity equity)
     {
         var tickerPrice = await RequestStockPriceAsync(equity.Symbol);

@@ -209,4 +209,54 @@ public partial class HoldingsIndex
         HoldingType.BuyPending => BadgeStyle.Primary,
         _ => BadgeStyle.Light
     };
+
+    private async Task OpenFlagSettingsDialog(Holding holding)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "FlagMinValue", holding.FlagMinIndex },
+            { "FlagMaxValue", holding.FlagMaxIndex }
+        };
+
+        var result = await DialogService.OpenAsync<FlagSettingsDialog>(
+            $"Flag Settings - {holding.Name}",
+            parameters,
+            new DialogOptions { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
+
+        if (result is ValueTuple<decimal?, decimal?> tuple)
+        {
+            await SaveFlagSettings(holding, tuple.Item1, tuple.Item2);
+        }
+    }
+
+    private async Task SaveFlagSettings(Holding holding, decimal? flagMinIndex, decimal? flagMaxIndex)
+    {
+        try
+        {
+            holding.FlagMinIndex = flagMinIndex;
+            holding.FlagMaxIndex = flagMaxIndex;
+
+            await ModelService.UpdateHoldingAsync(holding);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Flag settings updated for '{holding.Name}': Min = {flagMinIndex?.ToString("C2") ?? "N/A"}, Max = {flagMaxIndex?.ToString("C2") ?? "N/A"}",
+                Duration = 3000
+            });
+
+            await LoadHoldingsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to update flag settings: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
 }
