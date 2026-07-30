@@ -51,12 +51,13 @@ static public class TimeUtils
         return true;
     }
 
+    // TODO: Consider using TimeZoneInfo.ConvertTimeFromUtc to convert to Eastern Time instead of hardcoding UTC offsets.
     static public bool IsEquityUpToDate(DateTime equityDateTime)
     {
-        if (!IsTradingTime())
-        {
-            return true;
-        }
+        //if (!IsTradingTime())
+        //{
+        //    return true;
+        //}
 
         if (equityDateTime.Date != DateTime.UtcNow.Date)
         {
