@@ -3,5 +3,6 @@
     <File Path="readme-epp.txt" />
     <File Path="Readme.md" />
   </Folder>
+  <Project Path="../DBSync/DBSync.csproj" Id="f9920d4b-149b-43a5-8917-5f0c81f6e1ef" />
   <Project Path="UIPooc.csproj" />
 </Solution>

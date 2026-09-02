@@ -88,11 +88,6 @@ namespace UIPooc.Data
                     .WithOne(h => h.User)
                     .HasForeignKey(h => h.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasMany(e => e.Transactions)
-                    .WithOne(t => t.User)
-                    .HasForeignKey(t => t.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
 
@@ -182,6 +177,12 @@ namespace UIPooc.Data
                     .IsRequired();
 
                 entity.HasIndex(p => p.Name).IsUnique();
+
+
+                entity.HasMany(e => e.Transactions)
+                                    .WithOne(t => t.Holding)
+                                    .HasForeignKey(t => t.HoldingId)
+                                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
 
@@ -350,9 +351,6 @@ namespace UIPooc.Data
             {
                 entity.HasKey(e => e.TransactionId);
 
-                entity.Property(e => e.UserId)
-                    .IsRequired();
-
                 entity.Property(e => e.HoldingId)
                     .IsRequired();
 
@@ -387,7 +385,6 @@ namespace UIPooc.Data
                 entity.Property(e => e.IsDeleted)
                     .IsRequired();
 
-                entity.HasIndex(e => e.UserId);
                 entity.HasIndex(e => e.Symbol);
                 entity.HasIndex(e => e.TransactionDate);
                 entity.HasIndex(e => e.HoldingId);

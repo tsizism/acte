@@ -24,7 +24,6 @@ namespace UIPooc.Services
         {
             return await _context.Users
                 .Include(u => u.Holdings)
-                .Include(u => u.Transactions)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
         }
 
@@ -334,7 +333,6 @@ namespace UIPooc.Services
         public async Task<Transaction?> GetTransactionByIdAsync(int transactionId)
         {
             return await _context.Transactions
-                .Include(t => t.User)
                 .Include(t => t.Holding)
                 .FirstOrDefaultAsync(t => t.TransactionId == transactionId);
         }
@@ -343,15 +341,6 @@ namespace UIPooc.Services
         {
             return await _context.Transactions
                 .Where(t => t.HoldingId == holdingId)
-                .OrderByDescending(t => t.TransactionDate)
-                .ToListAsync();
-        }
-
-        public async Task<List<Transaction>> GetTransactionsByUserIdAsync(int userId)
-        {
-            return await _context.Transactions
-                .Include(t => t.Holding)
-                .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.TransactionDate)
                 .ToListAsync();
         }

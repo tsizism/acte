@@ -284,7 +284,6 @@ namespace UIPooc.Services
                         var transaction = new Transaction
                         {
                             HoldingId = holdingId,
-                            UserId = holding.UserId,
                             Symbol = symbol,
                             Type = transactionType,
                             Quantity = ParseInt(worksheet.Cells[row, 4].Text),

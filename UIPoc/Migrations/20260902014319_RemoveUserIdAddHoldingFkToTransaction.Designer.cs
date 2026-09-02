@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UIPooc.Data;
 
@@ -11,9 +12,11 @@ using UIPooc.Data;
 namespace UIPooc.Migrations
 {
     [DbContext(typeof(HoldingsDbContext))]
-    partial class HoldingsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260902014319_RemoveUserIdAddHoldingFkToTransaction")]
+    partial class RemoveUserIdAddHoldingFkToTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,7 +131,7 @@ namespace UIPooc.Migrations
                     b.HasIndex("HoldingId", "Symbol")
                         .IsUnique();
 
-                    b.ToTable("Equities", (string)null);
+                    b.ToTable("Equities");
                 });
 
             modelBuilder.Entity("UIPooc.Models.EquityMarket", b =>
@@ -190,7 +193,7 @@ namespace UIPooc.Migrations
                     b.HasIndex("Symbol")
                         .IsUnique();
 
-                    b.ToTable("EquityMarkets", (string)null);
+                    b.ToTable("EquityMarkets");
                 });
 
             modelBuilder.Entity("UIPooc.Models.Holding", b =>
@@ -258,7 +261,7 @@ namespace UIPooc.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Holdings", (string)null);
+                    b.ToTable("Holdings");
                 });
 
             modelBuilder.Entity("UIPooc.Models.IndexHistory", b =>
@@ -294,7 +297,7 @@ namespace UIPooc.Migrations
                     b.HasIndex("HoldingId", "RecordedAt")
                         .IsUnique();
 
-                    b.ToTable("IndexHistories", (string)null);
+                    b.ToTable("IndexHistories");
                 });
 
             modelBuilder.Entity("UIPooc.Models.Transaction", b =>
@@ -346,7 +349,7 @@ namespace UIPooc.Migrations
 
                     b.HasIndex("TransactionDate");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("UIPooc.Models.User", b =>
@@ -396,7 +399,7 @@ namespace UIPooc.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("UIPooc.Models.Equity", b =>

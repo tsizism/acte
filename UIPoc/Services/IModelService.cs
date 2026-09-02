@@ -41,7 +41,6 @@ namespace UIPooc.Services
         // Transaction operations
         Task<Transaction?> GetTransactionByIdAsync(int transactionId);
         Task<List<Transaction>> GetTransactionsByHoldingIdAsync(int holdingId);
-        Task<List<Transaction>> GetTransactionsByUserIdAsync(int userId);
         Task<Transaction> CreateTransactionAsync(Transaction transaction);
         Task<Transaction> UpdateTransactionAsync(Transaction transaction);
         Task DeleteTransactionAsync(int transactionId);

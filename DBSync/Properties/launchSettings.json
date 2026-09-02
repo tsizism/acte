@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DBSync": {
+      "commandName": "Project",
+      "commandLineArgs": "--copy-data"
+    }
+  }
+}
