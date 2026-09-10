@@ -423,3 +423,8 @@ FodyWeavers.xsd
 # Blazor specific
 **/*.razor.css
 !**/*.razor.css
+
+
+# DBSync
+DBSync/bin/
+DBSync/obj/
