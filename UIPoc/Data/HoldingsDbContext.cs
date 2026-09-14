@@ -220,6 +220,10 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
+                entity.Property(e => e.AverageCostMarket)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
                 entity.Property(e => e.CurrentPrice)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");

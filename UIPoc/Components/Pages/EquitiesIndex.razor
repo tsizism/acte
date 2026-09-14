@@ -195,7 +195,19 @@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+                @* <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" /> *@
+
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
+                    <Template Context="equity">
+                        @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCostMarket" Title="Avg Cost Market" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
+                    <Template Context="equity">
+                        @equity.AverageCostMarket.ToString("C2") @equity.Currency
+                    </Template>
+                </RadzenDataGridColumn>
 
                 @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
                 {
@@ -238,7 +250,7 @@
 
             <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd}" />
 
             <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 

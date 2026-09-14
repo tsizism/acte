@@ -10,6 +10,7 @@ public class Equity
     public string Keywords { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public decimal AverageCost { get; set; }
+    public decimal AverageCostMarket { get; set; }
     public decimal CurrentPrice { get; set; }
     public decimal MarketPrice { get; set; } = 0;
     public decimal? GainLoss { get; set; }

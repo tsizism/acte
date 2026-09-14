@@ -424,7 +424,3 @@ FodyWeavers.xsd
 **/*.razor.css
 !**/*.razor.css
 
-
-# DBSync
-DBSync/bin/
-DBSync/obj/
