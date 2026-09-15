@@ -290,6 +290,7 @@ public class FinanceService : IFinanceService
         foreach (var equity in lst)
         {
             var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+
             if (!TimeUtils.IsEquityUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
             {
                 YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
@@ -312,6 +313,22 @@ public class FinanceService : IFinanceService
                     decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
                     equity.CurrentPrice = tickerPrice.Price * exchangeRate;
                 }
+
+                if (equity.CurrentPrice > equity.HoldingHigh)
+                {
+                    equity.HoldingHigh = equity.CurrentPrice;
+                    equity.HoldingHighAt = DateTime.UtcNow;
+                }
+
+                if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
+                {
+                    equity.HoldingLow = equity.CurrentPrice;
+                    equity.HoldingLowAt = DateTime.UtcNow;
+                }
+
+                equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
+                equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
+
 
                 equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
                 await _modelService.UpdateEquityAsync(equity);
@@ -417,7 +434,7 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<Equity?> CreateAndFetchEquityAsync(Equity equity)
     {
-        var tickerPrice = await RequestStockPriceAsync(equity.Symbol);
+        YhStockPriceResult tickerPrice = await RequestStockPriceAsync(equity.Symbol);
 
         if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {

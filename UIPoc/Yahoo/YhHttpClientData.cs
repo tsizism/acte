@@ -53,22 +53,6 @@ public class YhStockPriceResult
         equity.Currency = this.Currency;
         equity.MarketPrice = this.Price;
         equity.CurrentPrice = this.Price;
-
-
-        if (equity.CurrentPrice > equity.HoldingHigh)
-        {
-            equity.HoldingHigh = equity.CurrentPrice;
-            equity.HoldingHighAt = DateTime.UtcNow;
-        }
-
-        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
-        {
-            equity.HoldingLow = equity.CurrentPrice;
-            equity.HoldingLowAt = DateTime.UtcNow;
-        }
-
-        equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
-        equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
     }
 }
 

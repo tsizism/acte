@@ -141,12 +141,12 @@ public class EquityMarketSyncDaemon : BackgroundService
     {
         _logger.LogInformation("EquityMarketSyncService is starting.");
             
-        await PereodicTask(stoppingToken, TimeSpan.FromMinutes(2));
+        await PeriodicTask(stoppingToken, TimeSpan.FromMinutes(2));
 
         _logger.LogInformation("EquityMarketSyncService is stopping.");
     }
 
-    private async Task PereodicTask(CancellationToken stoppingToken, TimeSpan delay)
+    private async Task PeriodicTask(CancellationToken stoppingToken, TimeSpan delay)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
