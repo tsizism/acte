@@ -282,111 +282,127 @@ public class FinanceService : IFinanceService
     /// <exception cref="Exception"></exception>
     public async Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding, bool alwaysRealTime = false)
     {
-        List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
-        Dictionary<string, decimal> holdingIndexSnapshotDict = new Dictionary<string, decimal>();
+        // ── Lock file ────────────────────────────────────────────────
+        var lockPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(),$"holding_{holding.HoldingId}.lock");
+        await File.WriteAllTextAsync(lockPath, $"Locked at: {DateTime.UtcNow:O}{Environment.NewLine}HoldingId: {holding.HoldingId}");
 
-        string snapshot = string.Empty;
-
-        foreach (var equity in lst)
+        try
         {
-            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-            if (!TimeUtils.IsEquityUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
+            List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
+            Dictionary<string, decimal> holdingIndexSnapshotDict = new Dictionary<string, decimal>();
+
+            string snapshot = string.Empty;
+
+            foreach (var equity in lst)
             {
-                YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
+                var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-                //string ticker = @"{""symbol"": ""AAPL"", 
-                //                    ""price"": 230.4584, 
-                //                    ""currency"": ""USD"",
-                //                    ""symbolName"": ""Apple"",
-                //                    ""marketCap"": 3503912648704
-
-                tickerPrice.PopulateDatabaseEntity(equity);
-
-                if (holding.Currency == null)
+                if (!TimeUtils.IsEquityUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
                 {
-                    throw new Exception("Holding currency is null.");
+                    YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
+
+                    //string ticker = @"{""symbol"": ""AAPL"", 
+                    //                    ""price"": 230.4584, 
+                    //                    ""currency"": ""USD"",
+                    //                    ""symbolName"": ""Apple"",
+                    //                    ""marketCap"": 3503912648704
+
+                    tickerPrice.PopulateDatabaseEntity(equity);
+
+                    if (holding.Currency == null)
+                    {
+                        throw new Exception("Holding currency is null.");
+                    }
+
+                    if (holding.Currency != tickerPrice.Currency)
+                    {
+                        decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                        equity.CurrentPrice = tickerPrice.Price * exchangeRate;
+                    }
+
+                    if (equity.CurrentPrice > equity.HoldingHigh)
+                    {
+                        equity.HoldingHigh = equity.CurrentPrice;
+                        equity.HoldingHighAt = DateTime.UtcNow;
+                    }
+
+                    if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
+                    {
+                        equity.HoldingLow = equity.CurrentPrice;
+                        equity.HoldingLowAt = DateTime.UtcNow;
+                    }
+
+                    equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
+                    equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
+
+
+                    equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
+                    await _modelService.UpdateEquityAsync(equity);
                 }
 
-                if (holding.Currency != tickerPrice.Currency)
-                {
-                    decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-                    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
-                }
+                holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
 
-                if (equity.CurrentPrice > equity.HoldingHigh)
-                {
-                    equity.HoldingHigh = equity.CurrentPrice;
-                    equity.HoldingHighAt = DateTime.UtcNow;
-                }
-
-                if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
-                {
-                    equity.HoldingLow = equity.CurrentPrice;
-                    equity.HoldingLowAt = DateTime.UtcNow;
-                }
-
-                equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
-                equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
+                //if (equity.Currency != holding.Currency)
+                //{
+                //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
+                //}
 
 
-                equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
-                await _modelService.UpdateEquityAsync(equity);
+                //if (holding.Currency == equity.Currency)
+
+                //try
+                //{
+                //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
+                //}
+                //catch (Exception ex)
+                //{
+                //    NotificationService.Notify(new NotificationMessage
+                //    {
+                //        Severity = NotificationSeverity.Warning,
+                //        Summary = "Price Fetch Warning",
+                //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
+                //        Duration = 3000,
+                //        CloseOnClick = true
+                //    });
+                //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
+                //}
+
+
             }
 
-            holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
+            if (!TimeUtils.IsEquityUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+            {
+                holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
 
-            //if (equity.Currency != holding.Currency)
-            //{
-            //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
-            //}
+                await _modelService.UpdateHoldingAsync(holding);
 
+                try
+                {
+                    await _modelService.UpsertIndexHistoryAsync(new IndexHistory
+                    {
+                        HoldingId = holding.HoldingId,
+                        Index = holding.Index,
+                        HoldingSnapshot = JsonSerializer.Serialize(holdingIndexSnapshotDict),
+                        RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
+                }
+            }
 
-            //if (holding.Currency == equity.Currency)
-
-            //try
-            //{
-            //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
-            //}
-            //catch (Exception ex)
-            //{
-            //    NotificationService.Notify(new NotificationMessage
-            //    {
-            //        Severity = NotificationSeverity.Warning,
-            //        Summary = "Price Fetch Warning",
-            //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
-            //        Duration = 3000,
-            //        CloseOnClick = true
-            //    });
-            //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
-            //}
-
+            return lst;
 
         }
-
-        if (!TimeUtils.IsEquityUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+        finally
         {
-            holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
-
-            await _modelService.UpdateHoldingAsync(holding);
-
-            try
-            {
-                await _modelService.UpsertIndexHistoryAsync(new IndexHistory
-                {
-                    HoldingId = holding.HoldingId,
-                    Index = holding.Index,
-                    HoldingSnapshot = JsonSerializer.Serialize(holdingIndexSnapshotDict),
-                    RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
-            }
+            // ── Delete lock regardless of success or exception ───────
+            if (File.Exists(lockPath))
+                File.Delete(lockPath);
         }
 
-        return lst;
     }
 
     /// <summary>

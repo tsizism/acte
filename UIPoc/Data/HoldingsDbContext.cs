@@ -232,6 +232,10 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
+                entity.Property(e => e.PrevDayMarketPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
                 entity.Property(e => e.LastTxnType)
                     .IsRequired();
 
@@ -282,6 +286,9 @@ namespace UIPooc.Data
                 entity.Property(e => e.LastUpdated)
                     .IsRequired()
                     .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.DataSource)
+                    .HasMaxLength(16);
 
                 entity.Property(e => e.IsDeleted)
                     .IsRequired();

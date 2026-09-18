@@ -7,13 +7,13 @@ PS Y:\LossLess\7.swProjects\acte\webapp\Balazor\UIPoc\acte\UIPoc>
 dotnet tool update --global dotnet-ef
 Tool 'dotnet-ef' was successfully updated from version '10.0.3' to version '10.0.12'.
 
-1. Add public decimal AverageCostMarket { get; set; } to public class Equity
-2. Add entity.Property(e => e.AverageCostMarket).IsRequired().HasColumnType("decimal(18,2)"); 
+1. class Equity --> Add public decimal AverageCostMarket { get; set; } to 
+2. class HoldingsDbContext --> Add entity.Property(e => e.AverageCostMarket).IsRequired().HasColumnType("decimal(18,2)"); 
 to the OnModelCreating method in your DbContext class (e.g., HoldingsDbContext).
 3. In the Package Manager Console (PMC), run the following command to create a new migration:
-dotnet ef migrations add AverageCostMarket_ToEquity
+---> dotnet ef migrations add AverageCostMarket_ToEquity
 4. In the PMC, run the following command to apply the migration and update the database:
-dotnet ef database update
+---> dotnet ef database update
 5. Copy and verify the changes in your database using SQL Server Management Studio (SSMS) or any other database management tool of your choice.
 UPDATE Equities
 SET AverageCostMarket = AverageCost

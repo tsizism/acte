@@ -190,7 +190,40 @@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Market Currency" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" /> *@
 
-            <RadzenDataGridColumn Property="CurrentPrice" Title=@($"Current Price ({_selectedHolding!.Currency})") Width="120px" Sortable="false" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+                @* <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh"     Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Equity" Property="CurrentPrice"    Title=@($"Current Price ({_selectedHolding!.Currency})") Width="120px" Sortable="false" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingLow"      Title="Holding Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" /> *@
+
+                @* <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="H / Current / L" Sortable="false" Width="160px">
+                    <Template Context="equity">
+                        <span style="color: green;">@equity.HoldingHigh.ToString("N2")</span>
+                        /
+                        <strong>@equity.CurrentPrice.ToString("N2")</strong>
+                        /
+                        <span style="color: red;">@equity.HoldingLow.ToString("N2")</span>
+                    </Template>
+                </RadzenDataGridColumn> *@
+
+
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="H / Current / L" Sortable="false" Width="160px">
+                    <Template Context="equity">
+                        @{
+                            var distHigh = equity.HoldingHigh - equity.CurrentPrice;
+                            var distLow = equity.CurrentPrice - equity.HoldingLow;
+                            var closerToHigh = distHigh < distLow;
+                            var closerToLow = distLow < distHigh;
+                        }
+                        <span style="color: green; font-weight: @(closerToHigh ? "bold" : "normal");">
+                            @equity.HoldingHigh.ToString("N2")
+                        </span>
+                        /
+                        <span>@equity.CurrentPrice.ToString("N2")</span>
+                        /
+                        <span style="color: red; font-weight: @(closerToLow ? "bold" : "normal");">
+                            @equity.HoldingLow.ToString("N2")
+                        </span>
+                    </Template>
+                </RadzenDataGridColumn>
 
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
@@ -252,9 +285,9 @@
 
             <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd}" />
 
-            <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Holding High" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
 
-            <RadzenDataGridColumn TItem="Equity" Property="HoldingLow" Title="Holding Low" Width="100px" FormatString="{0:C2}" TextAlign="TextAlign.Right" />
+
+
 
                 <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                     <Template Context="equity">

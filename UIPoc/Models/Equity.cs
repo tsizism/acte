@@ -13,6 +13,7 @@ public class Equity
     public decimal AverageCostMarket { get; set; }
     public decimal CurrentPrice { get; set; }
     public decimal MarketPrice { get; set; } = 0;
+    public decimal PrevDayMarketPrice { get; set; } = 0;
     public decimal? GainLoss { get; set; }
     public TransactionType LastTxnType { get; set; }
     public decimal LastTxnQuantity { get; set; }
@@ -29,6 +30,7 @@ public class Equity
     public string? FlagMessage { get; set; } = string.Empty;
     public DateTime? FlagDate { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    public string DataSource { get; set; } = string.Empty;
     public bool IsDeleted { get; set; } = false;
     public Holding Holding { get; set; } = null!;
 
