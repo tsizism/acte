@@ -171,7 +171,7 @@ public class FinanceService : IFinanceService
                 return _cachedPrice;
             }
 
-            if (!TimeUtils.IsTicketPriceCacheExpired(_cachedPrice.LastUpdated))
+            if (!TimeUtils.IsTickerPriceCacheExpired(_cachedPrice.LastUpdated))
             {
                 return _cachedPrice;
             }
@@ -298,7 +298,11 @@ public class FinanceService : IFinanceService
             {
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-                if (!TimeUtils.IsEquityUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
+                //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
+
+                string action = TimeUtils.EquityTimeToAction(equity.LastUpdated);
+
+                if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 {
                     YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
 
@@ -371,7 +375,7 @@ public class FinanceService : IFinanceService
 
             }
 
-            if (!TimeUtils.IsEquityUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+            if (!TimeUtils.IsHoldingUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
             {
                 holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
 

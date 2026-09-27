@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UIPooc.Data;
 using UIPooc.Models;
+using UIPooc.Utils;
 
 namespace UIPooc.Services
 {
@@ -222,7 +223,7 @@ namespace UIPooc.Services
 
         public async Task<Equity> UpdateEquityAsync(Equity equity)
         {
-            equity.LastUpdated = DateTime.UtcNow;
+            equity.LastUpdated = TimeUtils.AdjustEquityTime(equity.LastUpdated);
             _context.Equities.Update(equity);
             await _context.SaveChangesAsync();
             return equity;
