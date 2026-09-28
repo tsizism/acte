@@ -160,6 +160,11 @@ static public class TimeUtils
             // We check in after hours on Tuesday, Wednesday, Thursday, Friday
             if ((today == DayOfWeek.Monday) || (today == DayOfWeek.Tuesday) || (today == DayOfWeek.Wednesday) || (today == DayOfWeek.Thursday) || (today == DayOfWeek.Friday))
             {
+                if (equityDateTime.Day < nowUtc.Day)  
+                {
+                    return "FullUpdate";        // we are in after hours, equityDateTime is from a previous day, we need a full update.
+                }
+
                 if (equityDateTime.TimeOfDay < TRADING_FINISH_UTC.ToTimeSpan()) 
                 {
                     return "FullUpdate"; // Last update before end of trade ie 16:30 PM EST (21:30 UTC)
