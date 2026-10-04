@@ -23,8 +23,8 @@ public class FinanceService : IFinanceService
     private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
     private const string YahooFinanceSearchUrl = "https://query1.finance.yahoo.com/v1/finance/search";
 
-    public static readonly Dictionary<string, YhStockPriceResult> _priceCache = new(StringComparer.OrdinalIgnoreCase);
-    public static readonly Dictionary<string, YhGetFullStockPriceResult> _fullStockPriceCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhStockPriceResultAbstract> _shortInfoCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhStockPriceResultAbstract> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
 
 
     public FinanceService(YhHttpClient yhHttpClient, IModelService modelService, ILogger<FinanceService> logger)
@@ -162,30 +162,63 @@ public class FinanceService : IFinanceService
     /// <param name="ticker"></param>
     /// <param name="canUseCache"></param>
     /// <returns></returns>
-    private async Task<YhStockPriceResult> RequestStockPriceAsync(string ticker, bool canUseCache = true)
+    public async Task<YhStockPriceResultAbstract> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true)
     {
-        if (canUseCache && FinanceService._priceCache.TryGetValue(ticker, out var _cachedPrice))
+        if (isShortStockInfo)
         {
-            if (!TimeUtils.IsTradingTime())
+            if (canUseCache && FinanceService._shortInfoCache.TryGetValue(ticker, out var _cachedPrice))
             {
-                return _cachedPrice;
-            }
+                if (!TimeUtils.IsTradingTime())
+                {
+                    return _cachedPrice;
+                }
 
-            if (!TimeUtils.IsTickerPriceCacheExpired(_cachedPrice.LastUpdated))
+                if (!TimeUtils.IsTickerPriceCacheExpired(_cachedPrice.LastUpdated))
+                {
+                    return _cachedPrice;
+                }
+            }
+        }
+        else
+        {
+            if (canUseCache && FinanceService._longInfoCache.TryGetValue(ticker, out var _cachedPrice))
             {
-                return _cachedPrice;
+                if (!TimeUtils.IsTradingTime())
+                {
+                    return _cachedPrice;
+                }
+                if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedPrice.LastUpdated))
+                {
+                    return _cachedPrice;
+                }
             }
         }
 
+        YhStockPriceResultAbstract result;
 
-        YhStockPriceResult result = await _yhHttpClient.YhGetStockPriceAsync(ticker);
+        if (isShortStockInfo)
+        {
+            result = await _yhHttpClient.YhGetStockPriceOnlyAsync(ticker);
+        }
+        else
+        {
+            result = await _yhHttpClient.YhGetStockPriceInfo(ticker);
+        }
 
         if (!string.IsNullOrEmpty(result.Error))
         {
             return result;
         }
 
-        FinanceService._priceCache[ticker] = result;
+        if (isShortStockInfo)
+        {
+            FinanceService._shortInfoCache[ticker] = result;
+        }
+        else
+        {
+            FinanceService._longInfoCache[ticker] = result;
+        }
+
         return result;
     }
 
@@ -195,25 +228,25 @@ public class FinanceService : IFinanceService
     /// <param name="symbol"></param>
     /// <param name="canUseCache"></param>
     /// <returns></returns>
-    public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
-    {
-        if (canUseCache && FinanceService._fullStockPriceCache.TryGetValue(symbol, out var _cachedFullStockPrice))
-        {
-            if (!TimeUtils.IsTradingTime())
-            {
-                return _cachedFullStockPrice;
-            }
+    //public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
+    //{
+    //    if (canUseCache && FinanceService._longInfoCache.TryGetValue(symbol, out var _cachedFullStockPrice))
+    //    {
+    //        if (!TimeUtils.IsTradingTime())
+    //        {
+    //            return _cachedFullStockPrice;
+    //        }
 
-            if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
-            {
-                return _cachedFullStockPrice;
-            }
-        }
+    //        if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
+    //        {
+    //            return _cachedFullStockPrice;
+    //        }
+    //    }
 
-        YhGetFullStockPriceResult result = await _yhHttpClient.YhGetFullStockPrice(symbol);
-        FinanceService._fullStockPriceCache[symbol] = result;
-        return result;
-    }
+    //    YhGetFullStockPriceResult result = await _yhHttpClient.YhGetStockPriceInfo(symbol);
+    //    FinanceService._longInfoCache[symbol] = result;
+    //    return result;
+    //}
 
     /// <summary>
     /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
@@ -230,7 +263,7 @@ public class FinanceService : IFinanceService
         //currency: "USD"
 
 
-        var usd = await RequestStockPriceAsync("CADUSD=X");
+        var usd = await RequestStockPriceAsync("CADUSD=X", isShortStockInfo: true);
         return usd.Price;
 
     }
@@ -241,8 +274,8 @@ public class FinanceService : IFinanceService
         //price: 1.3723
         //currency: "CAD"
 
-        var cm = await RequestStockPriceAsync("CM");
-        var cmto = await RequestStockPriceAsync("CM.TO");
+        var cm = await RequestStockPriceAsync("CM", isShortStockInfo: true);
+        var cmto = await RequestStockPriceAsync("CM.TO", isShortStockInfo: true);
         return cmto.Price / cm.Price;
 
         //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
@@ -263,7 +296,7 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<decimal?> FetchTickerPriceAsync(string ticker)
     {
-        YhStockPriceResult tp = await RequestStockPriceAsync(ticker, canUseCache: false);
+        YhStockPriceResult tp = (YhStockPriceResult)await RequestStockPriceAsync(ticker, isShortStockInfo: true, canUseCache: false);
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -300,11 +333,11 @@ public class FinanceService : IFinanceService
 
                 //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
 
-                string action = TimeUtils.EquityTimeToAction(equity.LastUpdated);
+                string action = TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
 
                 if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 {
-                    YhStockPriceResult tickerPrice = await this.RequestStockPriceAsync(symbol);
+                    YhStockPriceResult tickerPrice = (YhStockPriceResult)await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
 
                     //string ticker = @"{""symbol"": ""AAPL"", 
                     //                    ""price"": 230.4584, 
@@ -454,7 +487,7 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<Equity?> CreateAndFetchEquityAsync(Equity equity)
     {
-        YhStockPriceResult tickerPrice = await RequestStockPriceAsync(equity.Symbol);
+        YhStockPriceResult tickerPrice = (YhStockPriceResult)await RequestStockPriceAsync(equity.Symbol, isShortStockInfo: true );
 
         if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {

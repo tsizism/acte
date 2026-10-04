@@ -110,7 +110,7 @@ static public class TimeUtils
         return equityDateTime;
     }
 
-    static public string EquityTimeToAction(DateTime equityDateTime)
+    static public string EquityTimeToAction(DateTime equityDateTime, string ticker)
     {
         bool isTradingNow = IsTradingTime();
         DateTime nowUtc = DateTime.UtcNow;

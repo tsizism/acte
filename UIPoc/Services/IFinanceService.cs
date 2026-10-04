@@ -8,6 +8,9 @@ public interface IFinanceService
     // Equity Operations
     Task<Equity?> CreateAndFetchEquityAsync(Equity equity);
 
+
+    Task<YhStockPriceResultAbstract> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true);
+
     // Quote Operations
     Task<decimal?> FetchTickerPriceAsync(string ticker);
     Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US");
@@ -30,7 +33,7 @@ public interface IFinanceService
     // Search
     //Task<List<EquitySearchResult>> SearchSymbolsAsync(string query);
     //Task<TickerPriceEntity> GetTickerPriceAsync(string ticker);
-    Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
+    //Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true);
     Task<decimal> GetCADUSDExchangeRateAsync();
     Task<decimal> GetCADExchangeRateAsync();
     Task<List<Equity>> FetchEquitiesForHoldingAsync(Holding holding, bool alwaysRealTime = false);

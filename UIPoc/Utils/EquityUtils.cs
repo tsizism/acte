@@ -74,7 +74,7 @@ static public class EquityUtils
         return true;
     }
 
-    public static string GetYahooFinanceUrl(string marketSymbol)
+    public static string GetFinancePortalUrlForStock(string marketSymbol)
     {
         if (string.IsNullOrWhiteSpace(marketSymbol))
         {

@@ -29,19 +29,33 @@ using UIPooc.Utils;
 
 namespace UIPooc.Yahoo;
 
-// DTO for stock ticker price information retrieved from Yahoo Finance API
-// Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
-public class YhStockPriceResult
+public abstract class YhStockPriceResultAbstract
 {
+    public abstract bool IsFullStockPriceResult { get; }
+
+    public abstract void PopulateDatabaseEntity(Equity equity);
+
+    public abstract void PopulateDatabaseEquityMarket(EquityMarket equityMarket);
+
     public string Symbol { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string Currency { get; set; } = string.Empty;
     public decimal MarketCap { get; set; }
-    public DateTime LastUpdated { get; set; }
     public string Error { get; set; } = string.Empty;
 
+    public DateTime LastUpdated { get; set; }
+}
+
+
+// DTO for stock ticker price information retrieved from Yahoo Finance API
+// Stock Price - "https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"), 4 keys (symbol, price, currency, marketCap)
+public class YhStockPriceResult : YhStockPriceResultAbstract
+{
+    public override bool IsFullStockPriceResult => false;
+
+
     // TickerPriceEntity to Equity equity
-    public void PopulateDatabaseEntity(Equity equity)
+    public override void PopulateDatabaseEntity(Equity equity)
     {
         var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
@@ -54,6 +68,11 @@ public class YhStockPriceResult
         equity.MarketPrice = this.Price;
         equity.CurrentPrice = this.Price;
     }
+
+    public override void PopulateDatabaseEquityMarket(EquityMarket equityMarket)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 // DTO for full stock price information retrieved from Yahoo Finance API
@@ -61,51 +80,50 @@ public class YhStockPriceResult
 //                               "https://yh-finance-complete.p.rapidapi.com/price?symbol=bce.to"),  - 28 keys
 
 // $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
-public class YhGetFullStockPriceResult
+public class YhGetFullStockPriceResult : YhStockPriceResultAbstract
 {
-    public YhGetFullStockPricePriceResult? Price { get; set; }
-    public DateTime LastUpdated { get; set; }
+    public override bool IsFullStockPriceResult => true;
 
-    public Equity ToDatabaseEquity(Equity equity)
+    public YhGetFullStockPricePriceResult? PriceInfo { get; set; }
+
+    public override void PopulateDatabaseEntity(Equity equity)
     {
-        if (Price == null)
+        if (PriceInfo == null)
         {
-            throw new InvalidOperationException("FullStockPriceEntity.ToDatabaseEquity: Price is null.");
+            throw new InvalidOperationException("FullStockPriceEntity.PopulateDatabaseEntity: PriceInfo is null.");
         }
 
-        equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
-        equity.MarketPrice = Price.RegularMarketPrice;
-        equity.CurrentPrice = Price.RegularMarketPrice;
+        equity.AverageCost = equity.AverageCost == 0 ? PriceInfo.RegularMarketPrice : equity.AverageCost;
+        equity.MarketPrice = PriceInfo.RegularMarketPrice;
+        equity.CurrentPrice = PriceInfo.RegularMarketPrice;
 
 
-        if (Price.RegularMarketPrice > equity.HoldingHigh)
+        if (PriceInfo.RegularMarketPrice > equity.HoldingHigh)
         {
-            equity.HoldingHigh = Price.RegularMarketPrice;
+            equity.HoldingHigh = PriceInfo.RegularMarketPrice;
             equity.HoldingHighAt = this.LastUpdated;
         }
 
-        if (Price.RegularMarketPrice < equity.HoldingLow)
+        if (PriceInfo.RegularMarketPrice < equity.HoldingLow)
         {
-            equity.HoldingLow = Price.RegularMarketPrice;
+            equity.HoldingLow = PriceInfo.RegularMarketPrice;
             equity.HoldingLowAt = this.LastUpdated;
         }
-
-        return equity;
     }
 
-    internal void ToDatabaseEquityMarket(EquityMarket equityMarket)
+    public override void PopulateDatabaseEquityMarket(EquityMarket equityMarket)
     {
-        equityMarket.Currency = Price!.Currency;
-        equityMarket.CurrentPrice = Price.RegularMarketPrice;
-        equityMarket.PreviousClose = Price.RegularMarketPreviousClose;
-        equityMarket.OpenPrice = Price.RegularMarketOpen;
-        equityMarket.DayHigh = Price.RegularMarketDayHigh;
-        equityMarket.DayLow = Price.RegularMarketDayLow;
-        equityMarket.Volume = Price.RegularMarketVolume;
-        equityMarket.MarketCap = Price.MarketCap;
+        equityMarket.Currency = PriceInfo!.Currency;
+        equityMarket.CurrentPrice = PriceInfo.RegularMarketPrice;
+        equityMarket.PreviousClose = PriceInfo.RegularMarketPreviousClose;
+        equityMarket.OpenPrice = PriceInfo.RegularMarketOpen;
+        equityMarket.DayHigh = PriceInfo.RegularMarketDayHigh;
+        equityMarket.DayLow = PriceInfo.RegularMarketDayLow;
+        equityMarket.Volume = PriceInfo.RegularMarketVolume;
+        equityMarket.MarketCap = PriceInfo.MarketCap;
         equityMarket.Week52High = 0;
         equityMarket.Week52Low = 0;
-        equityMarket.LastTradeTime = Price.RegularMarketTime;
+        equityMarket.LastTradeTime = PriceInfo.RegularMarketTime;
         equityMarket.LastUpdated = DateTime.UtcNow;
     }
 }

@@ -167,7 +167,7 @@
             <Columns>
                 <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="100px" Frozen="true">
                     <Template Context="equity">
-                    <a href="@EquityUtils.GetYahooFinanceUrl(@EquityUtils.GetSymbolAdjustedToMarket(equity))" target="_blank">
+                    <a href="@EquityUtils.GetFinancePortalUrlForStock(@EquityUtils.GetSymbolAdjustedToMarket(equity))" target="_blank">
                         <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@EquityUtils.GetSymbolAdjustedToMarket(equity)" />
                         </a>
                     </Template>
@@ -447,7 +447,7 @@
     private void CalculateTotals()
     {
         _totalValue = (decimal)(_selectedHolding?.Index ?? 0);
-    
+
         // _totalGainLoss = _equities.Sum(e => e.GainLoss!.Value);
         // var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
         // _totalGainLossPercent = totalCost != 0 ? _totalGainLoss / totalCost : 0;
@@ -476,7 +476,7 @@
         try
         {
             var excelData = await ExportService.ExportEquitiesToExcelAsync(_selectedHoldingId.Value);
-            
+
             // Download the file
             var fileName = $"Equities_{_selectedHolding?.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             await DownloadFileAsync(fileName, excelData);
@@ -547,16 +547,30 @@
             return;
 
         // Initialize the values from the current holding
-        _flagMinValue = _selectedHolding.FlagMinIndex;
-        _flagMaxValue = _selectedHolding.FlagMaxIndex;
+        this._flagMinValue = _selectedHolding.FlagMinIndex;
+        this._flagMaxValue = _selectedHolding.FlagMaxIndex;
+
+        if (_flagMinValue == null || _flagMaxValue == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "FlagMinIndex or FlagMaxIndex is null. Cannot open flag settings dialog.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        var dict = new Dictionary<string, object?>
+            {
+                { "FlagMinValue", this._flagMinValue },
+                { "FlagMaxValue", this._flagMaxValue }
+            };
 
         var result = await DialogService.OpenAsync<FlagSettingsDialog>(
             "Flag Settings",
-            new Dictionary<string, object>
-            {
-                { "FlagMinValue", _flagMinValue },
-                { "FlagMaxValue", _flagMaxValue }
-            },
+            dict,
             new DialogOptions { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
 
         if (result is ValueTuple<decimal?, decimal?> tuple)

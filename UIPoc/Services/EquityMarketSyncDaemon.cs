@@ -264,12 +264,12 @@ public class EquityMarketSyncDaemon : BackgroundService
                 using IServiceScope scope = _serviceProvider.CreateScope();
                 IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
 
-                YhGetFullStockPriceResult? fullStockPrice = await financeService.RequestFullStockPriceAsync(marketSymbol);
+                YhStockPriceResultAbstract? fullStockPrice = await financeService.RequestStockPriceAsync(marketSymbol, isShortStockInfo: false);
 
                 bool newEquityMarket = equityMarket == null;
                 equityMarket ??= new EquityMarket {Symbol = marketSymbol };
 
-                fullStockPrice.ToDatabaseEquityMarket(equityMarket);
+                fullStockPrice.PopulateDatabaseEquityMarket(equityMarket);
 
                 if (newEquityMarket)
                 {

@@ -212,15 +212,40 @@ public partial class HoldingsIndex
 
     private async Task OpenFlagSettingsDialog(Holding holding)
     {
+        if(holding == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Holding is null. Cannot open flag settings dialog.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        if (holding.FlagMaxIndex == null || holding.FlagMinIndex == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "FlagMinIndex or FlagMaxIndex is null. Cannot open flag settings dialog.",
+                Duration = 4000
+            });
+            return;
+        }
+
+
         var parameters = new Dictionary<string, object>
         {
-            { "FlagMinValue", holding.FlagMinIndex },
-            { "FlagMaxValue", holding.FlagMaxIndex }
+            { "FlagMinValue", holding.FlagMinIndex! },
+            { "FlagMaxValue", holding.FlagMaxIndex! }
         };
 
         var result = await DialogService.OpenAsync<FlagSettingsDialog>(
             $"Flag Settings - {holding.Name}",
-            parameters,
+            parameters!,
             new DialogOptions { Width = "500px", Height = "auto", Resizable = true, Draggable = true });
 
         if (result is ValueTuple<decimal?, decimal?> tuple)

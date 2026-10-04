@@ -145,7 +145,7 @@ public class YhHttpClient
     /// </summary>
     /// <param name="ticker"></param>
     /// <returns></returns>
-    public async Task<YhStockPriceResult> YhGetStockPriceAsync(string ticker)
+    public async Task<YhStockPriceResult> YhGetStockPriceOnlyAsync(string ticker)
     {
         //var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
         var url = $"yhprice?ticker={ticker}";
@@ -196,7 +196,7 @@ public class YhHttpClient
     /// <param name="symbol"></param>
     /// <returns></returns>
 
-    public async Task<YhGetFullStockPriceResult> YhGetFullStockPrice(string symbol)
+    public async Task<YhGetFullStockPriceResult> YhGetStockPriceInfo(string symbol)
     {
         var url = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 
