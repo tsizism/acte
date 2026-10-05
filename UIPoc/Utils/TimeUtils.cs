@@ -52,6 +52,12 @@ static public class TimeUtils
         return true;
     }
 
+    public static bool IsEquityMarketCacheExpired(DateTime lastUpdated)
+    {
+        throw new NotImplementedException();
+    }
+
+
     // TODO: Consider using TimeZoneInfo.ConvertTimeFromUtc to convert to Eastern Time instead of hardcoding UTC offsets.
     static public bool IsHoldingUpToDate(DateTime equityDateTime)
     {
@@ -339,7 +345,6 @@ static public class TimeUtils
 
         return "NoUpdate";
     }
-
 
 }
 

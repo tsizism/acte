@@ -33,9 +33,20 @@ public abstract class YhStockPriceResultAbstract
 {
     public abstract bool IsFullStockPriceResult { get; }
 
-    public abstract void PopulateDatabaseEntity(Equity equity);
+    public void PopulateDatabaseEntity(Equity equity)
+    {
+        var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-    public abstract void PopulateDatabaseEquityMarket(EquityMarket equityMarket);
+        if (symbol != this.Symbol)
+        {
+            throw new InvalidOperationException("TickerPriceEntity.PopulateDatabaseEquity: Symbol mismatch.");
+        }
+
+        equity.Currency = this.Currency;
+        equity.MarketPrice = this.Price;
+        equity.CurrentPrice = this.Price;
+    }
+
 
     public string Symbol { get; set; } = string.Empty;
     public decimal Price { get; set; }
@@ -55,24 +66,6 @@ public class YhStockPriceResult : YhStockPriceResultAbstract
 
 
     // TickerPriceEntity to Equity equity
-    public override void PopulateDatabaseEntity(Equity equity)
-    {
-        var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
-
-        if (symbol != this.Symbol)
-        {
-            throw new InvalidOperationException("TickerPriceEntity.PopulateDatabaseEquity: Symbol mismatch.");
-        }
-
-        equity.Currency = this.Currency;
-        equity.MarketPrice = this.Price;
-        equity.CurrentPrice = this.Price;
-    }
-
-    public override void PopulateDatabaseEquityMarket(EquityMarket equityMarket)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 // DTO for full stock price information retrieved from Yahoo Finance API
@@ -86,32 +79,32 @@ public class YhGetFullStockPriceResult : YhStockPriceResultAbstract
 
     public YhGetFullStockPricePriceResult? PriceInfo { get; set; }
 
-    public override void PopulateDatabaseEntity(Equity equity)
-    {
-        if (PriceInfo == null)
-        {
-            throw new InvalidOperationException("FullStockPriceEntity.PopulateDatabaseEntity: PriceInfo is null.");
-        }
+    //public override void PopulateDatabaseEntity(Equity equity)
+    //{
+    //    if (PriceInfo == null)
+    //    {
+    //        throw new InvalidOperationException("FullStockPriceEntity.PopulateDatabaseEntity: PriceInfo is null.");
+    //    }
 
-        equity.AverageCost = equity.AverageCost == 0 ? PriceInfo.RegularMarketPrice : equity.AverageCost;
-        equity.MarketPrice = PriceInfo.RegularMarketPrice;
-        equity.CurrentPrice = PriceInfo.RegularMarketPrice;
+    //    equity.AverageCost = equity.AverageCost == 0 ? PriceInfo.RegularMarketPrice : equity.AverageCost;
+    //    equity.MarketPrice = PriceInfo.RegularMarketPrice;
+    //    equity.CurrentPrice = PriceInfo.RegularMarketPrice;
 
 
-        if (PriceInfo.RegularMarketPrice > equity.HoldingHigh)
-        {
-            equity.HoldingHigh = PriceInfo.RegularMarketPrice;
-            equity.HoldingHighAt = this.LastUpdated;
-        }
+    //    if (PriceInfo.RegularMarketPrice > equity.HoldingHigh)
+    //    {
+    //        equity.HoldingHigh = PriceInfo.RegularMarketPrice;
+    //        equity.HoldingHighAt = this.LastUpdated;
+    //    }
 
-        if (PriceInfo.RegularMarketPrice < equity.HoldingLow)
-        {
-            equity.HoldingLow = PriceInfo.RegularMarketPrice;
-            equity.HoldingLowAt = this.LastUpdated;
-        }
-    }
+    //    if (PriceInfo.RegularMarketPrice < equity.HoldingLow)
+    //    {
+    //        equity.HoldingLow = PriceInfo.RegularMarketPrice;
+    //        equity.HoldingLowAt = this.LastUpdated;
+    //    }
+    //}
 
-    public override void PopulateDatabaseEquityMarket(EquityMarket equityMarket)
+    public void PopulateDatabaseEquityMarket(EquityMarket equityMarket)
     {
         equityMarket.Currency = PriceInfo!.Currency;
         equityMarket.CurrentPrice = PriceInfo.RegularMarketPrice;
