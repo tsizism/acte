@@ -9,7 +9,7 @@ public interface IFinanceService
     Task<Equity?> CreateAndFetchEquityAsync(Equity equity);
 
 
-    Task<YhStockPriceResultAbstract> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true);
+    Task<YhStockPriceInfo> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true);
 
     // Quote Operations
     Task<decimal?> FetchTickerPriceAsync(string ticker);

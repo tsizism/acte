@@ -10,6 +10,7 @@ using UIPooc.Models;
 using UIPooc.Utils;
 using UIPooc.Yahoo;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static UIPooc.Yahoo.YhStockPriceInfo;
 
 namespace UIPooc.Services;
 
@@ -264,12 +265,13 @@ public class EquityMarketSyncDaemon : BackgroundService
                 using IServiceScope scope = _serviceProvider.CreateScope();
                 IFinanceService financeService = scope.ServiceProvider.GetRequiredService<IFinanceService>();
 
-                YhGetFullStockPriceResult fullStockPrice = (YhGetFullStockPriceResult)await financeService.RequestStockPriceAsync(marketSymbol, isShortStockInfo: false);
+                var wrapper = await financeService.RequestStockPriceAsync(marketSymbol, isShortStockInfo: false);
+                YhGetResultStockDetails? fullStockPrice = wrapper.StockPriceDetails;
 
                 bool newEquityMarket = equityMarket == null;
                 equityMarket ??= new EquityMarket {Symbol = marketSymbol };
 
-                fullStockPrice.PopulateDatabaseEquityMarket(equityMarket);
+                fullStockPrice?.PopulateEquityMarket(equityMarket);
 
                 if (newEquityMarket)
                 {

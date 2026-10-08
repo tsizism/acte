@@ -9,6 +9,7 @@ using UIPooc.Helpers;
 using UIPooc.Models;
 using UIPooc.Utils;
 using UIPooc.Yahoo;
+using static UIPooc.Yahoo.YhStockPriceInfo;
 
 namespace UIPooc.Services;
 
@@ -23,8 +24,8 @@ public class FinanceService : IFinanceService
     private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
     private const string YahooFinanceSearchUrl = "https://query1.finance.yahoo.com/v1/finance/search";
 
-    public static readonly Dictionary<string, YhStockPriceResultAbstract> _shortInfoCache = new(StringComparer.OrdinalIgnoreCase);
-    public static readonly Dictionary<string, YhStockPriceResultAbstract> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhStockPriceInfo> _shortInfoCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhStockPriceInfo> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
     public static readonly Dictionary<string, EquityMarket> _equityMarketCache = new(StringComparer.OrdinalIgnoreCase);
 
     public FinanceService(YhHttpClient yhHttpClient, IModelService modelService, ILogger<FinanceService> logger)
@@ -162,9 +163,9 @@ public class FinanceService : IFinanceService
     /// <param name="ticker"></param>
     /// <param name="canUseCache"></param>
     /// <returns></returns>
-    public async Task<YhStockPriceResultAbstract> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true)
+    public async Task<YhStockPriceInfo> RequestStockPriceAsync(string ticker, bool isShortStockInfo, bool canUseCache = true)
     {
-        YhStockPriceResultAbstract result;
+        YhStockPriceInfo result;
 
         if (canUseCache)
         {
@@ -195,11 +196,12 @@ public class FinanceService : IFinanceService
 
         if (isShortStockInfo)
         {
-            result = await _yhHttpClient.YhGetStockPriceOnlyAsync(ticker);
+
+            result = new YhStockPriceInfo(await _yhHttpClient.YhGetStockPriceOnlyAsync(ticker));
         }
         else
         {
-            result = await _yhHttpClient.YhGetStockPriceInfo(ticker);
+            result = new YhStockPriceInfo(await _yhHttpClient.YhGetStockDetails(ticker));
         }
 
         if (!string.IsNullOrEmpty(result.Error))
@@ -261,7 +263,8 @@ public class FinanceService : IFinanceService
 
 
         var usd = await RequestStockPriceAsync("CADUSD=X", isShortStockInfo: true);
-        return usd.Price;
+        YhGetResultStockPrice? tickerPrice = usd.StockPrice;
+        return tickerPrice?.Price ?? 0;
 
     }
 
@@ -272,8 +275,10 @@ public class FinanceService : IFinanceService
         //currency: "CAD"
 
         var cm = await RequestStockPriceAsync("CM", isShortStockInfo: true);
+        YhGetResultStockPrice? cmTickerPrice = cm.StockPrice;
         var cmto = await RequestStockPriceAsync("CM.TO", isShortStockInfo: true);
-        return cmto.Price / cm.Price;
+        YhGetResultStockPrice? cmtoTickerPrice = cmto.StockPrice;
+        return (cmtoTickerPrice?.Price ?? 0) / (cmTickerPrice?.Price ?? 0);
 
         //var cad = await EquityMarketSyncDaemon.RequestTickerPriceAsync("CAD=X"); 
         //return cad.Price;
@@ -293,7 +298,8 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<decimal?> FetchTickerPriceAsync(string ticker)
     {
-        YhStockPriceResult tp = (YhStockPriceResult)await RequestStockPriceAsync(ticker, isShortStockInfo: true, canUseCache: false);
+        var wrapper = await RequestStockPriceAsync(ticker, isShortStockInfo: true, canUseCache: false);
+        YhGetResultStockPrice? tp = wrapper.StockPrice;
 
         if (!string.IsNullOrEmpty(tp?.Error))
         {
@@ -320,7 +326,6 @@ public class FinanceService : IFinanceService
         {
             List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
             Dictionary<string, decimal> holdingIndexSnapshotDict = new Dictionary<string, decimal>();
-            YhStockPriceResultAbstract tickerPrice;
 
             string snapshot = string.Empty;
 
@@ -332,11 +337,13 @@ public class FinanceService : IFinanceService
 
                 string action = TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
 
-                if (equity.CurrentPrice == 0 || alwaysRealTime) //  || action == "FullUpdate" || action == "QuickUpdate") 
-                {
+                //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
+                //{
+                    YhGetResultStockPrice? tickerPrice;
                     if (action == "QuickUpdate")
                     {
-                        tickerPrice = await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
+                        var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
+                        tickerPrice = wrapper.StockPrice;
 
                         //string ticker = @"{""symbol"": ""AAPL"", 
                         //                    ""price"": 230.4584, 
@@ -344,19 +351,23 @@ public class FinanceService : IFinanceService
                         //                    ""symbolName"": ""Apple"",
                         //                    ""marketCap"": 3503912648704
 
-                        tickerPrice.PopulateDatabaseEntity(equity); 
+                        tickerPrice!.PopulateDatabaseEntity(equity); 
                     }
                     else if (action == "FullUpdate")
                     {
                         EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol);
 
-                        tickerPrice = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
-                        tickerPrice.PopulateDatabaseEntity(equity);
-                        
-                        //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
-                        
-                        ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
-                    }
+                        var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
+                        YhGetResultStockDetails? details = wrapper.StockPriceDetails;
+                        tickerPrice = details!.GetResultStockPrice();
+                        tickerPrice!.PopulateDatabaseEntity(equity);
+
+                    //tickerPrice = wrapper.StockPrice;
+
+                    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
+
+                    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
+                }
                     else
                     {
                         // NoAction - use equty from DB
@@ -392,7 +403,7 @@ public class FinanceService : IFinanceService
 
                     equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
                     await _modelService.UpdateEquityAsync(equity);
-                }
+                //}
 
                 holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
 
@@ -503,7 +514,8 @@ public class FinanceService : IFinanceService
     /// <returns></returns>
     public async Task<Equity?> CreateAndFetchEquityAsync(Equity equity)
     {
-        YhStockPriceResult tickerPrice = (YhStockPriceResult)await RequestStockPriceAsync(equity.Symbol, isShortStockInfo: true );
+        var wrapper = await RequestStockPriceAsync(equity.Symbol, isShortStockInfo: true );
+        YhGetResultStockPrice? tickerPrice = wrapper.StockPrice;
 
         if (tickerPrice == null || !string.IsNullOrEmpty(tickerPrice?.Error))
         {

@@ -1,7 +1,8 @@
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
 using UIPooc.Services;
-using System.Net.Http.Headers;
+using static UIPooc.Yahoo.YhStockPriceInfo;
 
 
 // Poprtal API for Yahoo Finance data, including stock quotes, historical data, and market insights.
@@ -145,7 +146,7 @@ public class YhHttpClient
     /// </summary>
     /// <param name="ticker"></param>
     /// <returns></returns>
-    public async Task<YhStockPriceResult> YhGetStockPriceOnlyAsync(string ticker)
+    public async Task<YhGetResultStockPrice> YhGetStockPriceOnlyAsync(string ticker)
     {
         //var url = $"https://yh-finance-complete.p.rapidapi.com/yhprice?ticker={ticker}";
         var url = $"yhprice?ticker={ticker}";
@@ -154,7 +155,7 @@ public class YhHttpClient
 
         if (jsonResponse == null)
         {
-            return new YhStockPriceResult() { Error = "YhGetStockPriceAsync: Get returned empty string" };
+            return new YhGetResultStockPrice() { Error = "YhGetStockPriceAsync: Get returned empty string" };
         }
 
         if (jsonResponse.Contains("error"))
@@ -163,21 +164,21 @@ public class YhHttpClient
 
             if (dict1 == null)
             {
-                return new YhStockPriceResult() { Error = "YhGetStockPriceAsync: Failed to parse JSON response" };
+                return new YhGetResultStockPrice() { Error = "YhGetStockPriceAsync: Failed to parse JSON response" };
             }
 
             string errorMessage = dict1.ContainsKey("error") ? dict1["error"].ToString() ?? "Unknown error" : "Undefined error";    
 
-            return new YhStockPriceResult() { Error = errorMessage };
+            return new YhGetResultStockPrice() { Error = errorMessage };
         }
 
-        YhStockPriceResult? result = JsonSerializer.Deserialize<YhStockPriceResult>(jsonResponse, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+        YhGetResultStockPrice? result = JsonSerializer.Deserialize<YhGetResultStockPrice>(jsonResponse, new JsonSerializerOptions {PropertyNameCaseInsensitive = true});
 
         // { "symbol":"BCE","price":25.11,"currency":"USD","marketCap":23415724032}
 
         if (result == null)
         {
-            result=  new YhStockPriceResult();
+            result=  new YhGetResultStockPrice();
         }
         result.LastUpdated = DateTime.UtcNow;
         return result;
@@ -196,17 +197,19 @@ public class YhHttpClient
     /// <param name="symbol"></param>
     /// <returns></returns>
 
-    public async Task<YhGetFullStockPriceResult> YhGetStockPriceInfo(string symbol)
+    public async Task<YhGetResultStockDetails> YhGetStockDetails(string symbol)
     {
         var url = $"https://yh-finance-complete.p.rapidapi.com/price?symbol={symbol}";
 
         string jsonResponse = await HttpGet(url);
 
-        YhGetFullStockPriceResult? result = JsonSerializer.Deserialize<YhGetFullStockPriceResult>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        YhGetResultStockDetails? result = JsonSerializer.Deserialize<YhGetResultStockDetails>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         if (result == null)
         {
-            result = new YhGetFullStockPriceResult();
+            //result = new YhGetResultStockDetails();
+            throw new InvalidOperationException("Failed to deserialize JSON response for stock details");
+
         }
         result.LastUpdated = DateTime.UtcNow;
         return result;

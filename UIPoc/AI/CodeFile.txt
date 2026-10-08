@@ -1,0 +1,120 @@
+﻿/*
+
+using System;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+
+public class Program
+{
+    private static readonly string _connectionString = "Server=YOUR_SERVER;Database=YOUR_DB;Trusted_Connection=True;TrustServerCertificate=True;";
+    private static readonly string _ollamaUrl = "http://localhost:11434/api/generate";
+    private static readonly string _modelName = "qwen2.5"; // Ensure you ran `ollama pull qwen2.5`
+
+    public static async Task Main(string[] args)
+    {
+        Console.WriteLine("🤖 Local Investment FAQ Assistant Initiated.");
+        Console.Write("\nAsk an investment question: ");
+        string userQuery = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(userQuery)) return;
+
+        // Step 1: Retrieval Phase (SQL Text Search)
+        Console.WriteLine("\n🔍 Searching local SQL Database via Full-Text Search...");
+        string context = await RetrieveFaqContextAsync(userQuery);
+
+        if (string.IsNullOrEmpty(context))
+        {
+            Console.WriteLine("⚠️ No direct context discovered in database. Relying on baseline model knowledge.");
+            context = "No specific documentation found.";
+        }
+
+        // Step 2: Generation Phase (Augmenting & Prompting Qwen)
+        Console.WriteLine("🧠 Invoking Local Qwen Model via Ollama...");
+        await GenerateAnswerAsync(userQuery, context);
+    }
+
+    private static async Task<string> RetrieveFaqContextAsync(string query)
+    {
+        var contextBuilder = new StringBuilder();
+
+        // Standard relational keyword search matching lexical variants via FREETEXT
+        string sqlQuery = @"
+            SELECT TOP 3 Category, Question, Answer 
+            FROM InvestmentFaqs 
+            WHERE FREETEXT(FullTextContent, @SearchQuery);";
+
+        using var connection = new SqlConnection(_connectionString);
+        using var command = new SqlCommand(sqlQuery, connection);
+        command.Parameters.AddWithValue("@SearchQuery", query);
+
+        await connection.OpenAsync();
+        using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            contextBuilder.AppendLine(\$"[Category: {reader["Category"]}]");
+            contextBuilder.AppendLine(\$"Question: {reader["Question"]}");
+            contextBuilder.AppendLine(\$"Answer: {reader["Answer"]}\n---");
+        }
+
+        return contextBuilder.ToString();
+    }
+
+    private static async Task GenerateAnswerAsync(string query, string context)
+    {
+        using var httpClient = new HttpClient();
+        httpClient.Timeout = TimeSpan.FromMinutes(3);
+
+        // System prompt design guarantees model relies stringently on database facts
+        string systemPrompt = "You are a professional compliance-focused investment advisor assistant. " +
+                              "Answer the user's question using ONLY the provided verified context fragments. " +
+                              "If the answer cannot be found in the context, clearly state that you do not possess that data.";
+
+        string targetedPrompt = \$"Context Documents:\n{context}\n\nUser Question: {query}\n\nStructured Answer:";
+
+        var requestBody = new OllamaRequest
+        {
+            Model = _modelName,
+            Prompt = targetedPrompt,
+            System = systemPrompt,
+            Stream = false
+        };
+
+        string jsonPayload = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await httpClient.PostAsync(_ollamaUrl, content);
+            response.EnsureSuccessStatusCode();
+
+            string jsonResponse = await response.Content.ReadAsStringAsync();
+            var ollamaResponse = JsonSerializer.Deserialize<OllamaResponse>(jsonResponse);
+
+            Console.WriteLine("\n✨ Guardrailed Compliance Response:");
+            Console.WriteLine(ollamaResponse?.Response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(\$"\n❌ Generation Error: {ex.Message}");
+        }
+    }
+}
+
+public class OllamaRequest
+{
+    [JsonPropertyName("model")] public string Model { get; set; }
+    [JsonPropertyName("prompt")] public string Prompt { get; set; }
+    [JsonPropertyName("system")] public string System { get; set; }
+    [JsonPropertyName("stream")] public bool Stream { get; set; }
+}
+
+public class OllamaResponse
+{
+    [JsonPropertyName("response")] public string Response { get; set; }
+}
+
+*/
