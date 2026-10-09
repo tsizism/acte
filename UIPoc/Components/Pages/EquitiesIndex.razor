@@ -205,7 +205,7 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="H / Current / L" Sortable="false" Width="160px">
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="160px">
                     <Template Context="equity">
                         @{
                             var distHigh = equity.HoldingHigh - equity.CurrentPrice;
@@ -230,26 +230,26 @@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" /> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="200px" Sortable="false" TextAlign="TextAlign.Right">
                     <Template Context="equity">
-                        @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
+                    @equity.AverageCostMarket.ToString("C2") @equity.Currency / @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCostMarket" Title="Avg Cost Market" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
+                @* <RadzenDataGridColumn TItem="Equity" Property="AverageCostMarket" Title="Avg Cost Market" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
                     <Template Context="equity">
                         @equity.AverageCostMarket.ToString("C2") @equity.Currency
                     </Template>
-                </RadzenDataGridColumn>
+                </RadzenDataGridColumn> *@
 
                 @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
                 {
-                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="100px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="50px" FormatString="{0}" TextAlign="TextAlign.Right" />
                 }
 
-                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="120px"  TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="200px"  TextAlign="TextAlign.Right">
                     <Template Context="equity">
-                        @((equity.Quantity * equity.CurrentPrice).ToString("C2"))
+                    @((equity.Quantity * equity.MarketPrice).ToString("C2")) @equity.Currency /  @((equity.Quantity * equity.CurrentPrice).ToString("C2")) @_selectedHolding!.Currency
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -281,21 +281,17 @@
                 </RadzenDataGridColumn> *@
 
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px" FormatString="{0:yyyy-MM-dd HH:mm}" />
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="140px" FormatString="{0:yyyy-MM-dd}" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="100px" FormatString="{0:yyyy-MM-dd}" />
 
-
-
-
-
-                <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
-                    <Template Context="equity">
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
-                                     Click="@(() => DeleteEquity(equity))"
-                                     title="Delete Equity" />
-                    </Template>
-                </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="50px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                <Template Context="equity">
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
+                                    Click="@(() => DeleteEquity(equity))"
+                                    title="Delete Equity" />
+                </Template>
+            </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     }

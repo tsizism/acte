@@ -78,7 +78,7 @@ public class YhStockPriceInfo
 
             equity.Currency = this.Currency;
             equity.MarketPrice = this.Price;
-            equity.CurrentPrice = this.Price;
+            equity.CurrentPrice = this.Price; // Will be adjusted to currency in FetchEquitiesForHoldingAsync
         }
     }
 
