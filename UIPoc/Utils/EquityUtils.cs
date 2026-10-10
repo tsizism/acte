@@ -14,8 +14,15 @@ static public class EquityUtils
 
     static public string GetSymbolAdjustedToMarket(Equity equity)
     {
-        return equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+        //return equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
+        return GetSymbolAdjustedToMarket(equity.Symbol, equity.Market);
     }
+
+    static public string GetSymbolAdjustedToMarket(string symbol, string marker)
+    {
+        return marker == "CDN" ? symbol + ".TO" : symbol;
+    }
+
 
     static public string GetMarketFromSymbol(string symbol, out string marker)
     {

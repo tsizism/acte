@@ -173,6 +173,38 @@
                     </Template>
                 </RadzenDataGridColumn>
 
+
+
+            <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="150px">
+                <Template Context="equity">
+                        @{
+                        bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+
+                        if (result)
+                        {
+                            decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
+                            decimal proc = diff / equityMarket.CurrentPrice;
+
+                            if (diff >= 0)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@{diff.ToString("C2") + " " + equity.Currency + " " + proc.ToString("P2")}" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger"  Text="@{diff.ToString("C2")  + " " + equity.Currency + " " + proc.ToString("P2")}" />
+                            }
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Undefined" />
+                        }
+                    }
+
+                </Template>
+            </RadzenDataGridColumn>
+
+
+
                 @* <RadzenDataGridColumn TItem="Equity" Property="CompanyName" Title="Company" Width="200px" /> *@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Market" Title="Market" Width="80px">
@@ -182,7 +214,7 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="150px" Sortable="false" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="100px" Sortable="false" TextAlign="TextAlign.Right">
                     <Template Context="equity">
                         @equity.MarketPrice.ToString("C2") @equity.Currency
                     </Template>

@@ -28,6 +28,8 @@ public class FinanceService : IFinanceService
     public static readonly Dictionary<string, YhStockPriceInfo> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
     public static readonly Dictionary<string, EquityMarket> _equityMarketCache = new(StringComparer.OrdinalIgnoreCase);
 
+    public static readonly Dictionary<string, YhGetResultStockDetails> _stockDetailsCache = new(StringComparer.OrdinalIgnoreCase);
+
     public FinanceService(YhHttpClient yhHttpClient, IModelService modelService, ILogger<FinanceService> logger)
     {
         _yhHttpClient = yhHttpClient;
@@ -154,6 +156,12 @@ public class FinanceService : IFinanceService
 
 
     #endregion
+
+    public bool GetEquityMarket(string symbol, out EquityMarket equityMarket)
+    {
+        return _equityMarketCache.TryGetValue(symbol, out equityMarket!);
+    }
+
 
     #region Requests
 
@@ -335,7 +343,7 @@ public class FinanceService : IFinanceService
 
                 //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
 
-                string action = TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
+                string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
 
                 //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 //{
@@ -362,12 +370,19 @@ public class FinanceService : IFinanceService
                         tickerPrice = details!.GetResultStockPrice();
                         tickerPrice!.PopulateDatabaseEntity(equity);
 
-                    //tickerPrice = wrapper.StockPrice;
+                        YhGetResultStockDetails? stockPriceDetails = wrapper.StockPriceDetails;
 
-                    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
+                        if ( stockPriceDetails != null)
+                        {
+                            stockPriceDetails.PopulateEquityMarket(equityMarket!);
+                            await _modelService.UpsertEquityMarketAsync(equityMarket!);
+                            _stockDetailsCache[symbol] = stockPriceDetails!;
+                        }
 
-                    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
-                }
+    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
+
+    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
+}
                     else
                     {
                         // NoAction - use equty from DB

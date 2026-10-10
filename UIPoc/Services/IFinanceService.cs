@@ -13,6 +13,8 @@ public interface IFinanceService
 
     // Quote Operations
     Task<decimal?> FetchTickerPriceAsync(string ticker);
+    bool GetEquityMarket(string symbol, out EquityMarket equityMarket);
+
     //Task<EquityMarket?> GetQuoteAsync(string symbol, string market = "US");
     //Task<List<EquityMarket>> GetQuotesAsync(List<string> symbols, string market = "US");
     //Task<EquityMarket?> GetQuoteAndCacheAsync(string symbol, string market = "US");
