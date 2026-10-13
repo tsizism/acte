@@ -139,10 +139,11 @@ public class YhHttpClient
     /////////////////////////////////////////////////////////////////////////
 
     /// <summary>
+    /// YH Finance Title: GET Stock Price
     /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
-    /// GET Stock Price
     /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/yhprice?ticker=bce"),
     /// S(mall) Size Result
+    /// 4 Keys
     /// </summary>
     /// <param name="ticker"></param>
     /// <returns></returns>
@@ -189,10 +190,11 @@ public class YhHttpClient
 
 
     /// <summary>
+    /// YH Finance Title: Financials/GET Full Stock Price
     /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
     /// GET Full Stock Price
     /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/price?symbol=bce"),
-    /// M(edium) Size Result - Price  more than 34 keys, 
+    /// M(edium) Size Result - Price  ~ 34 keys, 
     /// </summary>
     /// <param name="symbol"></param>
     /// <returns></returns>
@@ -214,6 +216,39 @@ public class YhHttpClient
         result.LastUpdated = DateTime.UtcNow;
         return result;
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///
+    /// YH Finance Title: GET Stock Summary Detail 
+    /// https://rapidapi.com/belchiorarkad-FqvHs2EDOtP/api/yh-finance-complete
+    /// GET Stock Summary Detail
+    /// RequestUri = new Uri("https://yh-finance-complete.p.rapidapi.com/yhf?ticker=bce"),
+    /// L(arge) Size Result - Summary ~ 48 keys, Price ~ 43 keys, Total ~ 91 keys
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+    public async Task<YhGetResultStockSummaryDetails> GetSymbolFullPriceAsync(string symbol)
+    {
+        string urlYhComplete = $"https://yh-finance-complete.p.rapidapi.com/yhf?ticker={symbol}";
+
+        //Dictionary<string, object>? dict = await Get(url
+        string jsonResponse = await HttpGet(urlYhComplete);
+
+        YhGetResultStockSummaryDetails? result = JsonSerializer.Deserialize<YhGetResultStockSummaryDetails>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (result == null)
+        {
+            //result = new YhGetResultStockSummaryDetails();
+            throw new InvalidOperationException("Failed to deserialize JSON response for stock details");
+
+        }
+        result.LastUpdated = DateTime.UtcNow;
+        return result;
+    }
+
+
+
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Deprecated methods below - consider removing or refactoring to use the new YhGetStockPriceAsync and YhGetFullStockPrice methods instead      ///

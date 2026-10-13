@@ -27,8 +27,7 @@ public class FinanceService : IFinanceService
     public static readonly Dictionary<string, YhStockPriceInfo> _shortInfoCache = new(StringComparer.OrdinalIgnoreCase);
     public static readonly Dictionary<string, YhStockPriceInfo> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
     public static readonly Dictionary<string, EquityMarket> _equityMarketCache = new(StringComparer.OrdinalIgnoreCase);
-
-    public static readonly Dictionary<string, YhGetResultStockDetails> _stockDetailsCache = new(StringComparer.OrdinalIgnoreCase);
+    public static readonly Dictionary<string, YhGetResultStockSummaryDetails> _stockSummaryDetailsCache = new(StringComparer.OrdinalIgnoreCase);
 
     public FinanceService(YhHttpClient yhHttpClient, IModelService modelService, ILogger<FinanceService> logger)
     {
@@ -204,12 +203,12 @@ public class FinanceService : IFinanceService
 
         if (isShortStockInfo)
         {
-
             result = new YhStockPriceInfo(await _yhHttpClient.YhGetStockPriceOnlyAsync(ticker));
         }
         else
         {
-            result = new YhStockPriceInfo(await _yhHttpClient.YhGetStockDetails(ticker));
+            //result = new YhStockPriceInfo(await _yhHttpClient.YhGetStockDetails(ticker));
+            result = new YhStockPriceInfo(await _yhHttpClient.GetSymbolFullPriceAsync(ticker));
         }
 
         if (!string.IsNullOrEmpty(result.Error))
@@ -343,7 +342,7 @@ public class FinanceService : IFinanceService
 
                 //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
 
-                string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
+                string action = "FullUpdate"; // TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
 
                 //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 //{
@@ -363,20 +362,21 @@ public class FinanceService : IFinanceService
                     }
                     else if (action == "FullUpdate")
                     {
-                        EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol);
+                        EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
 
                         var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
-                        YhGetResultStockDetails? details = wrapper.StockPriceDetails;
-                        tickerPrice = details!.GetResultStockPrice();
+
+                        YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
+                        tickerPrice = details!.ExtractResultStockPrice();
                         tickerPrice!.PopulateDatabaseEntity(equity);
 
-                        YhGetResultStockDetails? stockPriceDetails = wrapper.StockPriceDetails;
+                        YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
 
-                        if ( stockPriceDetails != null)
+                        if ( stockSummaryDetails != null)
                         {
-                            stockPriceDetails.PopulateEquityMarket(equityMarket!);
+                            stockSummaryDetails.PopulateEquityMarket(equityMarket!);
                             await _modelService.UpsertEquityMarketAsync(equityMarket!);
-                            _stockDetailsCache[symbol] = stockPriceDetails!;
+                            _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
                         }
 
     //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;

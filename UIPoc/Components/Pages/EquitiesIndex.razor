@@ -165,44 +165,13 @@
                        FilterMode="FilterMode.Simple"
                        Style="height: 800px">
             <Columns>
-                <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="100px" Frozen="true">
+                <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="50px" Frozen="true" TextAlign="TextAlign.Left">
                     <Template Context="equity">
                     <a href="@EquityUtils.GetFinancePortalUrlForStock(@EquityUtils.GetSymbolAdjustedToMarket(equity))" target="_blank">
                         <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@EquityUtils.GetSymbolAdjustedToMarket(equity)" />
                         </a>
                     </Template>
                 </RadzenDataGridColumn>
-
-
-
-            <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="150px">
-                <Template Context="equity">
-                        @{
-                        bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
-
-                        if (result)
-                        {
-                            decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
-                            decimal proc = diff / equityMarket.CurrentPrice;
-
-                            if (diff >= 0)
-                            {
-                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@{diff.ToString("C2") + " " + equity.Currency + " " + proc.ToString("P2")}" />
-                            }
-                            else
-                            {
-                                <RadzenBadge BadgeStyle="BadgeStyle.Danger"  Text="@{diff.ToString("C2")  + " " + equity.Currency + " " + proc.ToString("P2")}" />
-                            }
-                        }
-                        else
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Undefined" />
-                        }
-                    }
-
-                </Template>
-            </RadzenDataGridColumn>
-
 
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="CompanyName" Title="Company" Width="200px" /> *@
@@ -214,11 +183,57 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="100px" Sortable="false" TextAlign="TextAlign.Right">
+                @* <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="100px" Sortable="false" TextAlign="TextAlign.Left">
                     <Template Context="equity">
                         @equity.MarketPrice.ToString("C2") @equity.Currency
                     </Template>
+                </RadzenDataGridColumn> *@
+
+                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="100px">
+                    <Template Context="equity">
+                        @{
+                            bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+
+                            bool closerToHigh = false;
+                            bool closerToLow = false;
+
+                            if (result && equityMarket.Week52High > 0 && equityMarket.Week52Low > 0)
+                            {
+                                // decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
+                                // decimal proc = diff / equityMarket.CurrentPrice;
+
+                                var distHigh = equityMarket.Week52High - equity.CurrentPrice;
+                                var distLow = equity.CurrentPrice - equityMarket.Week52Low;
+                                closerToHigh = distHigh < distLow;
+                                closerToLow = distLow < distHigh;
+                            }
+
+                            if (result && equityMarket.Week52High > 0)
+                            {
+                                <span style="color: green; font-weight: @(closerToHigh ? "bold" : "normal");">
+                                    @equityMarket.Week52High!.Value.ToString("N2") 
+                                </span>
+
+                                <span> / </span>
+                            }
+
+                            <span> @equity.CurrentPrice.ToString("N2")   </span>
+
+                            if (result && equityMarket.Week52Low > 0)
+                            {
+                                <span> / </span>
+                                <span style="color: red; font-weight: @(closerToLow ? "bold" : "normal");">
+                                    @equityMarket.Week52Low!.Value.ToString("N2") 
+                                </span>
+                            }
+
+                            @(" " + equity.Currency)
+                        }
+
+                    </Template>
                 </RadzenDataGridColumn>
+
+
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Market Currency" Width="120px" Sortable="false" FormatString="{0:C4}" TextAlign="TextAlign.Right" /> *@
 
@@ -237,7 +252,7 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="160px">
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="150px">
                     <Template Context="equity">
                         @{
                             var distHigh = equity.HoldingHigh - equity.CurrentPrice;
@@ -257,14 +272,35 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-
                 @* <RadzenDataGridColumn TItem="Equity" Property="Currency" Title="Currency" Width="80px" /> *@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" /> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="200px" Sortable="false" TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="100px">
                     <Template Context="equity">
-                    @equity.AverageCostMarket.ToString("C2") @equity.Currency / @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
+                            @{
+                            bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+
+                            if (result)
+                            {
+                                decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
+                                decimal proc = diff / equityMarket.CurrentPrice;
+
+                                if (diff >= 0)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@{diff.ToString("C2") + " " + equity.Currency + " " + proc.ToString("P2")}" />
+                                }
+                                else
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger"  Text="@{diff.ToString("C2")  + " " + equity.Currency + " " + proc.ToString("P2")}" />
+                                }
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Undefined" />
+                            }
+                        }
+
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -276,16 +312,23 @@
 
                 @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
                 {
-                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Quantity" Width="50px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Qty" Width="50px" FormatString="{0}" TextAlign="TextAlign.Right" />
                 }
 
-                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="200px"  TextAlign="TextAlign.Right">
+                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Left">
+                    <Template Context="equity">
+                        @equity.AverageCostMarket.ToString("C2") @equity.Currency / @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
+                    </Template>
+                </RadzenDataGridColumn>
+
+
+                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="200px"  TextAlign="TextAlign.Center">
                     <Template Context="equity">
                     @((equity.Quantity * equity.MarketPrice).ToString("C2")) @equity.Currency /  @((equity.Quantity * equity.CurrentPrice).ToString("C2")) @_selectedHolding!.Currency
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="GainLoss" Title="Gain/Loss" Width="120px" TextAlign="TextAlign.Right" SortOrder="SortOrder.Descending">
+                <RadzenDataGridColumn TItem="Equity" Property="GainLoss" Title="Gain/Loss" Width="100px" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending">
                     <Template Context="equity">
                         @{
                             var gainLoss = equity!.GainLoss!.Value;
@@ -294,6 +337,8 @@
                     <span style="color: @color; font-weight: bold;">@gainLoss.ToString("C2")</span>
                     </Template>
                 </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px" FormatString="{0:HH:mm dd-MM-yyyy}" TextAlign="TextAlign.Center" />
 
                 @* <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -313,9 +358,7 @@
                 </RadzenDataGridColumn> *@
 
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px" FormatString="{0:yyyy-MM-dd HH:mm}" />
-
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="100px" FormatString="{0:yyyy-MM-dd}" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-dd-yyyy}" TextAlign="TextAlign.Center" />
 
             <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="50px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                 <Template Context="equity">
@@ -442,7 +485,7 @@
                 {
                     Severity = NotificationSeverity.Warning,
                     Summary = "Price Fetch Warning",
-                    Detail = $"Failed to GetEquitiesForHoldingAsync for {_selectedHolding!.Name}: {ex.Message}",
+                    Detail = $"Failed to LoadEquitiesAsync for {_selectedHolding!.Name}: {ex.Message}",
                     Duration = 3000,
                     CloseOnClick = true
                 });

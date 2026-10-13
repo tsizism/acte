@@ -54,9 +54,8 @@ static public class TimeUtils
 
     public static bool IsEquityMarketCacheExpired(DateTime lastUpdated)
     {
-        throw new NotImplementedException();
+        return IsFullStockPriceCacheExpired(lastUpdated); // 4h or 2h - IsTickerPriceCacheExpired(lastUpdated); 
     }
-
 
     // TODO: Consider using TimeZoneInfo.ConvertTimeFromUtc to convert to Eastern Time instead of hardcoding UTC offsets.
     static public bool IsHoldingUpToDate(DateTime equityDateTime)
