@@ -33,7 +33,7 @@ static public class TimeUtils
     //if ((DateTime.UtcNow - cached.LastUpdated).TotalMinutes<SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
     static public bool IsFullStockPriceCacheExpired(DateTime dt) => (DateTime.UtcNow - dt).TotalMinutes > SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES;
 
-    static public bool IsTradingTime()
+    static public bool  IsTradingTime()
     {
         DateTime currentTime = DateTime.UtcNow;
         DayOfWeek day = currentTime.DayOfWeek;
@@ -107,9 +107,24 @@ static public class TimeUtils
             return equityDateTime;
         }
 
-        if (equityDateTime.TimeOfDay > TRADING_FINISH_UTC.ToTimeSpan())
+        if (nowUtc.DayOfWeek != DayOfWeek.Saturday && nowUtc.DayOfWeek != DayOfWeek.Sunday)
         {
-            return nowUtc.Date.Add(TRADING_FINISH_UTC.ToTimeSpan());
+            if (nowUtc.TimeOfDay > TRADING_FINISH_UTC.ToTimeSpan())
+            {
+                return nowUtc.Date.Add(TRADING_FINISH_UTC.ToTimeSpan());
+            }
+
+            if (nowUtc.TimeOfDay < TRADING_START_UTC.ToTimeSpan())
+            {
+                return nowUtc.Date.Add(TRADING_START_UTC.ToTimeSpan()-TimeSpan.FromMinutes(1));
+            }
+        }
+        else
+        {
+            // Weekend check, equityDateTime should be from Friday's trading session
+            int prevDays = (nowUtc.DayOfWeek == DayOfWeek.Saturday) ? 1 : 2; // Saturday -> Friday, Sunday -> Friday
+            DateTime fridayEndOfSessionEquityTime = nowUtc.Date.AddDays(-1 * prevDays).Add(TRADING_FINISH_UTC.ToTimeSpan());
+            return fridayEndOfSessionEquityTime; // Adjust to the end of trading hours on Friday (21:00 UTC)
         }
 
         return equityDateTime;
