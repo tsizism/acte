@@ -130,6 +130,7 @@ public class YhStockPriceInfo
             equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
             equity.MarketPrice = Price.RegularMarketPrice;
             equity.CurrentPrice = Price.RegularMarketPrice;
+            equity.PrevDayMarketPrice = Price.RegularMarketPreviousClose;
 
 
             if (Price.RegularMarketPrice > equity.HoldingHigh)
@@ -201,7 +202,7 @@ public class YhStockPriceInfo
             equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
             equity.MarketPrice = Price.RegularMarketPrice;
             equity.CurrentPrice = Price.RegularMarketPrice;
-
+            equity.PrevDayMarketPrice = Price.RegularMarketPreviousClose;
 
             if (Price.RegularMarketPrice > equity.HoldingHigh)
             {

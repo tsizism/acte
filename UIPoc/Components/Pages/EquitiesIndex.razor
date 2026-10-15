@@ -252,7 +252,7 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="150px">
+                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="125px">
                     <Template Context="equity">
                         @{
                             var distHigh = equity.HoldingHigh - equity.CurrentPrice;
@@ -276,7 +276,7 @@
 
                 @* <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost" Width="110px" FormatString="{0:C2}" TextAlign="TextAlign.Right" /> *@
 
-                <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="100px">
+                <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="75px">
                     <Template Context="equity">
                             @{
                             bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
@@ -312,7 +312,7 @@
 
                 @if( _selectedHolding != null && _selectedHolding.Type != HoldingType.WatchList)
                 {
-                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Qty" Width="50px" FormatString="{0}" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Qty" Width="50px" FormatString="{0}" TextAlign="TextAlign.Center" />
                 }
 
                 <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Left">
@@ -322,13 +322,13 @@
                 </RadzenDataGridColumn>
 
 
-                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="200px"  TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="175px"  TextAlign="TextAlign.Center">
                     <Template Context="equity">
                     @((equity.Quantity * equity.MarketPrice).ToString("C2")) @equity.Currency /  @((equity.Quantity * equity.CurrentPrice).ToString("C2")) @_selectedHolding!.Currency
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="GainLoss" Title="Gain/Loss" Width="100px" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending">
+                <RadzenDataGridColumn TItem="Equity" Property="GainLoss" Title="Gain/Loss" Width="75px" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending">
                     <Template Context="equity">
                         @{
                             var gainLoss = equity!.GainLoss!.Value;
@@ -338,7 +338,12 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px" FormatString="{0:HH:mm dd-MM-yyyy}" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px"  TextAlign="TextAlign.Center" >
+                    <Template Context="equity">
+                        @equity.LastUpdated.ToString("HH:mm dd-MM-yy")
+                    </Template>
+                </RadzenDataGridColumn>
+
 
                 @* <RadzenDataGridColumn TItem="Equity" Title="Gain/Loss %" Width="120px" TextAlign="TextAlign.Right">
                     <Template Context="equity">
@@ -358,7 +363,7 @@
                 </RadzenDataGridColumn> *@
 
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-dd-yyyy}" TextAlign="TextAlign.Center" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-dd-yy}" TextAlign="TextAlign.Center" />
 
             <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="50px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                 <Template Context="equity">
