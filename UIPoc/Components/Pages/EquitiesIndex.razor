@@ -189,15 +189,17 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price" Width="100px">
+                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price 52w" Width="100px">
                     <Template Context="equity">
                         @{
-                            bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+                            // bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+
+                            var equityMarket = this.GetEquityMarket(equity);
 
                             bool closerToHigh = false;
                             bool closerToLow = false;
 
-                            if (result && equityMarket.Week52High > 0 && equityMarket.Week52Low > 0)
+                            if (equityMarket != null && equityMarket.Week52High > 0 && equityMarket.Week52Low > 0)
                             {
                                 // decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
                                 // decimal proc = diff / equityMarket.CurrentPrice;
@@ -208,7 +210,7 @@
                                 closerToLow = distLow < distHigh;
                             }
 
-                            if (result && equityMarket.Week52High > 0)
+                            if (equityMarket != null && equityMarket.Week52High > 0)
                             {
                                 <span style="color: green; font-weight: @(closerToHigh ? "bold" : "normal");">
                                     @equityMarket.Week52High!.Value.ToString("N2") 
@@ -219,7 +221,7 @@
 
                             <span> @equity.MarketPrice.ToString("N2")   </span>
 
-                            if (result && equityMarket.Week52Low > 0)
+                            if (equityMarket != null && equityMarket.Week52Low > 0)
                             {
                                 <span> / </span>
                                 <span style="color: red; font-weight: @(closerToLow ? "bold" : "normal");">
@@ -279,9 +281,9 @@
                 <RadzenDataGridColumn Property="Change" Title="Prev Day Change" Width="75px">
                     <Template Context="equity">
                             @{
-                            bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+                            var equityMarket = this.GetEquityMarket(equity);
 
-                            if (result)
+                            if (equityMarket != null)
                             {
                                 decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
                                 decimal proc = diff / equityMarket.CurrentPrice;
@@ -338,9 +340,17 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Updated" Width="100px"  TextAlign="TextAlign.Center" >
+                    <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Market/Upd" Width="100px" TextAlign="TextAlign.Center">
                     <Template Context="equity">
+                    @{
+                        var equityMarket = this.GetEquityMarket(equity);
+
+                        @if (equityMarket != null)
+                        {
+                            @(equityMarket.LastTradeTime!.Value.ToString("HH:mm dd-MM-yy") + "/")
+                        }
                         @equity.LastUpdated.ToString("HH:mm dd-MM-yy")
+                    }
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -734,5 +744,14 @@
         HoldingType.BuyPending => BadgeStyle.Primary,
         _ => BadgeStyle.Light
     };
+
+
+    private EquityMarket? GetEquityMarket(Equity equity)
+    {
+        bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
+        
+        return result ? equityMarket : null;
+    }
+    
 
 }

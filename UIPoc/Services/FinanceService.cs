@@ -366,23 +366,26 @@ public class FinanceService : IFinanceService
 
                         var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
 
+                        YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
                         YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
                         tickerPrice = details!.ExtractResultStockPrice();
-                        tickerPrice!.PopulateDatabaseEntity(equity);
 
-                        YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
-
-                        if ( stockSummaryDetails != null)
+                    if ( stockSummaryDetails != null)
                         {
+                            stockSummaryDetails.PopulateDatabaseEntity(equity!);
                             stockSummaryDetails.PopulateEquityMarket(equityMarket!);
                             await _modelService.UpsertEquityMarketAsync(equityMarket!);
                             _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
                         }
+                        else
+                        {
+                            tickerPrice!.PopulateDatabaseEntity(equity);
+                        }
 
-    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
+                    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
 
-    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
-}
+                    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
+                    }
                     else
                     {
                         // NoAction - use equty from DB
