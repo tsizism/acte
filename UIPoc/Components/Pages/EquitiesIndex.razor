@@ -189,7 +189,7 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price 52w" Width="100px">
+                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price + 52w" Width="100px">
                     <Template Context="equity">
                         @{
                             // bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
@@ -210,10 +210,10 @@
                                 closerToLow = distLow < distHigh;
                             }
 
-                            if (equityMarket != null && equityMarket.Week52High > 0)
+                            if (equityMarket != null && equityMarket.Week52Low > 0)
                             {
-                                <span style="color: green; font-weight: @(closerToHigh ? "bold" : "normal");">
-                                    @equityMarket.Week52High!.Value.ToString("N2") 
+                                <span style="color: black; font-weight: @(closerToLow ? "bold" : "normal");">
+                                    @equityMarket.Week52Low!.Value.ToString("N2") 
                                 </span>
 
                                 <span> / </span>
@@ -221,11 +221,11 @@
 
                             <span> @equity.MarketPrice.ToString("N2")   </span>
 
-                            if (equityMarket != null && equityMarket.Week52Low > 0)
+                            if (equityMarket != null && equityMarket.Week52High > 0)
                             {
                                 <span> / </span>
-                                <span style="color: red; font-weight: @(closerToLow ? "bold" : "normal");">
-                                    @equityMarket.Week52Low!.Value.ToString("N2") 
+                                <span style="color: black; font-weight: @(closerToHigh ? "bold" : "normal");">
+                                    @equityMarket.Week52High!.Value.ToString("N2") 
                                 </span>
                             }
 
@@ -254,7 +254,7 @@
                 </RadzenDataGridColumn> *@
 
 
-                <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title="Price High/Current/Low" Sortable="false" Width="125px">
+            <RadzenDataGridColumn TItem="Equity" Property="HoldingHigh" Title=@($"Price Low/Current/High ({_selectedHolding!.Currency})") Sortable="false" Width="125px">
                     <Template Context="equity">
                         @{
                             var distHigh = equity.HoldingHigh - equity.CurrentPrice;
@@ -262,14 +262,14 @@
                             var closerToHigh = distHigh < distLow;
                             var closerToLow = distLow < distHigh;
                         }
-                        <span style="color: green; font-weight: @(closerToHigh ? "bold" : "normal");">
-                            @equity.HoldingHigh.ToString("N2")
+                        <span style="color: black; font-weight: @(closerToLow ? "bold" : "normal");">
+                            @equity.HoldingLow.ToString("N2")
                         </span>
                         /
                         <span>@equity.CurrentPrice.ToString("N2")</span>
                         /
-                        <span style="color: red; font-weight: @(closerToLow ? "bold" : "normal");">
-                            @equity.HoldingLow.ToString("N2")
+                        <span style="color: black; font-weight: @(closerToHigh ? "bold" : "normal");">
+                            @equity.HoldingHigh.ToString("N2")
                         </span>
                     </Template>
                 </RadzenDataGridColumn>

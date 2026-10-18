@@ -371,16 +371,16 @@ public class FinanceService : IFinanceService
                         tickerPrice = details!.ExtractResultStockPrice();
 
                     if ( stockSummaryDetails != null)
-                        {
-                            stockSummaryDetails.PopulateDatabaseEntity(equity!);
-                            stockSummaryDetails.PopulateEquityMarket(equityMarket!);
-                            await _modelService.UpsertEquityMarketAsync(equityMarket!);
-                            _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
-                        }
-                        else
-                        {
-                            tickerPrice!.PopulateDatabaseEntity(equity);
-                        }
+                    {
+                        stockSummaryDetails.PopulateDatabaseEntity(equity!);
+                        stockSummaryDetails.PopulateEquityMarket(equityMarket!);
+                        await _modelService.UpsertEquityMarketAsync(equityMarket!);
+                        _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
+                    }
+                    else
+                    {
+                        tickerPrice!.PopulateDatabaseEntity(equity);
+                    }
 
                     //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
 
