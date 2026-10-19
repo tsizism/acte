@@ -1,3 +1,4 @@
+using Azure;
 using UIPooc.Components.Pages;
 using UIPooc.Models;
 using UIPooc.Utils;
@@ -144,6 +145,8 @@ public class YhStockPriceInfo
                 equity.HoldingLow = Price.RegularMarketPrice;
                 equity.HoldingLowAt = this.LastUpdated;
             }
+
+            Console.WriteLine($"Write equity.HoldingLow/equity.HoldingHigh (PopulateDatabaseEntity): equity.Symbol={equity.Symbol}, equity.HoldingHigh={equity.HoldingHigh}, equity.HoldingLow={equity.HoldingLow}");
 
             return equity;
         }

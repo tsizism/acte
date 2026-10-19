@@ -19,10 +19,10 @@ public class FinanceService : IFinanceService
     private readonly IModelService _modelService;
     private readonly ILogger<FinanceService> _logger;
 
-    private const string YahooFinanceBaseUrl = "https://query1.finance.yahoo.com/v8/finance";
-    private const string YahooFinanceQuoteUrl = "https://query1.finance.yahoo.com/v7/finance/quote";
-    private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
-    private const string YahooFinanceSearchUrl = "https://query1.finance.yahoo.com/v1/finance/search";
+    //private const string YahooFinanceBaseUrl = "https://query1.finance.yahoo.com/v8/finance";
+    //private const string YahooFinanceQuoteUrl = "https://query1.finance.yahoo.com/v7/finance/quote";
+    //private const string YahooFinanceChartUrl = "https://query1.finance.yahoo.com/v8/finance/chart";
+    //private const string YahooFinanceSearchUrl = "https://query1.finance.yahoo.com/v1/finance/search";
 
     public static readonly Dictionary<string, YhStockPriceInfo> _shortInfoCache = new(StringComparer.OrdinalIgnoreCase);
     public static readonly Dictionary<string, YhStockPriceInfo> _longInfoCache = new(StringComparer.OrdinalIgnoreCase);
@@ -39,6 +39,37 @@ public class FinanceService : IFinanceService
     }
 
     #region Utils Methods
+
+    public enum PriceRequestScope
+    {
+        None,
+        PriceOnly,
+        Details
+    }
+
+    public static PriceRequestScope GetPriceRequestScope(DateTime? regularMarketTime)
+    {
+        if (regularMarketTime is null)
+            return PriceRequestScope.None;
+
+        DateTime utcTime = regularMarketTime.Value.ToUniversalTime();
+        DayOfWeek day = utcTime.DayOfWeek;
+
+        if (day == DayOfWeek.Saturday || day == DayOfWeek.Sunday)
+            return PriceRequestScope.None;
+
+        TimeOnly time = TimeOnly.FromDateTime(utcTime);
+        TimeOnly tradingStart = TimeOnly.Parse("14:30");
+        TimeOnly tradingEnd = TimeOnly.Parse("21:00");
+
+        if (time < tradingStart || time > tradingEnd)
+            return PriceRequestScope.None;
+
+        if (time == tradingStart)
+            return PriceRequestScope.PriceOnly;
+
+        return PriceRequestScope.Details;
+    }
 
     private EquityMarket MapToEquityMarket(JsonElement quote, string market)
     {
@@ -336,33 +367,46 @@ public class FinanceService : IFinanceService
 
             string snapshot = string.Empty;
 
+            EquityBuilder equityBuilder = new EquityBuilder(_yhHttpClient, _modelService);
+
             foreach (var equity in lst)
             {
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
                 //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
 
-                string action = "FullUpdate"; // TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
+                string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
+
+                equityBuilder.WithEquity(equity);
 
                 //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 //{
-                    YhGetResultStockPrice? tickerPrice;
-                    if (action == "QuickUpdate")
-                    {
-                        var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
-                        tickerPrice = wrapper.StockPrice;
+                YhGetResultStockPrice? tickerPrice;
 
-                        //string ticker = @"{""symbol"": ""AAPL"", 
-                        //                    ""price"": 230.4584, 
-                        //                    ""currency"": ""USD"",
-                        //                    ""symbolName"": ""Apple"",
-                        //                    ""marketCap"": 3503912648704
+                    //if (action == "QuickUpdate")
+                    //{
+                    //    var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
+                    //    tickerPrice = wrapper.StockPrice;
 
-                        tickerPrice!.PopulateDatabaseEntity(equity); 
-                    }
-                    else if (action == "FullUpdate")
-                    {
-                        EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
+                    //    //string ticker = @"{""symbol"": ""AAPL"", 
+                    //    //                    ""price"": 230.4584, 
+                    //    //                    ""currency"": ""USD"",
+                    //    //                    ""symbolName"": ""Apple"",
+                    //    //                    ""marketCap"": 3503912648704
+
+                    //    tickerPrice!.PopulateDatabaseEntity(equity); 
+                    //}
+                    //else if (action == "FullUpdate")
+                    //{
+                    //EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
+
+                    equityBuilder.WithEquityMarketFromCache();
+                    await equityBuilder.WithEquityMarketFromDb();
+                    equityBuilder.WithEquityFromCache();
+
+                    PriceRequestScope scope = GetPriceRequestScope(equity.LastUpdated);
+
+                    await equityBuilder.WithEquityFromRestAPI(isShortStockInfo: false);
 
                         var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
 
@@ -370,27 +414,27 @@ public class FinanceService : IFinanceService
                         YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
                         tickerPrice = details!.ExtractResultStockPrice();
 
-                    if ( stockSummaryDetails != null)
-                    {
-                        stockSummaryDetails.PopulateDatabaseEntity(equity!);
-                        stockSummaryDetails.PopulateEquityMarket(equityMarket!);
-                        await _modelService.UpsertEquityMarketAsync(equityMarket!);
-                        _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
-                    }
-                    else
-                    {
-                        tickerPrice!.PopulateDatabaseEntity(equity);
-                    }
+                        if ( stockSummaryDetails != null)
+                        {
+                            stockSummaryDetails.PopulateDatabaseEntity(equity!);
+                            stockSummaryDetails.PopulateEquityMarket(equityMarket!);
+                            await _modelService.UpsertEquityMarketAsync(equityMarket!);
+                            _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
+                        }
+                        else
+                        {
+                            tickerPrice!.PopulateDatabaseEntity(equity);
+                        }
 
                     //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
 
                     ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
-                    }
-                    else
-                    {
-                        // NoAction - use equty from DB
-                        continue;
-                    }
+                    //}
+                    //else
+                    //{
+                    //    // NoAction - use equty from DB
+                    //    continue;
+                    //}
 
                     if (holding.Currency == null)
                     {
@@ -414,6 +458,7 @@ public class FinanceService : IFinanceService
                         equity.HoldingLow = equity.CurrentPrice;
                         equity.HoldingLowAt = DateTime.UtcNow;
                     }
+                    Console.WriteLine($"Write equity.HoldingLow/equity.HoldingHigh (FetchEquitiesForHoldingAsync): equity.Symbol={equity.Symbol}, equity.HoldingHigh={equity.HoldingHigh}, equity.HoldingLow={equity.HoldingLow}");
 
                     equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
                     equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;

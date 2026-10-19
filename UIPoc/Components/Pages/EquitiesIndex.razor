@@ -493,6 +493,8 @@
                 }
 
                 _equities = await FinanceService.FetchEquitiesForHoldingAsync(_selectedHolding);
+                _selectedHolding = await FinanceService.FetchHoldingAsync(_selectedHoldingId.Value);
+                CalculateTotals();
             }
             catch (Exception ex)
             {
