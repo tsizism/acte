@@ -27,11 +27,11 @@ public class EquityBuilder
 
     public async Task<EquityBuilder> WithEquity(Equity equity, decimal? exchangeRate = null)
     {
-        if (TimeUtils.IsStockUpToDate(equity.LastUpdated))
-        {
-            _equity = equity;
-            return this;
-        }
+        //if (TimeUtils.IsUpToDateWithMarket(equity.LastUpdated))
+        //{
+        //    _equity = equity;
+        //    return this;
+        //}
 
         if(_equityMarket == null)
         {
@@ -55,7 +55,7 @@ public class EquityBuilder
         {
             _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);
 
-            if (TimeUtils.IsStockUpToDate(cached.LastUpdated))
+            if (TimeUtils.IsUpToDateWithMarket(cached.LastUpdated))
             {
                 _equityMarket = cached;
                 _logger.LogDebug("EquityMarket for {Symbol} is up-to-date and will be used.", symbol);
@@ -84,7 +84,7 @@ public class EquityBuilder
         _equityMarket = await _modelService.GetEquityMarketBySymbolAsync(symbol);
 
         // Not in cashe or cache is outdated, fetch from database
-        if (_equityMarket != null && TimeUtils.IsStockUpToDate(_equityMarket.LastUpdated))
+        if (_equityMarket != null && TimeUtils.IsUpToDateWithMarket(_equityMarket.LastUpdated))
         {
             FinanceService._equityMarketCache[symbol] = _equityMarket;
             _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);

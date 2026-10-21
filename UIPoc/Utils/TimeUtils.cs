@@ -25,17 +25,17 @@ static public class TimeUtils
     //if ((DateTime.UtcNow - cached.LastUpdated).TotalMinutes<SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
     static public bool IsFullStockPriceCacheExpired(DateTime dt) => (DateTime.UtcNow - dt).TotalMinutes > SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES;  // 4h now
 
-    static public bool  IsTradingTime()
+    static public bool  IsTradingTime(DateTime? dt = null)
     {
-        DateTime currentTime = DateTime.UtcNow;
-        DayOfWeek day = currentTime.DayOfWeek;
+        DateTime dateTime = dt ?? DateTime.UtcNow;
+        DayOfWeek day = dateTime.DayOfWeek;
 
         if ((day == DayOfWeek.Saturday) || (day == DayOfWeek.Sunday))
         {
             return false;
         }
 
-        TimeOnly nowTimeOnly = TimeOnly.FromDateTime(currentTime);
+        TimeOnly nowTimeOnly = TimeOnly.FromDateTime(dateTime);
         if (nowTimeOnly < TRADING_START_UTC || nowTimeOnly > TRADING_FINISH_UTC)
         {
             return false;
@@ -49,35 +49,42 @@ static public class TimeUtils
         return IsFullStockPriceCacheExpired(lastUpdated); // 4h or 2h - IsTickerPriceCacheExpired(lastUpdated); 
     }
 
-    static public bool IsStockUpToDate(DateTime lastUpdated)
+    static public bool IsUpToDateWithMarket(DateTime lastUpdated)
     {
         DateTime nowUtc = DateTime.UtcNow;
-        DateTime lastUpdatedUtc = lastUpdated.Kind == DateTimeKind.Utc
-            ? lastUpdated
-            : DateTime.SpecifyKind(lastUpdated, DateTimeKind.Utc);
+        DateTime lastUpdatedUtc = lastUpdated.Kind == DateTimeKind.Utc ? lastUpdated : DateTime.SpecifyKind(lastUpdated, DateTimeKind.Utc);
 
-        if (!IsTradingTime())
+        bool result = false;
+
+        if (IsTradingTime()) // is now during trading hours, check if lastUpdated is within the last 4 hours
         {
-            DateTime lastTradingDay = nowUtc.Date;
-
-            if (nowUtc.DayOfWeek == DayOfWeek.Saturday)
+            if(!IsTradingTime(lastUpdated)) // lastUpdated is not during trading hours, we consider it outdated
             {
-                lastTradingDay = lastTradingDay.AddDays(-1);
-            }
-            else if (nowUtc.DayOfWeek == DayOfWeek.Sunday)
-            {
-                lastTradingDay = lastTradingDay.AddDays(-2);
-            }
-            else if (TimeOnly.FromDateTime(nowUtc) < TRADING_START_UTC)
-            {
-                lastTradingDay = lastTradingDay.AddDays(nowUtc.DayOfWeek == DayOfWeek.Monday ? -3 : -1);
+                return false;
             }
 
-            DateTime tradingFinish = lastTradingDay.Add(TRADING_FINISH_UTC.ToTimeSpan());
-            return lastUpdatedUtc >= tradingFinish;
+            result = nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(4);
+            return result;
         }
 
-        return nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(2);
+        DateTime lastTradingDay = nowUtc.Date;
+
+        if (nowUtc.DayOfWeek == DayOfWeek.Saturday)
+        {
+            lastTradingDay = lastTradingDay.AddDays(-1);
+        }
+        else if (nowUtc.DayOfWeek == DayOfWeek.Sunday)
+        {
+            lastTradingDay = lastTradingDay.AddDays(-2);
+        }
+        else if (TimeOnly.FromDateTime(nowUtc) < TRADING_START_UTC)
+        {
+            lastTradingDay = lastTradingDay.AddDays(nowUtc.DayOfWeek == DayOfWeek.Monday ? -3 : -1);
+        }
+
+        DateTime tradingFinish = lastTradingDay.Add(TRADING_FINISH_UTC.ToTimeSpan());
+        result = lastUpdatedUtc >= tradingFinish;
+        return result;
     }
 
     // TODO: Consider using TimeZoneInfo.ConvertTimeFromUtc to convert to Eastern Time instead of hardcoding UTC offsets.

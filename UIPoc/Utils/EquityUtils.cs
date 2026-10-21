@@ -95,8 +95,7 @@ static public class EquityUtils
             throw new ArgumentNullException(nameof(equity) + " or " + nameof(equityMarket));
         }
 
-        equity.Market = equityMarket.Symbol.EndsWith(".TO") ? "CDN" : "US";
-        equity.LastUpdated = equityMarket.LastUpdated;
+        //equity.Market = equityMarket.Symbol.EndsWith(".TO") ? "CDN" : "US";
         //equity.CurrentPrice = equityMarket.CurrentPrice;
 
         //if (holdingCurrency != equityMarket.Currency)
@@ -106,7 +105,8 @@ static public class EquityUtils
         //}
 
         equity.CurrentPrice = exchangeRate == null ? equityMarket.CurrentPrice : equityMarket.CurrentPrice * exchangeRate.Value;
-
+        equity.MarketPrice = equityMarket.CurrentPrice;
+        equity.LastUpdated = equityMarket.LastUpdated;
 
         return equity;
     }

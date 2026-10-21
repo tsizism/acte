@@ -501,7 +501,7 @@ public class FinanceService : IFinanceService
 
             }
 
-            if (!TimeUtils.IsHoldingUpToDate(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+            if (!TimeUtils.IsUpToDateWithMarket(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
             {
                 holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
 
