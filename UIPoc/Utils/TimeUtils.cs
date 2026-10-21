@@ -1,11 +1,3 @@
- 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Radzen.Blazor.Rendering;
-using UIPooc.Data;
-using UIPooc.Models;
-using UIPooc.Yahoo;
-
 namespace UIPooc.Utils;
 
 static public class TimeUtils
@@ -31,7 +23,7 @@ static public class TimeUtils
 
     static public bool IsTickerPriceCacheExpired(DateTime dt) => (DateTime.UtcNow - dt).TotalMinutes  > TICKER_CACHE_DURATION_MINUTES;
     //if ((DateTime.UtcNow - cached.LastUpdated).TotalMinutes<SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES)
-    static public bool IsFullStockPriceCacheExpired(DateTime dt) => (DateTime.UtcNow - dt).TotalMinutes > SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES;
+    static public bool IsFullStockPriceCacheExpired(DateTime dt) => (DateTime.UtcNow - dt).TotalMinutes > SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES;  // 4h now
 
     static public bool  IsTradingTime()
     {
@@ -55,6 +47,37 @@ static public class TimeUtils
     public static bool IsEquityMarketCacheExpired(DateTime lastUpdated)
     {
         return IsFullStockPriceCacheExpired(lastUpdated); // 4h or 2h - IsTickerPriceCacheExpired(lastUpdated); 
+    }
+
+    static public bool IsStockUpToDate(DateTime lastUpdated)
+    {
+        DateTime nowUtc = DateTime.UtcNow;
+        DateTime lastUpdatedUtc = lastUpdated.Kind == DateTimeKind.Utc
+            ? lastUpdated
+            : DateTime.SpecifyKind(lastUpdated, DateTimeKind.Utc);
+
+        if (!IsTradingTime())
+        {
+            DateTime lastTradingDay = nowUtc.Date;
+
+            if (nowUtc.DayOfWeek == DayOfWeek.Saturday)
+            {
+                lastTradingDay = lastTradingDay.AddDays(-1);
+            }
+            else if (nowUtc.DayOfWeek == DayOfWeek.Sunday)
+            {
+                lastTradingDay = lastTradingDay.AddDays(-2);
+            }
+            else if (TimeOnly.FromDateTime(nowUtc) < TRADING_START_UTC)
+            {
+                lastTradingDay = lastTradingDay.AddDays(nowUtc.DayOfWeek == DayOfWeek.Monday ? -3 : -1);
+            }
+
+            DateTime tradingFinish = lastTradingDay.Add(TRADING_FINISH_UTC.ToTimeSpan());
+            return lastUpdatedUtc >= tradingFinish;
+        }
+
+        return nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(2);
     }
 
     // TODO: Consider using TimeZoneInfo.ConvertTimeFromUtc to convert to Eastern Time instead of hardcoding UTC offsets.

@@ -1,17 +1,9 @@
- 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Radzen.Blazor.Rendering;
-using System.Timers;
-using UIPooc.Data;
 using UIPooc.Models;
-using UIPooc.Yahoo;
 
 namespace UIPooc.Utils;
 
 static public class EquityUtils
 {
-
     static public string GetSymbolAdjustedToMarket(Equity equity)
     {
         //return equity.Market == "CDN" ? equity.Symbol + ".TO" : equity.Symbol;
@@ -47,10 +39,10 @@ static public class EquityUtils
         return equity.GainLoss!.Value / costBasis;
     }
 
-    static public void CalculateGainLoss(List<Equity> _equities, out decimal totalGainLoss, out decimal totalGainLossPercent)
+    static public void CalculateGainLoss(List<Equity> equities, out decimal totalGainLoss, out decimal totalGainLossPercent)
     {
-        totalGainLoss = _equities.Sum(e => e.GainLoss!.Value);
-        var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
+        totalGainLoss = equities.Sum(e => e.GainLoss!.Value);
+        var totalCost = equities.Sum(e => e.Quantity * e.AverageCost);
         totalGainLossPercent = totalCost != 0 ? totalGainLoss / totalCost : 0;
     }
 
@@ -94,6 +86,46 @@ static public class EquityUtils
         var baseUrl = normalizedMarket.EndsWith(".TO") ? "https://ca.finance.yahoo.com/quote/" : "https://finance.yahoo.com/quote/";
 
         return $"{baseUrl}{marketSymbol}";
+    }
+
+    public static Equity UpdateEquityFromMarket(Equity equity, EquityMarket equityMarket, decimal? exchangeRate)
+    {
+        if (equity == null || equityMarket == null)
+        {
+            throw new ArgumentNullException(nameof(equity) + " or " + nameof(equityMarket));
+        }
+
+        equity.Market = equityMarket.Symbol.EndsWith(".TO") ? "CDN" : "US";
+        equity.LastUpdated = equityMarket.LastUpdated;
+        //equity.CurrentPrice = equityMarket.CurrentPrice;
+
+        //if (holdingCurrency != equityMarket.Currency)
+        //{
+        //    decimal exchangeRate = holdingCurrency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+        //    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
+        //}
+
+        equity.CurrentPrice = exchangeRate == null ? equityMarket.CurrentPrice : equityMarket.CurrentPrice * exchangeRate.Value;
+
+
+        return equity;
+    }
+
+    public static Equity AdjustEquityHoldingHighLow(Equity equity)
+    {
+        if (equity.CurrentPrice > equity.HoldingHigh)
+        {
+            equity.HoldingHigh = equity.CurrentPrice;
+            equity.HoldingHighAt = DateTime.UtcNow;
+        }
+
+        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
+        {
+            equity.HoldingLow = equity.CurrentPrice;
+            equity.HoldingLowAt = DateTime.UtcNow;
+        }
+
+        return equity;
     }
 }
 

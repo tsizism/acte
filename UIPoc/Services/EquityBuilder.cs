@@ -12,33 +12,35 @@ public class EquityBuilder
 
     private Equity? _equity;
     private EquityMarket? _equityMarket;
-    private YhStockPriceInfo? _stockPriceInfo;
+    //private YhStockPriceInfo? _stockPriceInfo;
 
-    public EquityMarket? EquityMarket => _equityMarket;
+    //public EquityMarket? EquityMarket => _equityMarket;
 
     public EquityBuilder(YhHttpClient yhHttpClient, IModelService modelService)
     {
         _yhHttpClient = yhHttpClient;
         _modelService = modelService;
         _logger = new Logger<EquityBuilder>(new LoggerFactory());
+        _equityMarket = null;
+        //_stockPriceInfo = null;
     }
 
-    public EquityBuilder WithEquity(Equity equity)
+    public async Task<EquityBuilder> WithEquity(Equity equity, decimal? exchangeRate = null)
     {
-        _equity = equity;
-        return this;
-    }
-
-    /// <summary>
-    /// Tries to populate <see cref="EquityMarket"/> from the in-memory cache.
-    /// </summary>
-    public EquityBuilder WithEquityMarketFromCache()
-    {
-        if (FinanceService._equityMarketCache.TryGetValue(_equity!.Symbol, out var cached))
+        if (TimeUtils.IsStockUpToDate(equity.LastUpdated))
         {
-            _equityMarket = cached;
-            _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", _equity!.Symbol);
+            _equity = equity;
+            return this;
         }
+
+        if(_equityMarket == null)
+        {
+            throw new InvalidOperationException("EquityMarket must be set before setting Equity.");
+        }
+
+        EquityUtils.UpdateEquityFromMarket(equity, _equityMarket, exchangeRate);
+
+        _equity = await _modelService.UpdateEquityAsync(equity);
         return this;
     }
 
@@ -46,26 +48,63 @@ public class EquityBuilder
     /// Populates <see cref="EquityMarket"/> from the database, falling back to the in-memory cache
     /// when the data is still fresh.
     /// </summary>
-    public async Task<EquityBuilder> WithEquityMarketFromDb() //string symbol, string market = "US")
+    public async Task<EquityBuilder> WithEquityMarket(string symbol) //, string market)
     {
-        if (FinanceService._equityMarketCache.TryGetValue(_equity!.Symbol, out var cached) && 
-            (!TimeUtils.IsTradingTime() || !TimeUtils.IsEquityMarketCacheExpired(cached.LastUpdated)))
+        _equityMarket = null;
+        if (FinanceService._equityMarketCache.TryGetValue(symbol, out var cached))
         {
-            _equityMarket = cached;
-            _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", _equity!.Symbol);
+            _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);
+
+            if (TimeUtils.IsStockUpToDate(cached.LastUpdated))
+            {
+                _equityMarket = cached;
+                _logger.LogDebug("EquityMarket for {Symbol} is up-to-date and will be used.", symbol);
+                return this;
+            }
+            else
+            {
+                _equityMarket = null;
+                FinanceService._equityMarketCache.Remove(symbol);
+                //_logger.LogDebug("EquityMarket for {Symbol} is outdated and will be refreshed from the database.", symbol);
+
+
+                //if(TimeUtils.IsTradingTime() && !TimeUtils.IsEquityMarketCacheExpired(cached.LastUpdated))
+                //{
+                //    _equityMarket = cached;
+                //    _logger.LogDebug("EquityMarket for {Symbol} is up-to-date and will be used.", _equity!.Symbol);
+                //    return this;
+                //}
+                //else
+                //{
+                //    _logger.LogDebug("EquityMarket for {Symbol} is outdated and will be refreshed from the database.", _equity!.Symbol);
+                //}
+            }
+        }
+
+        _equityMarket = await _modelService.GetEquityMarketBySymbolAsync(symbol);
+
+        // Not in cashe or cache is outdated, fetch from database
+        if (_equityMarket != null && TimeUtils.IsStockUpToDate(_equityMarket.LastUpdated))
+        {
+            FinanceService._equityMarketCache[symbol] = _equityMarket;
+            _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);
             return this;
         }
 
-        _equityMarket = await _modelService.GetEquityMarketBySymbolAsync(_equity!.Symbol);
+        YhGetResultStockSummaryDetails stockPriceInfo = await _yhHttpClient.GetSymbolFullPriceAsync(symbol);
+        var equityMarket = stockPriceInfo.PopulateEquityMarket(new EquityMarket { Symbol = symbol });
+        _equityMarket = await _modelService.UpsertEquityMarketAsync(equityMarket);
+        FinanceService._equityMarketCache[symbol] = _equityMarket;
 
-        if (_equityMarket != null)
-        {
-            FinanceService._equityMarketCache[_equity!.Symbol] = _equityMarket;
-        }
-        else
-        {
-            _equityMarket = new EquityMarket { Symbol = _equity!.Symbol };
-        }
+
+        //if (_equityMarket != null)
+        //{
+        //    FinanceService._equityMarketCache[_equity!.Symbol] = _equityMarket;
+        //}
+        //else
+        //{
+        //    _equityMarket = new EquityMarket { Symbol = _equity!.Symbol };
+        //}
 
         return this;
     }
@@ -73,48 +112,48 @@ public class EquityBuilder
     /// <summary>
     /// Tries to populate the stock price info from the in-memory short- or long-info cache.
     /// </summary>
-    public EquityBuilder WithEquityFromCache(bool isShortInfo = false)
-    {
-        var cache = isShortInfo
-            ? FinanceService._shortInfoCache
-            : FinanceService._longInfoCache;
+    //public EquityBuilder WithEquityFromCache(bool isShortInfo = false)
+    //{
+    //    var cache = isShortInfo
+    //        ? FinanceService._shortInfoCache
+    //        : FinanceService._longInfoCache;
 
-        if (cache.TryGetValue(_equity!.Symbol, out var cached))
-        {
-            _stockPriceInfo = cached;
-            _logger.LogDebug("Stock price info for {Symbol} resolved from {CacheType} cache.", _equity!.Symbol, isShortInfo ? "short" : "long");
-        }
-        return this;
-    }
+    //    if (cache.TryGetValue(_equity!.Symbol, out var cached))
+    //    {
+    //        _stockPriceInfo = cached;
+    //        _logger.LogDebug("Stock price info for {Symbol} resolved from {CacheType} cache.", _equity!.Symbol, isShortInfo ? "short" : "long");
+    //    }
+    //    return this;
+    //}
 
     /// <summary>
     /// Fetches the stock price info from the Yahoo Finance REST API and updates the cache.
     /// </summary>
-    public async Task<EquityBuilder> WithEquityFromRestAPI(bool isShortStockInfo = false)
-    {
-        YhStockPriceInfo info;
+    //public async Task<EquityBuilder> WithEquityFromRestAPI(bool isShortStockInfo = false)
+    //{
+    //    YhStockPriceInfo info;
 
-        if (isShortStockInfo)
-            info = new YhStockPriceInfo(await _yhHttpClient.YhGetStockPriceOnlyAsync(_equity!.Symbol));
-        else
-            info = new YhStockPriceInfo(await _yhHttpClient.GetSymbolFullPriceAsync(_equity!.Symbol));
+    //    if (isShortStockInfo)
+    //        info = new YhStockPriceInfo(await _yhHttpClient.YhGetStockPriceOnlyAsync(_equity!.Symbol));
+    //    else
+    //        info = new YhStockPriceInfo(await _yhHttpClient.GetSymbolFullPriceAsync(_equity!.Symbol));
 
-        if (!string.IsNullOrEmpty(info.Error))
-        {
-            _logger.LogWarning("Failed to fetch stock price for {Symbol} from REST API: {Error}", _equity!.Symbol, info.Error);
-            return this;
-        }
+    //    if (!string.IsNullOrEmpty(info.Error))
+    //    {
+    //        _logger.LogWarning("Failed to fetch stock price for {Symbol} from REST API: {Error}", _equity!.Symbol, info.Error);
+    //        return this;
+    //    }
 
-        _stockPriceInfo = info;
+    //    _stockPriceInfo = info;
 
-        var cache = isShortStockInfo
-            ? FinanceService._shortInfoCache
-            : FinanceService._longInfoCache;
+    //    var cache = isShortStockInfo
+    //        ? FinanceService._shortInfoCache
+    //        : FinanceService._longInfoCache;
 
-        cache[symbol] = _stockPriceInfo;
+    //    cache[symbol] = _stockPriceInfo;
 
-        return this;
-    }
+    //    return this;
+    //}
 
     /// <summary>
     /// Applies the accumulated stock price info to the <see cref="Equity"/> and, if available,
@@ -129,23 +168,23 @@ public class EquityBuilder
             return null;
         }
 
-        if (_stockPriceInfo == null)
-        {
-            _logger.LogWarning("EquityBuilder.Build called without stock price info for {Symbol}.", _equity.Symbol);
-            return _equity;
-        }
+        //if (_stockPriceInfo == null)
+        //{
+        //    _logger.LogWarning("EquityBuilder.Build called without stock price info for {Symbol}.", _equity.Symbol);
+        //    return _equity;
+        //}
 
-        if (_stockPriceInfo.StockSummaryDetails != null)
-        {
-            _stockPriceInfo.StockSummaryDetails.PopulateDatabaseEntity(_equity);
+        //if (_stockPriceInfo.StockSummaryDetails != null)
+        //{
+        //    _stockPriceInfo.StockSummaryDetails.PopulateDatabaseEntity(_equity);
 
-            if (_equityMarket != null)
-                _stockPriceInfo.StockSummaryDetails.PopulateEquityMarket(_equityMarket);
-        }
-        else
-        {
-            _stockPriceInfo.StockPrice?.PopulateDatabaseEntity(_equity);
-        }
+        //    if (_equityMarket != null)
+        //        _stockPriceInfo.StockSummaryDetails.PopulateEquityMarket(_equityMarket);
+        //}
+        //else
+        //{
+        //    _stockPriceInfo.StockPrice?.PopulateDatabaseEntity(_equity);
+        //}
 
         return _equity;
     }

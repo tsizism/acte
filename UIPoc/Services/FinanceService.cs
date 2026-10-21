@@ -369,19 +369,20 @@ public class FinanceService : IFinanceService
 
             EquityBuilder equityBuilder = new EquityBuilder(_yhHttpClient, _modelService);
 
+            decimal? exchangeRate = null;
+
             foreach (var equity in lst)
             {
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
                 //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
 
-                string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
+                //string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
 
-                equityBuilder.WithEquity(equity);
 
                 //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
                 //{
-                YhGetResultStockPrice? tickerPrice;
+                //YhGetResultStockPrice? tickerPrice;
 
                     //if (action == "QuickUpdate")
                     //{
@@ -400,31 +401,42 @@ public class FinanceService : IFinanceService
                     //{
                     //EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
 
-                    equityBuilder.WithEquityMarketFromCache();
-                    await equityBuilder.WithEquityMarketFromDb();
-                    equityBuilder.WithEquityFromCache();
+                    await equityBuilder.WithEquityMarket(symbol);
 
-                    PriceRequestScope scope = GetPriceRequestScope(equity.LastUpdated);
+                    if (holding.Currency != equity.Currency)
+                    {
+                        exchangeRate ??= holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                        await equityBuilder.WithEquity(equity, exchangeRate);
+                    }
+                    else
+                    {
+                        await equityBuilder.WithEquity(equity);
+                    }
 
-                    await equityBuilder.WithEquityFromRestAPI(isShortStockInfo: false);
+                    //await equityBuilder.WithEquityMarketFromDb();
+                    //equityBuilder.WithEquityFromCache();
 
-                        var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
+                    //PriceRequestScope scope = GetPriceRequestScope(equity.LastUpdated);
 
-                        YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
-                        YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
-                        tickerPrice = details!.ExtractResultStockPrice();
+                    //await equityBuilder.WithEquityFromRestAPI(isShortStockInfo: false);
 
-                        if ( stockSummaryDetails != null)
-                        {
-                            stockSummaryDetails.PopulateDatabaseEntity(equity!);
-                            stockSummaryDetails.PopulateEquityMarket(equityMarket!);
-                            await _modelService.UpsertEquityMarketAsync(equityMarket!);
-                            _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
-                        }
-                        else
-                        {
-                            tickerPrice!.PopulateDatabaseEntity(equity);
-                        }
+                    //var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
+
+                    //YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
+                    //YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
+                    //tickerPrice = details!.ExtractResultStockPrice();
+
+                    //if ( stockSummaryDetails != null)
+                    //{
+                    //    stockSummaryDetails.PopulateDatabaseEntity(equity!);
+                    //    stockSummaryDetails.PopulateEquityMarket(equityMarket!);
+                    //    await _modelService.UpsertEquityMarketAsync(equityMarket!);
+                    //    _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
+                    //}
+                    //else
+                    //{
+                    //    tickerPrice!.PopulateDatabaseEntity(equity);
+                    //}
 
                     //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
 
@@ -436,36 +448,27 @@ public class FinanceService : IFinanceService
                     //    continue;
                     //}
 
-                    if (holding.Currency == null)
-                    {
-                        throw new Exception("Holding currency is null.");
-                    }
+                    //if (holding.Currency == null)
+                    //{
+                    //    throw new Exception("Holding currency is null.");
+                    //}
 
-                    if (holding.Currency != tickerPrice.Currency)
-                    {
-                        decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-                        equity.CurrentPrice = tickerPrice.Price * exchangeRate;
-                    }
+                    //if (holding.Currency != tickerPrice.Currency)
+                    //{
+                    //    decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                    //    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
+                    //}
 
-                    if (equity.CurrentPrice > equity.HoldingHigh)
-                    {
-                        equity.HoldingHigh = equity.CurrentPrice;
-                        equity.HoldingHighAt = DateTime.UtcNow;
-                    }
+                    //EquityUtils.AdjustEquityHoldingHighLow(equity);
 
-                    if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
-                    {
-                        equity.HoldingLow = equity.CurrentPrice;
-                        equity.HoldingLowAt = DateTime.UtcNow;
-                    }
-                    Console.WriteLine($"Write equity.HoldingLow/equity.HoldingHigh (FetchEquitiesForHoldingAsync): equity.Symbol={equity.Symbol}, equity.HoldingHigh={equity.HoldingHigh}, equity.HoldingLow={equity.HoldingLow}");
+                    //Console.WriteLine($"Write equity.HoldingLow/equity.HoldingHigh (FetchEquitiesForHoldingAsync): equity.Symbol={equity.Symbol}, equity.HoldingHigh={equity.HoldingHigh}, equity.HoldingLow={equity.HoldingLow}");
 
-                    equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
-                    equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
+                    //equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
+                    //equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
 
 
-                    equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
-                    await _modelService.UpdateEquityAsync(equity);
+                    //equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
+                    //await _modelService.UpdateEquityAsync(equity);
                 //}
 
                 holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
