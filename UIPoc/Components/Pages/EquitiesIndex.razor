@@ -347,9 +347,9 @@
 
                         @if (equityMarket != null)
                         {
-                            @(equityMarket.LastTradeTime!.Value.ToString("HH:mm dd-MM-yy") + "/")
+                            @(equityMarket.LastTradeTime!.Value.ToLocalTime().ToString("HH:mm dd-MM") + "/")
                         }
-                        @equity.LastUpdated.ToString("HH:mm dd-MM-yy")
+                        @equity.LastUpdated.ToLocalTime().ToString("HH:mm dd-MM")
                     }
                     </Template>
                 </RadzenDataGridColumn>

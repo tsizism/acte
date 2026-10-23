@@ -406,6 +406,8 @@ public class FinanceService : IFinanceService
                     if (holding.Currency != equity.Currency)
                     {
                         exchangeRate ??= holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+
+                        // TODO: equityBuilder.WithExchangeRate
                         await equityBuilder.WithEquity(equity, exchangeRate);
                     }
                     else

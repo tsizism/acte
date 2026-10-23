@@ -88,29 +88,6 @@ static public class EquityUtils
         return $"{baseUrl}{marketSymbol}";
     }
 
-    public static Equity UpdateEquityFromMarket(Equity equity, EquityMarket equityMarket, decimal? exchangeRate)
-    {
-        if (equity == null || equityMarket == null)
-        {
-            throw new ArgumentNullException(nameof(equity) + " or " + nameof(equityMarket));
-        }
-
-        //equity.Market = equityMarket.Symbol.EndsWith(".TO") ? "CDN" : "US";
-        //equity.CurrentPrice = equityMarket.CurrentPrice;
-
-        //if (holdingCurrency != equityMarket.Currency)
-        //{
-        //    decimal exchangeRate = holdingCurrency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-        //    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
-        //}
-
-        equity.CurrentPrice = exchangeRate == null ? equityMarket.CurrentPrice : equityMarket.CurrentPrice * exchangeRate.Value;
-        equity.MarketPrice = equityMarket.CurrentPrice;
-        equity.LastUpdated = equityMarket.LastUpdated;
-
-        return equity;
-    }
-
     public static Equity AdjustEquityHoldingHighLow(Equity equity)
     {
         if (equity.CurrentPrice > equity.HoldingHigh)

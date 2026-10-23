@@ -12,9 +12,6 @@ public class EquityBuilder
 
     private Equity? _equity;
     private EquityMarket? _equityMarket;
-    //private YhStockPriceInfo? _stockPriceInfo;
-
-    //public EquityMarket? EquityMarket => _equityMarket;
 
     public EquityBuilder(YhHttpClient yhHttpClient, IModelService modelService)
     {
@@ -22,23 +19,21 @@ public class EquityBuilder
         _modelService = modelService;
         _logger = new Logger<EquityBuilder>(new LoggerFactory());
         _equityMarket = null;
-        //_stockPriceInfo = null;
     }
 
     public async Task<EquityBuilder> WithEquity(Equity equity, decimal? exchangeRate = null)
     {
-        //if (TimeUtils.IsUpToDateWithMarket(equity.LastUpdated))
-        //{
-        //    _equity = equity;
-        //    return this;
-        //}
-
         if(_equityMarket == null)
         {
             throw new InvalidOperationException("EquityMarket must be set before setting Equity.");
         }
 
-        EquityUtils.UpdateEquityFromMarket(equity, _equityMarket, exchangeRate);
+        //EquityUtils.UpdateEquityFromMarket(equity, _equityMarket, exchangeRate);
+
+        equity.MarketPrice = _equityMarket.CurrentPrice;
+        equity.CurrentPrice = exchangeRate == null ? _equityMarket.CurrentPrice : _equityMarket.CurrentPrice * exchangeRate.Value;
+
+        equity.LastUpdated = _equityMarket.LastUpdated;
 
         _equity = await _modelService.UpdateEquityAsync(equity);
         return this;

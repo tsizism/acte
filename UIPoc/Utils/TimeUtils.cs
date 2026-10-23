@@ -63,7 +63,7 @@ static public class TimeUtils
                 return false;
             }
 
-            result = nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(4);
+            result = nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(1);  
             return result;
         }
 

@@ -86,9 +86,13 @@
 
                 <RadzenDataGridColumn TItem="Holding" Property="FlagMinIndex" Title="Flag Min" Width="110px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
 
-                <RadzenDataGridColumn TItem="Holding" Property="CreatedAt" Title="Created" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+                <RadzenDataGridColumn TItem="Holding" Property="CreatedAt" Title="Created" Width="140px" FormatString="{0:yy-MM-dd HH:mm}" />
 
-                <RadzenDataGridColumn TItem="Holding" Property="LastUpdated" Title="Last Updated" Width="140px" FormatString="{0:yyyy-MM-dd HH:mm}" />
+                <RadzenDataGridColumn TItem="Holding" Property="LastUpdated" Title="Last Updated" Width="140px">
+                    <Template Context="holding">
+                        @holding.LastUpdated.ToLocalTime().ToString("yy-MM-dd HH:mm")
+                    </Template>
+                </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="Holding" Title="Actions" Width="250px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                     <Template Context="holding">
