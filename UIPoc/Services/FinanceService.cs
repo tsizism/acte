@@ -362,7 +362,7 @@ public class FinanceService : IFinanceService
 
         try
         {
-            List<Equity> lst = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
+            List<Equity> equities = await _modelService.GetEquitiesByHoldingIdAsync(holding.HoldingId);
             Dictionary<string, decimal> holdingIndexSnapshotDict = new Dictionary<string, decimal>();
 
             string snapshot = string.Empty;
@@ -371,7 +371,7 @@ public class FinanceService : IFinanceService
 
             decimal? exchangeRate = null;
 
-            foreach (var equity in lst)
+            foreach (var equity in equities)
             {
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
@@ -401,19 +401,21 @@ public class FinanceService : IFinanceService
                     //{
                     //EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
 
-                    await equityBuilder.WithEquityMarket(symbol);
+                await equityBuilder.WithEquitySymbol(symbol);
+                await equityBuilder.WithEquityMarket(equity);
 
-                    if (holding.Currency != equity.Currency)
-                    {
-                        exchangeRate ??= holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
+                if (holding.Currency != equity.Currency)
+                {
+                    exchangeRate ??= holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
 
-                        // TODO: equityBuilder.WithExchangeRate
-                        await equityBuilder.WithEquity(equity, exchangeRate);
-                    }
-                    else
-                    {
-                        await equityBuilder.WithEquity(equity);
-                    }
+                    await equityBuilder.WithExchangeRate(equity, exchangeRate);
+                }
+                else
+                {
+                    await equityBuilder.WithExchangeRate(equity);
+                }
+
+                await equityBuilder.Build(equity);
 
                     //await equityBuilder.WithEquityMarketFromDb();
                     //equityBuilder.WithEquityFromCache();
@@ -499,13 +501,11 @@ public class FinanceService : IFinanceService
                 //    });
                 //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
                 //}
-
-
             }
 
             if (!TimeUtils.IsUpToDateWithMarket(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
             {
-                holding.Index = decimal.Round((decimal)lst.Sum(e => e.Quantity * e.CurrentPrice), 4);
+                holding.Index = decimal.Round((decimal)equities.Sum(e => e.Quantity * e.CurrentPrice), 4);
 
                 await _modelService.UpdateHoldingAsync(holding);
 
@@ -525,7 +525,7 @@ public class FinanceService : IFinanceService
                 }
             }
 
-            return lst;
+            return equities;
 
         }
         finally

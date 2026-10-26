@@ -83,7 +83,7 @@ static public class TimeUtils
         }
 
         DateTime tradingFinish = lastTradingDay.Add(TRADING_FINISH_UTC.ToTimeSpan());
-        result = lastUpdatedUtc >= tradingFinish;
+        result = lastUpdatedUtc > tradingFinish;
         return result;
     }
 

@@ -9,8 +9,6 @@ public class EquityBuilder
     private readonly YhHttpClient _yhHttpClient;
     private readonly IModelService _modelService;
     private readonly ILogger<EquityBuilder> _logger;
-
-    private Equity? _equity;
     private EquityMarket? _equityMarket;
 
     public EquityBuilder(YhHttpClient yhHttpClient, IModelService modelService)
@@ -21,29 +19,11 @@ public class EquityBuilder
         _equityMarket = null;
     }
 
-    public async Task<EquityBuilder> WithEquity(Equity equity, decimal? exchangeRate = null)
-    {
-        if(_equityMarket == null)
-        {
-            throw new InvalidOperationException("EquityMarket must be set before setting Equity.");
-        }
-
-        //EquityUtils.UpdateEquityFromMarket(equity, _equityMarket, exchangeRate);
-
-        equity.MarketPrice = _equityMarket.CurrentPrice;
-        equity.CurrentPrice = exchangeRate == null ? _equityMarket.CurrentPrice : _equityMarket.CurrentPrice * exchangeRate.Value;
-
-        equity.LastUpdated = _equityMarket.LastUpdated;
-
-        _equity = await _modelService.UpdateEquityAsync(equity);
-        return this;
-    }
-
     /// <summary>
     /// Populates <see cref="EquityMarket"/> from the database, falling back to the in-memory cache
     /// when the data is still fresh.
     /// </summary>
-    public async Task<EquityBuilder> WithEquityMarket(string symbol) //, string market)
+    public async Task<EquityBuilder> WithEquitySymbol(string symbol) //, string market)
     {
         _equityMarket = null;
         if (FinanceService._equityMarketCache.TryGetValue(symbol, out var cached))
@@ -61,18 +41,6 @@ public class EquityBuilder
                 _equityMarket = null;
                 FinanceService._equityMarketCache.Remove(symbol);
                 //_logger.LogDebug("EquityMarket for {Symbol} is outdated and will be refreshed from the database.", symbol);
-
-
-                //if(TimeUtils.IsTradingTime() && !TimeUtils.IsEquityMarketCacheExpired(cached.LastUpdated))
-                //{
-                //    _equityMarket = cached;
-                //    _logger.LogDebug("EquityMarket for {Symbol} is up-to-date and will be used.", _equity!.Symbol);
-                //    return this;
-                //}
-                //else
-                //{
-                //    _logger.LogDebug("EquityMarket for {Symbol} is outdated and will be refreshed from the database.", _equity!.Symbol);
-                //}
             }
         }
 
@@ -91,18 +59,31 @@ public class EquityBuilder
         _equityMarket = await _modelService.UpsertEquityMarketAsync(equityMarket);
         FinanceService._equityMarketCache[symbol] = _equityMarket;
 
+        return this;
+    }
 
-        //if (_equityMarket != null)
-        //{
-        //    FinanceService._equityMarketCache[_equity!.Symbol] = _equityMarket;
-        //}
-        //else
-        //{
-        //    _equityMarket = new EquityMarket { Symbol = _equity!.Symbol };
-        //}
+    public async Task<EquityBuilder> WithEquityMarket(Equity equity)
+    {
+        if (_equityMarket == null || EquityUtils.GetSymbolAdjustedToMarket(equity.Symbol, equity.Market) != _equityMarket.Symbol)
+        {
+            throw new InvalidOperationException("EquityMarket must be set before setting Equity.");
+        }
+
+        equity.LastUpdated = _equityMarket.LastUpdated;
+        equity.MarketPrice = _equityMarket.CurrentPrice;
 
         return this;
     }
+
+    public async Task<EquityBuilder> WithExchangeRate(Equity equity, decimal? exchangeRate = null)
+    {
+        equity.CurrentPrice = exchangeRate == null ? equity.MarketPrice : equity.MarketPrice * exchangeRate.Value;
+      
+        return this;
+    }
+
+
+
 
     /// <summary>
     /// Tries to populate the stock price info from the in-memory short- or long-info cache.
@@ -155,13 +136,15 @@ public class EquityBuilder
     /// to the <see cref="EquityMarket"/>. Returns the populated <see cref="Equity"/>, or
     /// <c>null</c> when the required state has not been set.
     /// </summary>
-    public Equity? Build()
+    public async Task Build(Equity equity)
     {
-        if (_equity == null)
-        {
-            _logger.LogWarning("EquityBuilder.Build called without a target Equity.");
-            return null;
-        }
+        //if (equity == null)
+        //{
+        //    throw new InvalidOperationException("Equity must be set before calling Build.");
+        //    //_logger.LogWarning("EquityBuilder.Build called without a target Equity.");
+        //}
+
+        await _modelService.UpdateEquityAsync(equity);
 
         //if (_stockPriceInfo == null)
         //{
@@ -181,6 +164,6 @@ public class EquityBuilder
         //    _stockPriceInfo.StockPrice?.PopulateDatabaseEntity(_equity);
         //}
 
-        return _equity;
+        //return _equity;
     }
 }
