@@ -22,6 +22,8 @@ namespace UIPooc.Data
         public DbSet<EquityMarket> EquityMarkets { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<IndexHistory> IndexHistories { get; set; }
+        public DbSet<AIKnowledgeItem> AIKnowledgeItems { get; set; }
+        public DbSet<ChatbotMessage> ChatbotMessages { get; set; }
 
         //protected override void Seed(ModelBuilder modelBuilder)
         //{
@@ -46,7 +48,86 @@ namespace UIPooc.Data
             ConfigureEquityMarket(modelBuilder);
             ConfigureTransaction(modelBuilder);
             ConfigureIndexHistory(modelBuilder);
+            ConfigureAIKnowledgeItem(modelBuilder);
+            ConfigureChatbotMessage(modelBuilder);
             ConfigureRelationships(modelBuilder);
+        }
+
+        private void ConfigureChatbotMessage(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ChatbotMessage>(entity =>
+            {
+                entity.ToTable("ChatbotMessage");
+                entity.HasKey(e => e.ChatbotMessageId);
+
+                entity.Property(e => e.Model)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.SessionSQN)
+                    .IsRequired();
+
+                entity.Property(e => e.Content)
+                    .IsRequired();
+
+                entity.Property(e => e.PromptTokens)
+                    .IsRequired();
+
+                entity.Property(e => e.AnswerTokens)
+                    .IsRequired();
+
+                entity.Property(e => e.DurationMs)
+                    .IsRequired();
+
+                entity.Property(e => e.Error)
+                    .HasMaxLength(2000);
+
+                entity.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.UserId, e.SessionSQN });
+            });
+        }
+
+        private void ConfigureAIKnowledgeItem(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AIKnowledgeItem>(entity =>
+            {
+                entity.ToTable("AIKnowledgeItem");
+                entity.HasKey(e => e.AIKnowledgeItemId);
+
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.AKAs)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.Scope)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.Source)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.Chunks)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.Content)
+                    .IsRequired();
+
+                entity.Property(e => e.EstimatedTokens)
+                    .IsRequired();
+
+                entity.Property(e => e.EstimatedDurationSec)
+                    .IsRequired();
+
+                entity.HasIndex(e => e.Title);
+            });
         }
 
         private void ConfigureUser(ModelBuilder modelBuilder)
@@ -161,6 +242,10 @@ namespace UIPooc.Data
                 entity.Property(e => e.CallName)
                     .IsRequired()
                     .HasMaxLength(100);
+
+                entity.Property(e => e.Comment)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
                 entity.Property(e => e.CreatedAt)
                     .IsRequired();

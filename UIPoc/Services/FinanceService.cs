@@ -375,32 +375,6 @@ public class FinanceService : IFinanceService
             {
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
 
-                //if (!TimeUtils.IsHoldingUpToDate(equity.LastUpdated) || equity.CurrentPrice == 0 || alwaysRealTime) // 4 hours old ?
-
-                //string action = "FullUpdate"; //TimeUtils.EquityTimeToAction(equity.LastUpdated, equity.Symbol);
-
-
-                //if (equity.CurrentPrice == 0 || alwaysRealTime || action == "FullUpdate" || action == "QuickUpdate") 
-                //{
-                //YhGetResultStockPrice? tickerPrice;
-
-                    //if (action == "QuickUpdate")
-                    //{
-                    //    var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: true);
-                    //    tickerPrice = wrapper.StockPrice;
-
-                    //    //string ticker = @"{""symbol"": ""AAPL"", 
-                    //    //                    ""price"": 230.4584, 
-                    //    //                    ""currency"": ""USD"",
-                    //    //                    ""symbolName"": ""Apple"",
-                    //    //                    ""marketCap"": 3503912648704
-
-                    //    tickerPrice!.PopulateDatabaseEntity(equity); 
-                    //}
-                    //else if (action == "FullUpdate")
-                    //{
-                    //EquityMarket? equityMarket = await GetEquityMarketFromDb(symbol, equity.Market);
-
                 await equityBuilder.WithEquitySymbol(symbol);
                 await equityBuilder.WithEquityMarket(equity);
 
@@ -417,90 +391,7 @@ public class FinanceService : IFinanceService
 
                 await equityBuilder.Build(equity);
 
-                    //await equityBuilder.WithEquityMarketFromDb();
-                    //equityBuilder.WithEquityFromCache();
-
-                    //PriceRequestScope scope = GetPriceRequestScope(equity.LastUpdated);
-
-                    //await equityBuilder.WithEquityFromRestAPI(isShortStockInfo: false);
-
-                    //var wrapper = await this.RequestStockPriceAsync(symbol, isShortStockInfo: false);
-
-                    //YhGetResultStockSummaryDetails? stockSummaryDetails = wrapper.StockSummaryDetails ;
-                    //YhGetResultStockSummaryDetails? details = wrapper.StockSummaryDetails;
-                    //tickerPrice = details!.ExtractResultStockPrice();
-
-                    //if ( stockSummaryDetails != null)
-                    //{
-                    //    stockSummaryDetails.PopulateDatabaseEntity(equity!);
-                    //    stockSummaryDetails.PopulateEquityMarket(equityMarket!);
-                    //    await _modelService.UpsertEquityMarketAsync(equityMarket!);
-                    //    _stockSummaryDetailsCache[symbol] = stockSummaryDetails!;
-                    //}
-                    //else
-                    //{
-                    //    tickerPrice!.PopulateDatabaseEntity(equity);
-                    //}
-
-                    //var fullPrice = (YhGetFullStockPriceResult)tickerPrice;
-
-                    ///fullPrice.PopulateDatabaseEquityMarket(equityMarket);
-                    //}
-                    //else
-                    //{
-                    //    // NoAction - use equty from DB
-                    //    continue;
-                    //}
-
-                    //if (holding.Currency == null)
-                    //{
-                    //    throw new Exception("Holding currency is null.");
-                    //}
-
-                    //if (holding.Currency != tickerPrice.Currency)
-                    //{
-                    //    decimal exchangeRate = holding.Currency == "CAD" ? await GetCADExchangeRateAsync() : await GetCADUSDExchangeRateAsync();
-                    //    equity.CurrentPrice = tickerPrice.Price * exchangeRate;
-                    //}
-
-                    //EquityUtils.AdjustEquityHoldingHighLow(equity);
-
-                    //Console.WriteLine($"Write equity.HoldingLow/equity.HoldingHigh (FetchEquitiesForHoldingAsync): equity.Symbol={equity.Symbol}, equity.HoldingHigh={equity.HoldingHigh}, equity.HoldingLow={equity.HoldingLow}");
-
-                    //equity.AverageCost = equity.AverageCost == 0 ? equity.CurrentPrice : equity.AverageCost;
-                    //equity.Quantity = equity.Quantity == 0 ? 1 : equity.Quantity;
-
-
-                    //equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
-                    //await _modelService.UpdateEquityAsync(equity);
-                //}
-
                 holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
-
-                //if (equity.Currency != holding.Currency)
-                //{
-                //    throw new Exception("Currency mismatch: Equity currency does not match holding currency after conversion");
-                //}
-
-
-                //if (holding.Currency == equity.Currency)
-
-                //try
-                //{
-                //    equity.CurrentPrice = await FinanceService.GetTickerPriceAsync(equity.Symbol);
-                //}
-                //catch (Exception ex)
-                //{
-                //    NotificationService.Notify(new NotificationMessage
-                //    {
-                //        Severity = NotificationSeverity.Warning,
-                //        Summary = "Price Fetch Warning",
-                //        Detail = $"Failed to fetch price for {equity.Symbol}: {ex.Message}",
-                //        Duration = 3000,
-                //        CloseOnClick = true
-                //    });
-                //    equity.CurrentPrice = 0; // Default to 0 if price fetch fails
-                //}
             }
 
             if (!TimeUtils.IsUpToDateWithMarket(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?

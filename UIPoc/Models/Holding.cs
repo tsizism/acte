@@ -19,6 +19,7 @@ public class Holding
     public decimal? FlagMinIndex { get; set; }
     public string Name { get; set; } = string.Empty;
     public string CallName { get; set; } = string.Empty;
+    public string Comment { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     public User User { get; set; } = null!;
