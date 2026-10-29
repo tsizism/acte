@@ -1,16 +1,9 @@
-using Azure;
-using Azure.Core;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
-using Radzen.Blazor.Markdown;
-using Radzen.Blazor.Rendering;
-using System.Runtime.ConstrainedExecution;
 using UIPooc.Components;
 using UIPooc.Data;
 using UIPooc.Services;
 using UIPooc.Yahoo;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 //Singleton: This creates only one instance of a class during the application's lifecycle. Every time you request this class, you get the same instance.

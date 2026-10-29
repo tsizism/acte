@@ -2,9 +2,9 @@ namespace UIPooc.Utils;
 
 static public class TimeUtils
 {
-    static readonly TimeOnly TRADING_START_UTC = TimeOnly.Parse("14:30");
-    static readonly TimeOnly TRADING_30_MIN_IN_UTC = TimeOnly.Parse("15:00");
-    static readonly TimeOnly TRADING_FINISH_UTC = TimeOnly.Parse("21:00");
+    static readonly TimeOnly TRADING_START_UTC = TimeOnly.Parse("13:30");
+    static readonly TimeOnly TRADING_FINISH_UTC = TimeOnly.Parse("20:00");
+    static readonly TimeOnly TRADING_30_MIN_IN_UTC = TimeOnly.Parse("14:00");
     static readonly int TICKER_CACHE_DURATION_MINUTES = 120; // 2 hours
     static readonly int SYMBOL_FULL_PRICE_CACHE_DURATION_MINUTES = 480; // 4 hours
 
@@ -13,7 +13,7 @@ static public class TimeUtils
     /// Pre-market session: 4:00 a.m. – 9:30 a.m. ET.  (09:00 to 14:30 UTC)
     // After-hours session: 4:00 p.m. – 8:00 p.m.ET - 00:00 am EST.   (21:00 to 01:00 UTC to 05:00 UTC)
     // Overnight trading: Some platforms allow trading between 8:00 p.m.and 4:00 a.m.ET.
-    // Regular trading hours: 9:30 a.m. – 4:00 p.m ET.   (14:30 to 21:00 UTC)
+    // Regular trading hours: 9:30 a.m. – 4:00 p.m ET.   (13:30 to 20:00 UTC)
     /// </summary>
     /// <param name="ticker"></param>
     /// <param name="live"></param>

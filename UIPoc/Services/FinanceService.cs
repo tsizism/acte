@@ -1,15 +1,9 @@
 using Radzen;
-using Radzen.Blazor.Rendering;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using UIPooc.Attributes;
-using UIPooc.Helpers;
 using UIPooc.Models;
 using UIPooc.Utils;
 using UIPooc.Yahoo;
-using static UIPooc.Yahoo.YhStockPriceInfo;
 
 namespace UIPooc.Services;
 
@@ -69,6 +63,31 @@ public class FinanceService : IFinanceService
             return PriceRequestScope.PriceOnly;
 
         return PriceRequestScope.Details;
+    }
+
+    public static async Task<List<Transaction>> AddTransactionsFromEquitiesAsync(IEnumerable<Equity> equities, IModelService modelService)
+    {
+        var created = new List<Transaction>();
+
+        foreach (var equity in equities.Where(e => !e.IsDeleted))
+        {
+            var quantity = (int)equity.LastTxnQuantity;
+            var transaction = new Transaction
+            {
+                HoldingId = equity.HoldingId,
+                Symbol = equity.Symbol,
+                Type = equity.LastTxnType,
+                Quantity = quantity,
+                Price = equity.LastTxnPrice,
+                TotalAmount = quantity * equity.LastTxnPrice,
+                Commission = 0,
+                TransactionDate = equity.LastTxnAt == default ? DateTime.UtcNow : equity.LastTxnAt
+            };
+
+            created.Add(await modelService.CreateTransactionAsync(transaction));
+        }
+
+        return created;
     }
 
     private EquityMarket MapToEquityMarket(JsonElement quote, string market)
@@ -258,32 +277,6 @@ public class FinanceService : IFinanceService
 
         return result;
     }
-
-    /// <summary>
-    /// M(edium) result - 34 keys
-    /// </summary>
-    /// <param name="symbol"></param>
-    /// <param name="canUseCache"></param>
-    /// <returns></returns>
-    //public async Task<YhGetFullStockPriceResult> RequestFullStockPriceAsync(string symbol, bool canUseCache = true)
-    //{
-    //    if (canUseCache && FinanceService._longInfoCache.TryGetValue(symbol, out var _cachedFullStockPrice))
-    //    {
-    //        if (!TimeUtils.IsTradingTime())
-    //        {
-    //            return _cachedFullStockPrice;
-    //        }
-
-    //        if (!TimeUtils.IsFullStockPriceCacheExpired(_cachedFullStockPrice.LastUpdated))
-    //        {
-    //            return _cachedFullStockPrice;
-    //        }
-    //    }
-
-    //    YhGetFullStockPriceResult result = await _yhHttpClient.YhGetStockPriceInfo(symbol);
-    //    FinanceService._longInfoCache[symbol] = result;
-    //    return result;
-    //}
 
     /// <summary>
     /// One CAD is worth CM(USD)/CM.TO(CAD) USD. So to get the exchange rate, we can divide the price of CM by the price of CM.TO. 
