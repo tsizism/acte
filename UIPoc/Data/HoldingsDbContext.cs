@@ -464,6 +464,18 @@ namespace UIPooc.Data
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 
+                entity.Property(e => e.MarketPrice)
+                    .IsRequired()
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.Market)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
+                entity.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
                 entity.Property(e => e.TotalAmount)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");

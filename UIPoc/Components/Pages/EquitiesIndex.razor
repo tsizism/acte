@@ -1,4 +1,4 @@
-@page "/equities"
+ts@page "/equities"
 @page "/equities/{HoldingId:int}"
 @using UIPooc.Services
 @using UIPooc.Models
@@ -373,11 +373,14 @@
                 </RadzenDataGridColumn> *@
 
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-dd-yy}" TextAlign="TextAlign.Center" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-yy}" TextAlign="TextAlign.Center" />
 
-            <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="50px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+            <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="90px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                 <Template Context="equity">
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Dark" Size="ButtonSize.Small"
+                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                    Click="@(() => NavigationManager.NavigateTo($"/holdings/{equity.HoldingId}/transactions?symbol={Uri.EscapeDataString(equity.Symbol)}"))"
+                                    title="Transaction History" />
+                    <RadzenButton Icon="delete"
                                     Click="@(() => DeleteEquity(equity))"
                                     title="Delete Equity" />
                 </Template>

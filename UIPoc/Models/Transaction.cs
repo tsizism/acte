@@ -15,6 +15,9 @@ public class Transaction
     public TransactionType Type { get; set; }
     public int Quantity { get; set; }
     public decimal Price { get; set; }
+    public decimal MarketPrice { get; set; } = 0;
+    public string Market { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
     public decimal Commission { get; set; }
     public DateTime TransactionDate { get; set; } = DateTime.UtcNow;

@@ -1,0 +1,66 @@
+@page "/holdings/{HoldingId:int}/transactions"
+@using UIPooc.Models
+@rendermode InteractiveServer
+
+<RadzenNotification />
+
+<PageTitle>Transactions</PageTitle>
+
+<RadzenStack Gap="1rem">
+    <RadzenRow AlignItems="AlignItems.Center">
+        <RadzenColumn Size="12">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                              Click="@GoBack" title="Back to Holdings" />
+                <RadzenText TextStyle="TextStyle.H3">Transactions@(string.IsNullOrWhiteSpace(Symbol) ? "" : $" - {Symbol}")</RadzenText>
+                @if (_holding != null)
+                {
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-left: 0.5rem;">— @_holding.Name</RadzenText>
+                }
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (_isLoading)
+    {
+        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (_transactions.Count > 0)
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H6">
+                Total Transactions: <strong>@_transactions.Count</strong>
+            </RadzenText>
+        </RadzenCard>
+
+        <RadzenDataGrid Data="@_transactions"
+                        TItem="Transaction"
+                        AllowFiltering="true"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="20"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        FilterMode="FilterMode.Simple"
+                        Style="height: 800px">
+            <Columns>
+                <RadzenDataGridColumn TItem="Transaction" Property="TransactionDate" Title="Date" Width="160px" FormatString="{0:yyyy-MM-dd HH:mm}" SortOrder="SortOrder.Descending" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Symbol" Title="Symbol" Width="110px" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Type" Title="Type" Width="100px" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Quantity" Title="Quantity" Width="100px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Price" Title="Price" Width="110px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Property="MarketPrice" Title="Market Price" Width="130px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Property="TotalAmount" Title="Total" Width="130px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Commission" Title="Commission" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Market" Title="Market" Width="100px" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Currency" Title="Currency" Width="100px" />
+                <RadzenDataGridColumn TItem="Transaction" Property="Notes" Title="Notes" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false">
+            No transactions found for this holding.
+        </RadzenAlert>
+    }
+</RadzenStack>

@@ -65,8 +65,13 @@ public class FinanceService : IFinanceService
         return PriceRequestScope.Details;
     }
 
+    static bool AppliedTransactions = false;
+
     public static async Task<List<Transaction>> AddTransactionsFromEquitiesAsync(IEnumerable<Equity> equities, IModelService modelService)
     {
+        if (AppliedTransactions)
+            return new List<Transaction>();
+
         var created = new List<Transaction>();
 
         foreach (var equity in equities.Where(e => !e.IsDeleted))
@@ -79,6 +84,9 @@ public class FinanceService : IFinanceService
                 Type = equity.LastTxnType,
                 Quantity = quantity,
                 Price = equity.LastTxnPrice,
+                MarketPrice = equity.MarketPrice,
+                Market = equity.Market,
+                Currency = equity.Currency,
                 TotalAmount = quantity * equity.LastTxnPrice,
                 Commission = 0,
                 TransactionDate = equity.LastTxnAt == default ? DateTime.UtcNow : equity.LastTxnAt
@@ -86,6 +94,8 @@ public class FinanceService : IFinanceService
 
             created.Add(await modelService.CreateTransactionAsync(transaction));
         }
+
+        AppliedTransactions = true;
 
         return created;
     }
@@ -363,6 +373,10 @@ public class FinanceService : IFinanceService
             EquityBuilder equityBuilder = new EquityBuilder(_yhHttpClient, _modelService);
 
             decimal? exchangeRate = null;
+
+            ////////////////////////////////////////////////////////////////////////////////////
+            /// await AddTransactionsFromEquitiesAsync(equities, _modelService);
+            ///////////////////////////////////////////////////////////////////////////////////
 
             foreach (var equity in equities)
             {
