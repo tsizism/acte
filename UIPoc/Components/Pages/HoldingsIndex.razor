@@ -60,7 +60,7 @@
             <Columns>
                 <RadzenDataGridColumn TItem="Holding" Property="Name" Title="Name" Width="200px" Frozen="true">
                     <Template Context="holding">
-                        <RadzenLink Path="@($"equities/{holding.HoldingId}")" Text="@holding.Name" />
+                        <RadzenLink Path="@($"{(holding.Type == HoldingType.WatchList ? "watchlist-equities" : "equities")}/{holding.HoldingId}")" Text="@holding.Name" />
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -100,9 +100,13 @@
                                      Click="@(() => ViewEquities(holding.HoldingId))"
                                      title="View Equities" 
                                      Style="margin-right: 0.25rem" />
-                        <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                        <RadzenButton Icon="trending_up" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => ViewHoldingHistory(holding.HoldingId))"
-                                     title="View History" 
+                                     title="View Index History" 
+                                     Style="margin-right: 0.25rem" />
+                        <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                     Click="@(() => ViewTransactions(holding.HoldingId))"
+                                     title="View Transactions" 
                                      Style="margin-right: 0.25rem" />
                         <RadzenButton Icon="flag" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => OpenFlagSettingsDialog(holding))"
@@ -127,3 +131,13 @@
         </RadzenAlert>
     }
 </RadzenStack>
+
+@* 
+Icon Preview Name	Purpose / Action	Example Code
+trending_up	Market Gain / Bull Market	<RadzenButton Icon="trending_up" ... />
+trending_down	Market Loss / Bear Market	<RadzenButton Icon="trending_down" ... />
+insert_chart_outlined	Open Index Chart / Technical Analysis	<RadzenButton Icon="insert_chart_outlined" ... />
+show_chart	Dynamic Line Graph / Stock Performance	<RadzenButton Icon="show_chart" ... />
+monitoring	Portfolio or Index Tracking	<RadzenButton Icon="monitoring" ... />
+account_balance....
+*@

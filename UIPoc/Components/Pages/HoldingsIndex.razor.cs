@@ -75,7 +75,14 @@ public partial class HoldingsIndex
 
     private void ViewEquities(int holdingId)
     {
-        NavigationManager.NavigateTo($"/equities/{holdingId}");
+        var holding = _holdings.FirstOrDefault(h => h.HoldingId == holdingId);
+        var route = holding?.Type == HoldingType.WatchList ? "watchlist-equities" : "equities";
+        NavigationManager.NavigateTo($"/{route}/{holdingId}");
+    }
+
+    private void ViewTransactions(int holdingId)
+    {
+        NavigationManager.NavigateTo($"/holdings/{holdingId}/transactions");
     }
 
     private void ViewHoldingHistory(int holdingId)

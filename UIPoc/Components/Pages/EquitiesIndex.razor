@@ -1,4 +1,4 @@
-ts@page "/equities"
+@page "/equities"
 @page "/equities/{HoldingId:int}"
 @using UIPooc.Services
 @using UIPooc.Models
@@ -148,7 +148,7 @@ ts@page "/equities"
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenText TextStyle="TextStyle.H6">
-                        CAD/USD Rate: <strong>@_usdCadRate.ToString("C4")</strong> | USD/CAD Rate: <strong>@_cadUsdRate.ToString("C4")</strong>
+                        <a href="https://ca.finance.yahoo.com/quote/CADUSD%3DX/" target="_blank" rel="noopener noreferrer">CAD/USD Rate</a>: <strong>@_usdCadRate.ToString("C4")</strong> | <a href="https://ca.finance.yahoo.com/quote/CAD%3DX/" target="_blank" rel="noopener noreferrer">USD/CAD Rate</a>: <strong>@_cadUsdRate.ToString("C4")</strong>
                         </RadzenText>
                     </RadzenColumn>
                 </RadzenRow>
@@ -373,7 +373,7 @@ ts@page "/equities"
                 </RadzenDataGridColumn> *@
 
 
-            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Txn Date" Width="70px" FormatString="{0:dd-MM-yy}" TextAlign="TextAlign.Center" />
+            <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Buy Date" Width="70px" FormatString="{0:dd-MM-yy}" TextAlign="TextAlign.Center" />
 
             <RadzenDataGridColumn TItem="Equity" Title="Actions" Width="90px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
                 <Template Context="equity">
@@ -435,7 +435,9 @@ ts@page "/equities"
     {
         try
         {
-            _holdings = await FinanceService.FetchHoldingsAsync();
+            _holdings = (await FinanceService.FetchHoldingsAsync())
+                 .Where(h => h.Type == HoldingType.Active)
+                 .ToList();
         }
         catch (InvalidOperationException ex)
         {
