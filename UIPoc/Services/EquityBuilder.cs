@@ -10,6 +10,7 @@ public class EquityBuilder
     private readonly IModelService _modelService;
     private readonly ILogger<EquityBuilder> _logger;
     private EquityMarket? _equityMarket;
+    private string _dataSource = string.Empty;
 
     public EquityBuilder(YhHttpClient yhHttpClient, IModelService modelService)
     {
@@ -44,12 +45,12 @@ public class EquityBuilder
             }
         }
 
+        // Not in local cache or cache is outdated, fetch from database
         _equityMarket = await _modelService.GetEquityMarketBySymbolAsync(symbol);
 
-        // Not in cashe or cache is outdated, fetch from database
         if (_equityMarket != null && TimeUtils.IsUpToDateWithMarket(_equityMarket.LastUpdated))
         {
-            FinanceService._equityMarketCache[symbol] = _equityMarket;
+            FinanceService._equityMarketCache[symbol] = _equityMarket;  //Refresh local cache with up-to-date data from database
             _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);
             return this;
         }
@@ -58,7 +59,7 @@ public class EquityBuilder
         var equityMarket = stockPriceInfo.PopulateEquityMarket(new EquityMarket { Symbol = symbol });
         _equityMarket = await _modelService.UpsertEquityMarketAsync(equityMarket);
         FinanceService._equityMarketCache[symbol] = _equityMarket;
-
+        _dataSource = stockPriceInfo.DataSource;
         return this;
     }
 
@@ -71,7 +72,7 @@ public class EquityBuilder
 
         equity.LastUpdated = _equityMarket.LastUpdated;
         equity.MarketPrice = _equityMarket.CurrentPrice;
-
+        equity.DataSource = _dataSource;
         return this;
     }
 

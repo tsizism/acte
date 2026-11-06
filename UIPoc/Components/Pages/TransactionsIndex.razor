@@ -3,12 +3,13 @@
 @rendermode InteractiveServer
 
 <RadzenNotification />
+<RadzenDialog />
 
 <PageTitle>Transactions</PageTitle>
 
 <RadzenStack Gap="1rem">
     <RadzenRow AlignItems="AlignItems.Center">
-        <RadzenColumn Size="12">
+        <RadzenColumn Size="12" SizeMD="6">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                 <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                               Click="@GoBack" title="Back to Holdings" />
@@ -18,6 +19,9 @@
                     <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-left: 0.5rem;">— @_holding.Name</RadzenText>
                 }
             </RadzenStack>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" class="rz-text-align-end">
+            <RadzenButton Icon="add" Text="New" ButtonStyle="ButtonStyle.Primary" Click="@NewTransactionAsync" />
         </RadzenColumn>
     </RadzenRow>
 
@@ -52,6 +56,11 @@
                 <RadzenDataGridColumn TItem="Transaction" Property="Currency" Title="Currency" Width="100px" />
                 <RadzenDataGridColumn TItem="Transaction" Property="Market" Title="Market" Width="100px" />
                 <RadzenDataGridColumn TItem="Transaction" Property="TotalAmount" Title="Total" Width="130px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Title="Currency Rate" Width="130px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="transaction">
+                        @(transaction.MarketPrice != 0 ? (transaction.Price / transaction.MarketPrice).ToString("N4") : "-")
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="Transaction" Property="Commission" Title="Commission" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                 <RadzenDataGridColumn TItem="Transaction" Property="Notes" Title="Notes" />
             </Columns>

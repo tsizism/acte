@@ -203,7 +203,7 @@ namespace UIPooc.Migrations
                     b.Property<DateTime>("LastTxnAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("LastTxnPrice")
+                    b.Property<decimal>("LastTxnMarketPrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("LastTxnQuantity")

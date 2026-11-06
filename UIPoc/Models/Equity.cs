@@ -17,7 +17,7 @@ public class Equity
     public decimal? GainLoss { get; set; }
     public TransactionType LastTxnType { get; set; }
     public decimal LastTxnQuantity { get; set; }
-    public decimal LastTxnPrice { get; set; }
+    public decimal LastTxnMarketPrice { get; set; }
     public DateTime LastTxnAt { get; set; }
     public decimal HoldingHigh { get; set; }
     public DateTime HoldingHighAt { get; set; }
@@ -54,7 +54,7 @@ public class Equity
         GainLoss = other.GainLoss;
         LastTxnType = other.LastTxnType;
         LastTxnQuantity = other.LastTxnQuantity;
-        LastTxnPrice = other.LastTxnPrice;
+        LastTxnMarketPrice = other.LastTxnMarketPrice;
         LastTxnAt = other.LastTxnAt;
         HoldingHigh = other.HoldingHigh;
         HoldingHighAt = other.HoldingHighAt;
@@ -84,7 +84,7 @@ public class Equity
         destination.GainLoss = this.GainLoss;
         destination.LastTxnType = this.LastTxnType;
         destination.LastTxnQuantity = this.LastTxnQuantity;
-        destination.LastTxnPrice = this.LastTxnPrice;
+        destination.LastTxnMarketPrice = this.LastTxnMarketPrice;
         destination.LastTxnAt = this.LastTxnAt;
         destination.HoldingHigh = this.HoldingHigh;
         destination.HoldingHighAt = this.HoldingHighAt;

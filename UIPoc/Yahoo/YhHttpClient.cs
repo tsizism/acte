@@ -242,7 +242,9 @@ public class YhHttpClient
             throw new InvalidOperationException("Failed to deserialize JSON response for stock details");
 
         }
+
         result.LastUpdated = DateTime.UtcNow;
+        result.DataSource = "yh-complete";   // yh-finance-complete
         return result;
     }
 

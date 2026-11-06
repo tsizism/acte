@@ -104,7 +104,7 @@
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenFormField Text="Last Transaction Price" Style="width: 100%">
                             <ChildContent>
-                                <RadzenNumeric @bind-Value="_equity.LastTxnPrice" Name="LastTxnPrice" />
+                                @bind-Value="_equity.LastTxnMarketPrice" Name="LastTxnMarketPrice"
                             </ChildContent>
                         </RadzenFormField>
                     </RadzenColumn>

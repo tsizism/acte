@@ -204,8 +204,8 @@
                                 // decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
                                 // decimal proc = diff / equityMarket.CurrentPrice;
 
-                                var distHigh = equityMarket.Week52High - equity.CurrentPrice;
-                                var distLow = equity.CurrentPrice - equityMarket.Week52Low;
+                                var distHigh = equityMarket.Week52High - equity.MarketPrice;
+                                var distLow = equity.MarketPrice - equityMarket.Week52Low;
                                 closerToHigh = distHigh < distLow;
                                 closerToLow = distLow < distHigh;
                             }
@@ -317,12 +317,6 @@
                     <RadzenDataGridColumn TItem="Equity" Property="Quantity" Title="Qty" Width="50px" FormatString="{0}" TextAlign="TextAlign.Center" />
                 }
 
-                <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Left">
-                    <Template Context="equity">
-                        @equity.AverageCostMarket.ToString("C2") @equity.Currency / @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
-                    </Template>
-                </RadzenDataGridColumn>
-
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="175px"  TextAlign="TextAlign.Center">
                     <Template Context="equity">
@@ -371,6 +365,12 @@
                                     Text="@equity.LastTxnType.ToString()" />
                     </Template>
                 </RadzenDataGridColumn> *@
+
+            <RadzenDataGridColumn TItem="Equity" Property="AverageCost" Title="Avg Cost Market/Avg Cost" Width="150px" Sortable="false" TextAlign="TextAlign.Left">
+                <Template Context="equity">
+                    @equity.AverageCostMarket.ToString("C2") @equity.Currency / @equity.AverageCost.ToString("C2") @_selectedHolding!.Currency
+                </Template>
+            </RadzenDataGridColumn>
 
 
             <RadzenDataGridColumn TItem="Equity" Property="LastTxnAt" Title="Last Buy Date" Width="70px" FormatString="{0:dd-MM-yy}" TextAlign="TextAlign.Center" />

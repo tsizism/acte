@@ -159,7 +159,7 @@ namespace UIPooc.Services
                         };
 
                         equity.LastTxnQuantity = equity.Quantity;
-                        equity.LastTxnPrice = equity.CurrentPrice;
+                        equity.LastTxnMarketPrice = equity.CurrentPrice;
                         equity.HoldingHigh = equity.CurrentPrice;
                         //equity.HoldingHighAt = equity.LastTxnAt;
                         equity.HoldingLow = equity.CurrentPrice;

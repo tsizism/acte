@@ -83,11 +83,11 @@ public class FinanceService : IFinanceService
                 Symbol = equity.Symbol,
                 Type = equity.LastTxnType,
                 Quantity = quantity,
-                Price = equity.LastTxnPrice,
-                MarketPrice = equity.MarketPrice,
+                Price = equity.AverageCost,
+                MarketPrice = equity.AverageCostMarket,
                 Market = equity.Market,
                 Currency = equity.Currency,
-                TotalAmount = quantity * equity.LastTxnPrice,
+                TotalAmount = quantity * equity.AverageCost,
                 Commission = 0,
                 TransactionDate = equity.LastTxnAt == default ? DateTime.UtcNow : equity.LastTxnAt
             };

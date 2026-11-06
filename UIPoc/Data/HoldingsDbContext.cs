@@ -324,7 +324,7 @@ namespace UIPooc.Data
                 entity.Property(e => e.LastTxnType)
                     .IsRequired();
 
-                entity.Property(e => e.LastTxnPrice)
+                entity.Property(e => e.LastTxnMarketPrice)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 

@@ -1,4 +1,5 @@
 using UIPooc.Models;
+using UIPooc.Services;
 
 namespace UIPooc.Utils;
 
@@ -104,5 +105,56 @@ static public class EquityUtils
 
         return equity;
     }
+
+
+    //Date: Nov. 02, 2026
+    //Settlement Date S: Nov. 03, 2026
+    //CAD Buy
+    //ORACLE CORPORATION
+    //ORCL:US	100	
+    //USD118.80 US 
+    //Canadian dollars -$16,894.92
+    //Settlement -
+    //Commission USD 6.95 US dollars
+    //Exchange rate: 1.42130
+
+    public static Equity CreateEquityFromTransaction(Transaction transaction)
+    {
+        Equity equity = new Equity
+        {
+            HoldingId = transaction.HoldingId, 
+            Currency = transaction.Currency,
+            Market = transaction.Market,
+            Symbol = transaction.Symbol,
+            //Keywords = other.Keywords;
+            Quantity = (int)transaction.Quantity,
+            AverageCost = transaction.Price,
+            AverageCostMarket = transaction.MarketPrice,
+            CurrentPrice = transaction.Price,
+            MarketPrice = transaction.MarketPrice,
+            GainLoss = 0,
+            ///////////
+            LastTxnType = transaction.Type,
+            LastTxnQuantity = transaction.Quantity,
+            LastTxnMarketPrice = transaction.MarketPrice,
+            LastTxnAt = transaction.TransactionDate,
+            //////////
+            HoldingHigh = transaction.Price,
+            HoldingHighAt = transaction.TransactionDate,
+            IndexWeight = 0,
+            HoldingLow = transaction.Price,
+            HoldingLowAt = transaction.TransactionDate,
+            FlagMax = 0,
+            FlagMin = 0,
+            LastUpdated = transaction.TransactionDate.Date,
+            //Flag = transaction.Flag,
+            //FlagMessage = transaction.FlagMessage,
+            //FlagDate = transaction.FlagDate,
+            Holding = transaction.Holding,
+        };
+
+        return equity;
+    }
+
 }
 

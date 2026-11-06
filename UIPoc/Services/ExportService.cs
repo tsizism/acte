@@ -235,7 +235,7 @@ namespace UIPooc.Services
                 worksheet.Cells[row, 9].Value = gainLoss;
                 worksheet.Cells[row, 10].Value = gainLossPercent;
                 worksheet.Cells[row, 11].Value = equity.LastTxnType.ToString();
-                worksheet.Cells[row, 12].Value = equity.LastTxnPrice;
+                worksheet.Cells[row, 12].Value = equity.LastTxnMarketPrice;
                 worksheet.Cells[row, 13].Value = equity.LastTxnQuantity;
                 worksheet.Cells[row, 14].Value = equity.LastTxnAt;
                 worksheet.Cells[row, 14].Style.Numberformat.Format = "yyyy-mm-dd hh:mm:ss";

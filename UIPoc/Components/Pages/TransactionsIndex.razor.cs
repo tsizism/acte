@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using UIPooc.Components.Dialogs;
 using UIPooc.Models;
 using UIPooc.Services;
+using UIPooc.Utils;
 
 namespace UIPooc.Components.Pages;
 
@@ -21,6 +23,9 @@ public partial class TransactionsIndex
 
     [Inject]
     private NotificationService NotificationService { get; set; } = default!;
+
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
 
     private Holding? _holding;
     private List<Transaction> _transactions = [];
@@ -58,6 +63,68 @@ public partial class TransactionsIndex
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private async Task NewTransactionAsync()
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            { "HoldingId", HoldingId },
+            { "Symbol", Symbol },
+            { "HoldingCurrency", _holding?.Currency }
+        };
+
+        var result = await DialogService.OpenAsync<TransactionDialog>(
+            "New Transaction",
+            parameters!,
+            new DialogOptions { Width = "450px", Resizable = false, Draggable = false });
+
+        if (result is not Transaction transaction)
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelService.CreateTransactionAsync(transaction);
+
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Transaction for '{transaction.Symbol}' added.",
+                Duration = 5000
+            });
+
+            Equity equity = EquityUtils.CreateEquityFromTransaction(transaction);
+            await ModelService.CreateEquityAsync(equity);
+
+            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Equity for '{symbol}' added.",
+                Duration = 3000
+            });
+
+
+
+
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to add transaction: {ex.Message}",
+                Duration = 4000
+            });
         }
     }
 

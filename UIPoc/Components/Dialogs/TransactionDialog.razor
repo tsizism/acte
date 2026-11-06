@@ -1,0 +1,170 @@
+@using UIPooc.Models
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem" Style="padding: 1rem;">
+    <RadzenFormField Text="Symbol" Style="width: 100%;">
+        <RadzenTextBox @bind-Value="_transaction.Symbol" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Type" Style="width: 100%;">
+        <RadzenDropDown @bind-Value="_transaction.Type" Data="@_types" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Quantity" Style="width: 100%;">
+        <RadzenNumeric TValue="int" @bind-Value="_transaction.Quantity" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Total Amount"  Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.TotalAmount" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Market Price" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.MarketPrice" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Commission" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Commission" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Market" Style="width: 100%;">
+        <RadzenDropDown TValue="string" @bind-Value="_transaction.Market" Data="@_markets" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Currency" Style="width: 100%;">
+        <RadzenTextBox @bind-Value="_transaction.Currency" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Currency Rate" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="this.CurrencyRate" ReadOnly="true" Format="0.0000" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Price" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Price" ReadOnly="true" Format="0.0000" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Date" Style="width: 100%;">
+        <RadzenDatePicker TValue="DateTime" @bind-Value="_transaction.TransactionDate" ShowTime="true" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Notes" Style="width: 100%;">
+        <RadzenTextBox @bind-Value="_transaction.Notes" Style="width: 100%;" />
+    </RadzenFormField>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <RadzenText TextStyle="TextStyle.Caption" Style="color: red;">@_error</RadzenText>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+        <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public int HoldingId { get; set; }
+
+    [Parameter]
+    public string? Symbol { get; set; }
+
+    [Parameter]
+    public decimal CurrencyRate { get; set; }
+
+    [Parameter]
+    public string? HoldingCurrency { get; set; }
+
+    private readonly TransactionType[] _types = Enum.GetValues<TransactionType>();
+    private readonly string[] _markets = ["US", "CDN"];
+    private Transaction _transaction = new();
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        _transaction = new Transaction
+        {
+            HoldingId = HoldingId,
+            Symbol = Symbol ?? string.Empty,
+            Market = "US",
+            Currency = HoldingCurrency ?? string.Empty,
+            // TransactionDate = DateTime.UtcNow
+        };
+    }
+
+    private bool UpdateCurrencyRate()
+    {
+        if (   _transaction.Quantity <= 0 
+            || _transaction.MarketPrice <= 0
+            || _transaction.TotalAmount <= 0
+            || _transaction.Commission  <= 0)
+        {
+            this.CurrencyRate = 0;
+            _transaction.Price = 0;
+            this.CurrencyRate = 0;
+            return false;
+        }
+
+        if (_transaction.Market != "CDN" && _transaction.Market != "US")
+        {
+            _error = $"Invalid market: {_transaction.Market}. Should be 'CDN' or 'US'.";
+            return false;
+        }
+
+        _transaction.Symbol = _transaction.Symbol.Trim().ToUpperInvariant();
+
+        if (_transaction.Market == "CDN" )
+        {
+            this.CurrencyRate = 1.0m;
+            _transaction.Price = _transaction.MarketPrice;
+        }
+        else
+        {
+            _transaction.Price = (_transaction.TotalAmount - _transaction.Commission) / _transaction.Quantity;
+            this.CurrencyRate = _transaction.Price / _transaction.MarketPrice;
+        }
+        return true;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_transaction.Symbol))
+        {
+            _error = "Symbol is required.";
+            return;
+        }
+
+        if (!UpdateCurrencyRate())
+        {
+            _error = "Invalid transaction values.";
+            return;
+        }
+
+        var message = $"Save this transaction?\n\n" +
+            $"Symbol: {_transaction.Symbol}\n" +
+            $"Type: {_transaction.Type}\n" +
+            $"Quantity: {_transaction.Quantity}\n" +
+            $"Price: {_transaction.Price:0.####}\n" +
+            $"Total Amount: {_transaction.TotalAmount}\n" +
+            $"Market Price: {_transaction.MarketPrice}\n" +
+            $"Commission: {_transaction.Commission}\n" +
+            $"Market: {_transaction.Market}\n" +
+            $"Currency: {_transaction.Currency}\n" +
+            $"Currency Rate: {CurrencyRate:0.0000}\n" +
+            $"Date: {_transaction.TransactionDate:yyyy-MM-dd HH:mm}\n" +
+            $"Notes: {_transaction.Notes}";
+
+        var confirmed = await DialogService.Confirm(message, "Confirm Transaction",
+            new ConfirmOptions { OkButtonText = "Save", CancelButtonText = "Back", Style = "white-space: pre-line;" });
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        DialogService.Close(_transaction);
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}

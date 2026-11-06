@@ -175,6 +175,8 @@ public class YhGetResultStockSummaryDetails
 
     public string Error { get; set; } = string.Empty;
 
+    public string DataSource = string.Empty;
+
     public YhGetResultStockPrice ExtractResultStockPrice()
     {
         if (Price == null)
