@@ -36,6 +36,7 @@ static public class TimeUtils
         }
 
         TimeOnly nowTimeOnly = TimeOnly.FromDateTime(dateTime);
+
         if (nowTimeOnly < TRADING_START_UTC || nowTimeOnly > TRADING_FINISH_UTC)
         {
             return false;

@@ -545,7 +545,7 @@
         // var totalCost = _equities.Sum(e => e.Quantity * e.AverageCost);
         // _totalGainLossPercent = totalCost != 0 ? _totalGainLoss / totalCost : 0;
 
-        EquityUtils.CalculateGainLoss(_equities, out _totalGainLoss, out _totalGainLossPercent);
+        EquityUtils.CalculateHoldingGainLoss(_equities, out _totalGainLoss, out _totalGainLossPercent);
 
     }
 

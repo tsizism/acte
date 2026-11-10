@@ -40,7 +40,7 @@ static public class EquityUtils
         return equity.GainLoss!.Value / costBasis;
     }
 
-    static public void CalculateGainLoss(List<Equity> equities, out decimal totalGainLoss, out decimal totalGainLossPercent)
+    static public void CalculateHoldingGainLoss(List<Equity> equities, out decimal totalGainLoss, out decimal totalGainLossPercent)
     {
         totalGainLoss = equities.Sum(e => e.GainLoss!.Value);
         var totalCost = equities.Sum(e => e.Quantity * e.AverageCost);

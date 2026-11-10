@@ -73,6 +73,20 @@ public class EquityBuilder
         equity.LastUpdated = _equityMarket.LastUpdated;
         equity.MarketPrice = _equityMarket.CurrentPrice;
         equity.DataSource = _dataSource;
+
+        if (equity.CurrentPrice > equity.HoldingHigh)
+        {
+            equity.HoldingHigh = equity.CurrentPrice;
+            equity.HoldingHighAt = DateTime.UtcNow;
+        }
+
+        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
+        {
+            equity.HoldingLow = equity.CurrentPrice;
+            equity.HoldingLowAt = DateTime.UtcNow;
+        }
+
+        equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
         return this;
     }
 

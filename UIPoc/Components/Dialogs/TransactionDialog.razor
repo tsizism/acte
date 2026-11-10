@@ -85,8 +85,8 @@
         {
             HoldingId = HoldingId,
             Symbol = Symbol ?? string.Empty,
-            Market = "US",
-            Currency = HoldingCurrency ?? string.Empty,
+            // Market = "US",
+            // Currency = HoldingCurrency ?? string.Empty,
             // TransactionDate = DateTime.UtcNow
         };
     }
@@ -104,24 +104,49 @@
             return false;
         }
 
+        if (_transaction.Currency != "CAD" && _transaction.Currency != "USD")
+        {
+            _error = $"Invalid currency: {_transaction.Currency}. Should be 'CAD' or 'USD'.";
+            return false;
+        }
+
         if (_transaction.Market != "CDN" && _transaction.Market != "US")
         {
             _error = $"Invalid market: {_transaction.Market}. Should be 'CDN' or 'US'.";
             return false;
         }
 
-        _transaction.Symbol = _transaction.Symbol.Trim().ToUpperInvariant();
+        if (!(_transaction.Market == "US" && _transaction.Currency == "USD"))
+        {
+            _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'US/USD'.";
+            return false;
+        }
 
-        if (_transaction.Market == "CDN" )
+        if (!(_transaction.Market == "CAN" && _transaction.Currency == "CAD"))
+        {
+            _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'CAN/CAD'.";
+            return false;
+        }
+
+       _transaction.Symbol = _transaction.Symbol.Trim().ToUpperInvariant();
+
+        if ((_transaction.Market == "CDN" && this.HoldingCurrency == "CAD") || 
+            (_transaction.Market == "US"  && this.HoldingCurrency == "USD"))
         {
             this.CurrencyRate = 1.0m;
             _transaction.Price = _transaction.MarketPrice;
         }
-        else
+        else if (_transaction.Market == "US" && this.HoldingCurrency == "CAD")
         {
             _transaction.Price = (_transaction.TotalAmount - _transaction.Commission) / _transaction.Quantity;
             this.CurrencyRate = _transaction.Price / _transaction.MarketPrice;
         }
+        else
+        {
+            _error = $"Invalid Market/Currency/HoldingCurrency combination: {_transaction.Market}/{_transaction.Currency}/{this.HoldingCurrency}";
+            return false;
+        }
+
         return true;
     }
 
