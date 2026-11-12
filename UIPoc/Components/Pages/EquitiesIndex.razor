@@ -38,6 +38,11 @@
                              ButtonStyle="ButtonStyle.Info" 
                              Size="ButtonSize.Medium"
                              Style="margin-right: 0.5rem" />
+                <RadzenButton Icon="photo_camera" Text="Create Snapshot" 
+                             Click="@CreateSnapshotAsync" 
+                             ButtonStyle="ButtonStyle.Secondary" 
+                             Size="ButtonSize.Medium"
+                             Style="margin-right: 0.5rem" />
                 <RadzenButton Icon="download" Text="Export to Excel" 
                              Click="@ExportEquitiesAsync" 
                              ButtonStyle="ButtonStyle.Success" 
@@ -559,6 +564,34 @@
     private void NavigateToAddEquity()
     {
         NavigationManager.NavigateTo($"/equities/{_selectedHoldingId!.Value}/create");
+    }
+
+    private async Task CreateSnapshotAsync()
+    {
+        if (!_selectedHoldingId.HasValue)
+            return;
+
+        try
+        {
+            var snapshot = await ModelService.CreateHoldingSnapshotAsync(_selectedHoldingId.Value);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Snapshot created",
+                Detail = snapshot.Name,
+                Duration = 3000
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to create snapshot: {ex.Message}",
+                Duration = 4000
+            });
+        }
     }
 
     private async Task ExportEquitiesAsync()

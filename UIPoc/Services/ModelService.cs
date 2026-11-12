@@ -152,6 +152,66 @@ namespace UIPooc.Services
             return clonedHolding;
         }
 
+        public async Task<Holding> CreateHoldingSnapshotAsync(int sourceHoldingId)
+        {
+            var source = await _context.Holdings
+                .Include(h => h.Equities)
+                .Include(h => h.Transactions)
+                .FirstOrDefaultAsync(h => h.HoldingId == sourceHoldingId)
+                ?? throw new InvalidOperationException($"Holding with ID {sourceHoldingId} not found.");
+
+            var now = DateTime.UtcNow;
+            var name = $"{source.Name} {now:yyyy-MM-dd}";
+
+            var snapshot = new Holding
+            {
+                Name = name,
+                CallName = name,
+                Comment = source.Comment,
+                UserId = source.UserId,
+                Type = HoldingType.Snapshot,
+                Index = source.Index,
+                Currency = source.Currency,
+                FlagMaxIndex = source.FlagMaxIndex,
+                FlagMinIndex = source.FlagMinIndex,
+                CreatedAt = now,
+                LastUpdated = now,
+                Flag = source.Flag,
+                FlagMessage = source.FlagMessage,
+                FlagDate = source.FlagDate,
+                IsDeleted = false
+            };
+
+            foreach (var equity in source.Equities)
+            {
+                snapshot.Equities.Add(new Equity(equity));
+            }
+
+            foreach (var t in source.Transactions)
+            {
+                snapshot.Transactions.Add(new Transaction
+                {
+                    Symbol = t.Symbol,
+                    Type = t.Type,
+                    Quantity = t.Quantity,
+                    Price = t.Price,
+                    MarketPrice = t.MarketPrice,
+                    Market = t.Market,
+                    Currency = t.Currency,
+                    TotalAmount = t.TotalAmount,
+                    Commission = t.Commission,
+                    TransactionDate = t.TransactionDate,
+                    Notes = t.Notes,
+                    IsDeleted = t.IsDeleted
+                });
+            }
+
+            _context.Holdings.Add(snapshot);
+            await _context.SaveChangesAsync();
+
+            return snapshot;
+        }
+
         #endregion
 
         #region Equity Operations

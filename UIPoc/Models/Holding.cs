@@ -6,7 +6,7 @@ public enum HoldingType
     Active,
     SoldAndKeep,
     BuyPending,
-    Snaphot,  
+    Snapshot,  
 }
 
 public class Holding
