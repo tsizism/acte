@@ -235,6 +235,10 @@ namespace UIPooc.Data
 
                 entity.HasIndex(e => e.UserId);
 
+                entity.Property(e => e.HoldingMasterId);
+
+                entity.HasIndex(e => e.HoldingMasterId);
+
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(100);

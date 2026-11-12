@@ -4,13 +4,15 @@ public enum HoldingType
 {
     WatchList, 
     Active,
-    Sold,
+    SoldAndKeep,
     BuyPending,
+    Snaphot,  
 }
 
 public class Holding
 {
     public int HoldingId { get; set; }
+    public int? HoldingMasterId { get; set; }
     public int UserId { get; set; }
     public HoldingType Type { get; set; } = HoldingType.WatchList;
     public decimal Index { get; set; }

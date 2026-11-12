@@ -351,6 +351,9 @@ namespace UIPooc.Migrations
                     b.Property<decimal?>("FlagMinIndex")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("HoldingMasterId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Index")
                         .HasColumnType("decimal(18,2)");
 
@@ -372,6 +375,8 @@ namespace UIPooc.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("HoldingId");
+
+                    b.HasIndex("HoldingMasterId");
 
                     b.HasIndex("Name")
                         .IsUnique();
