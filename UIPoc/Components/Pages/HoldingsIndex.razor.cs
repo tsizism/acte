@@ -291,4 +291,48 @@ public partial class HoldingsIndex
             });
         }
     }
+
+    private async Task DeleteHoldingAsync(Holding holding)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Delete holding '{holding.Name}' and its {holding.Equities.Count} equities? This action cannot be undone.",
+            "Delete Holding",
+            new ConfirmOptions
+            {
+                OkButtonText = "Delete",
+                CancelButtonText = "Cancel",
+                Width = "400px"
+            });
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelService.DeleteHoldingAsync(holding.HoldingId);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = $"Holding '{holding.Name}' deleted.",
+                Duration = 4000
+            });
+
+            await LoadHoldingsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to delete holding: {ex.Message}",
+                Duration = 4000
+            });
+        }
+    }
+
 }

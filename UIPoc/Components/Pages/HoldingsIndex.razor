@@ -118,7 +118,11 @@
                                      Style="margin-right: 0.25rem" />
                         <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                      Click="@(() => CloneHolding(holding))"
-                                     title="Clone Holding" />
+                                     title="Clone Holding"
+                                     Style="margin-right: 0.25rem" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                     Click="@(() => DeleteHoldingAsync(holding))"
+                                     title="Delete Holding" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>

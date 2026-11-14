@@ -39,7 +39,7 @@
                              Size="ButtonSize.Medium"
                              Style="margin-right: 0.5rem" />
                 <RadzenButton Icon="photo_camera" Text="Create Snapshot" 
-                             Click="@CreateSnapshotAsync" 
+                             Click="@ConfirmCreateSnapshotAsync" 
                              ButtonStyle="ButtonStyle.Secondary" 
                              Size="ButtonSize.Medium"
                              Style="margin-right: 0.5rem" />
@@ -441,7 +441,7 @@
         try
         {
             _holdings = (await FinanceService.FetchHoldingsAsync())
-                 .Where(h => h.Type == HoldingType.Active)
+                 // .Where(h => h.Type == HoldingType.Active)
                  .ToList();
         }
         catch (InvalidOperationException ex)
@@ -566,14 +566,14 @@
         NavigationManager.NavigateTo($"/equities/{_selectedHoldingId!.Value}/create");
     }
 
-    private async Task CreateSnapshotAsync()
+    private async Task CreateSnapshotAsync(string name)
     {
         if (!_selectedHoldingId.HasValue)
             return;
 
         try
         {
-            var snapshot = await ModelService.CreateHoldingSnapshotAsync(_selectedHoldingId.Value);
+            var snapshot = await ModelService.CreateHoldingSnapshotAsync(_selectedHoldingId.Value, name);
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
@@ -793,5 +793,24 @@
         return result ? equityMarket : null;
     }
     
+    private async Task ConfirmCreateSnapshotAsync()
+    {
+        var holdingName = _selectedHolding?.Name ?? "the selected holding";
+        var name = $"{holdingName} {DateTime.Now:yyyy-MM-dd}";
+        var confirmed = await DialogService.Confirm(
+            $"Create a snapshot '{name}' ? A new holding containing a copy of its current equities will be created.",
+            "Create Snapshot",
+            new ConfirmOptions
+            {
+                OkButtonText = "Create",
+                CancelButtonText = "Cancel",
+                Width = "400px"
+            });
+
+        if (confirmed == true)
+        {
+            await CreateSnapshotAsync(name);
+        }
+    }
 
 }

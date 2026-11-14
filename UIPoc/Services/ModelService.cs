@@ -152,7 +152,7 @@ namespace UIPooc.Services
             return clonedHolding;
         }
 
-        public async Task<Holding> CreateHoldingSnapshotAsync(int sourceHoldingId)
+        public async Task<Holding> CreateHoldingSnapshotAsync(int sourceHoldingId, string  name)
         {
             var source = await _context.Holdings
                 .Include(h => h.Equities)
@@ -161,10 +161,10 @@ namespace UIPooc.Services
                 ?? throw new InvalidOperationException($"Holding with ID {sourceHoldingId} not found.");
 
             var now = DateTime.UtcNow;
-            var name = $"{source.Name} {now:yyyy-MM-dd}";
 
             var snapshot = new Holding
             {
+                HoldingMasterId = source.HoldingId,
                 Name = name,
                 CallName = name,
                 Comment = source.Comment,

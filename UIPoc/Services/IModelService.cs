@@ -18,7 +18,7 @@ namespace UIPooc.Services
         Task<Holding> UpdateHoldingAsync(Holding holding);
         Task DeleteHoldingAsync(int holdingId);
         Task<Holding> CloneHoldingAsync(int sourceHoldingId, string newHoldingName, bool cloneEquities = true);
-        Task<Holding> CreateHoldingSnapshotAsync(int sourceHoldingId);
+        Task<Holding> CreateHoldingSnapshotAsync(int sourceHoldingId, string name);
 
         // Equity operations
         Task<List<Equity>> GetAllEquitiesAsync();
