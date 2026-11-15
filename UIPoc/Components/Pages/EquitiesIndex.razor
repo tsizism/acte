@@ -83,6 +83,13 @@
                     <RadzenText TextStyle="TextStyle.H6">
                         Index: <strong>@_selectedHolding.Index.ToString("N2")</strong>
                     </RadzenText>
+
+                    @if (_masterHoldingName != null)
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            Master: <strong>@_masterHoldingName</strong>
+                        </RadzenText>
+                    }
                 }
             </RadzenColumn>
 
@@ -412,6 +419,7 @@
     public int? HoldingId { get; set; }
 
     private List<Holding> _holdings = new();
+    private string? _masterHoldingName;
     private List<Equity> _equities = new();
     private int? _selectedHoldingId;
     private Holding? _selectedHolding;
@@ -478,6 +486,7 @@
         {
             _equities.Clear();
             _selectedHolding = null;
+            _masterHoldingName = null;
             return;
         }
 
@@ -504,6 +513,9 @@
 
                 _equities = await FinanceService.FetchEquitiesForHoldingAsync(_selectedHolding);
                 _selectedHolding = await FinanceService.FetchHoldingAsync(_selectedHoldingId.Value);
+                _masterHoldingName = _selectedHolding?.HoldingMasterId is int masterId
+                    ? (await FinanceService.FetchHoldingAsync(masterId))?.Name
+                    : null;
                 CalculateTotals();
             }
             catch (Exception ex)

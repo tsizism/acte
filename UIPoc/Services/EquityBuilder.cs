@@ -24,8 +24,10 @@ public class EquityBuilder
     /// Populates <see cref="EquityMarket"/> from the database, falling back to the in-memory cache
     /// when the data is still fresh.
     /// </summary>
-    public async Task<EquityBuilder> WithEquitySymbol(string symbol) //, string market)
+    public async Task<EquityBuilder> WithEquityMarketFromCache(Equity equity) //, string market)
     {
+        var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+
         _equityMarket = null;
         if (FinanceService._equityMarketCache.TryGetValue(symbol, out var cached))
         {
@@ -44,7 +46,16 @@ public class EquityBuilder
                 //_logger.LogDebug("EquityMarket for {Symbol} is outdated and will be refreshed from the database.", symbol);
             }
         }
+        return this;
+    }
 
+    public async Task<EquityBuilder> WithEquityMarket(Equity equity)
+    {
+        if (_equityMarket != null && TimeUtils.IsUpToDateWithMarket(_equityMarket.LastUpdated))
+        {
+            return this;
+        }
+        var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
         // Not in local cache or cache is outdated, fetch from database
         _equityMarket = await _modelService.GetEquityMarketBySymbolAsync(symbol);
 
@@ -60,11 +71,8 @@ public class EquityBuilder
         _equityMarket = await _modelService.UpsertEquityMarketAsync(equityMarket);
         FinanceService._equityMarketCache[symbol] = _equityMarket;
         _dataSource = stockPriceInfo.DataSource;
-        return this;
-    }
 
-    public async Task<EquityBuilder> WithEquityMarket(Equity equity)
-    {
+
         if (_equityMarket == null || EquityUtils.GetSymbolAdjustedToMarket(equity.Symbol, equity.Market) != _equityMarket.Symbol)
         {
             throw new InvalidOperationException("EquityMarket must be set before setting Equity.");
@@ -73,20 +81,6 @@ public class EquityBuilder
         equity.LastUpdated = _equityMarket.LastUpdated;
         equity.CurrentMarketPrice = _equityMarket.CurrentPrice;
         equity.DataSource = _dataSource;
-
-        if (equity.CurrentPrice > equity.HoldingHigh)
-        {
-            equity.HoldingHigh = equity.CurrentPrice;
-            equity.HoldingHighAt = DateTime.UtcNow;
-        }
-
-        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
-        {
-            equity.HoldingLow = equity.CurrentPrice;
-            equity.HoldingLowAt = DateTime.UtcNow;
-        }
-
-        equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
         return this;
     }
 
@@ -153,6 +147,21 @@ public class EquityBuilder
     /// </summary>
     public async Task Build(Equity equity)
     {
+        if (equity.CurrentPrice > equity.HoldingHigh)
+        {
+            equity.HoldingHigh = equity.CurrentPrice;
+            equity.HoldingHighAt = DateTime.UtcNow;
+        }
+
+        if (equity.HoldingLow == 0 || equity.CurrentPrice < equity.HoldingLow)
+        {
+            equity.HoldingLow = equity.CurrentPrice;
+            equity.HoldingLowAt = DateTime.UtcNow;
+        }
+
+        equity.GainLoss = (equity.CurrentPrice - equity.AverageCost) * equity.Quantity;
+
+
         //if (equity == null)
         //{
         //    throw new InvalidOperationException("Equity must be set before calling Build.");
