@@ -84,7 +84,7 @@ public class YhGetResultStockPrice
         }
 
         equity.Currency = this.Currency;
-        equity.MarketPrice = this.Price;
+        equity.CurrentMarketPrice = this.Price;
         equity.CurrentPrice = this.Price; // Will be adjusted to currency in FetchEquitiesForHoldingAsync
     }
 }
@@ -127,7 +127,7 @@ public class YhGetResultStockDetails
         }
 
         equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
-        equity.MarketPrice = Price.RegularMarketPrice;
+        equity.CurrentMarketPrice = Price.RegularMarketPrice;
         equity.CurrentPrice = Price.RegularMarketPrice;
         equity.PrevDayMarketPrice = Price.RegularMarketPreviousClose;
 
@@ -203,7 +203,7 @@ public class YhGetResultStockSummaryDetails
         }
 
         equity.AverageCost = equity.AverageCost == 0 ? Price.RegularMarketPrice : equity.AverageCost;
-        equity.MarketPrice = Price.RegularMarketPrice;
+        equity.CurrentMarketPrice = Price.RegularMarketPrice;
         equity.CurrentPrice = Price.RegularMarketPrice;
         equity.PrevDayMarketPrice = Price.RegularMarketPreviousClose;
 

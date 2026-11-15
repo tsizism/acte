@@ -209,8 +209,8 @@
                                 // decimal diff = equityMarket.CurrentPrice - equityMarket.PreviousClose;
                                 // decimal proc = diff / equityMarket.CurrentPrice;
 
-                                var distHigh = equityMarket.Week52High - equity.MarketPrice;
-                                var distLow = equity.MarketPrice - equityMarket.Week52Low;
+                                var distHigh = equityMarket.Week52High - equity.CurrentMarketPrice;
+                                var distLow = equity.CurrentMarketPrice - equityMarket.Week52Low;
                                 closerToHigh = distHigh < distLow;
                                 closerToLow = distLow < distHigh;
                             }
@@ -224,7 +224,7 @@
                                 <span> / </span>
                             }
 
-                            <span> @equity.MarketPrice.ToString("N2")   </span>
+                            <span> @equity.CurrentMarketPrice.ToString("N2")   </span>
 
                             if (equityMarket != null && equityMarket.Week52High > 0)
                             {
@@ -325,7 +325,7 @@
 
                 <RadzenDataGridColumn TItem="Equity" Title="Total Value" Width="175px"  TextAlign="TextAlign.Center">
                     <Template Context="equity">
-                    @((equity.Quantity * equity.MarketPrice).ToString("C2")) @equity.Currency /  @((equity.Quantity * equity.CurrentPrice).ToString("C2")) @_selectedHolding!.Currency
+                    @((equity.Quantity * equity.CurrentMarketPrice).ToString("C2")) @equity.Currency /  @((equity.Quantity * equity.CurrentPrice).ToString("C2")) @_selectedHolding!.Currency
                     </Template>
                 </RadzenDataGridColumn>
 

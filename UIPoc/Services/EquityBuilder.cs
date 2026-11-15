@@ -71,7 +71,7 @@ public class EquityBuilder
         }
 
         equity.LastUpdated = _equityMarket.LastUpdated;
-        equity.MarketPrice = _equityMarket.CurrentPrice;
+        equity.CurrentMarketPrice = _equityMarket.CurrentPrice;
         equity.DataSource = _dataSource;
 
         if (equity.CurrentPrice > equity.HoldingHigh)
@@ -92,7 +92,7 @@ public class EquityBuilder
 
     public async Task<EquityBuilder> WithExchangeRate(Equity equity, decimal? exchangeRate = null)
     {
-        equity.CurrentPrice = exchangeRate == null ? equity.MarketPrice : equity.MarketPrice * exchangeRate.Value;
+        equity.CurrentPrice = exchangeRate == null ? equity.CurrentMarketPrice : equity.CurrentMarketPrice * exchangeRate.Value;
       
         return this;
     }

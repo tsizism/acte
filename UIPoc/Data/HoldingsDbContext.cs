@@ -315,9 +315,9 @@ namespace UIPooc.Data
 
                 entity.Property(e => e.CurrentPrice)
                     .IsRequired()
-                    .HasColumnType("decimal(18,2)");
+                    .HasColumnType("decimal(18,2)");    
 
-                entity.Property(e => e.MarketPrice)
+                entity.Property(e => e.CurrentMarketPrice)
                     .IsRequired()
                     .HasColumnType("decimal(18,2)");
 

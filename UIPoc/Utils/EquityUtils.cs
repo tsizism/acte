@@ -131,7 +131,7 @@ static public class EquityUtils
             AverageCost = transaction.Price,
             AverageCostMarket = transaction.MarketPrice,
             CurrentPrice = transaction.Price,
-            MarketPrice = transaction.MarketPrice,
+            CurrentMarketPrice = transaction.MarketPrice,
             GainLoss = 0,
             ///////////
             LastTxnType = transaction.Type,

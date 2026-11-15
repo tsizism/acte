@@ -12,7 +12,7 @@ public class Equity
     public decimal AverageCost { get; set; }
     public decimal AverageCostMarket { get; set; }
     public decimal CurrentPrice { get; set; }
-    public decimal MarketPrice { get; set; } = 0;
+    public decimal CurrentMarketPrice { get; set; } = 0;
     public decimal PrevDayMarketPrice { get; set; } = 0;
     public decimal? GainLoss { get; set; }
     public TransactionType LastTxnType { get; set; }
@@ -50,7 +50,7 @@ public class Equity
         Quantity = other.Quantity;
         AverageCost = other.AverageCost;
         CurrentPrice = other.CurrentPrice;
-        MarketPrice = other.MarketPrice;
+        CurrentMarketPrice = other.CurrentMarketPrice;
         GainLoss = other.GainLoss;
         LastTxnType = other.LastTxnType;
         LastTxnQuantity = other.LastTxnQuantity;
@@ -80,7 +80,7 @@ public class Equity
         destination.Quantity = this.Quantity;
         destination.AverageCost = this.AverageCost;
         destination.CurrentPrice = this.CurrentPrice;
-        destination.MarketPrice = this.MarketPrice;
+        destination.CurrentMarketPrice = this.CurrentMarketPrice;
         destination.GainLoss = this.GainLoss;
         destination.LastTxnType = this.LastTxnType;
         destination.LastTxnQuantity = this.LastTxnQuantity;

@@ -145,6 +145,9 @@ namespace UIPooc.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
+                    b.Property<decimal>("CurrentMarketPrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("CurrentPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -221,9 +224,6 @@ namespace UIPooc.Migrations
                         .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
-
-                    b.Property<decimal>("MarketPrice")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("PrevDayMarketPrice")
                         .HasColumnType("decimal(18,2)");
