@@ -125,6 +125,23 @@
                 }
             </RadzenColumn>
 
+            <RadzenColumn Size="4" SizeMD="2">
+                @if (_selectedHolding != null && _selectedHolding.Type != HoldingType.Snapshot)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenCheckBox TValue="bool" Value="@_showSnapshots" Change="@OnShowSnapshotsChanged" Name="ShowSnapshots" />
+                        <RadzenLabel Text="Show snapshot" Component="ShowSnapshots" />
+                    </RadzenStack>
+                }
+            </RadzenColumn>
+
+            <RadzenColumn Size="4" SizeMD="2">
+                <RadzenText TextStyle="TextStyle.H6">
+                    <strong>@_snapshotHoldingsNames</strong>
+                </RadzenText>
+            </RadzenColumn>
+
+
         </RadzenRow>
     </RadzenCard>
 
@@ -167,7 +184,7 @@
             </RadzenStack>
         </RadzenCard>
 
-        <RadzenDataGrid Data="@_equities" 
+        <RadzenDataGrid Data="@DisplayedEquities" 
                        TItem="Equity" 
                        AllowFiltering="true" 
                        AllowSorting="true"
@@ -177,6 +194,15 @@
                        FilterMode="FilterMode.Simple"
                        Style="height: 800px">
             <Columns>
+
+                @if (_showSnapshots)
+                {
+                <RadzenDataGridColumn TItem="Equity" Title="" Width="30px" Frozen="true" Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+                    <Template Context="equity">
+                        @(equity.HoldingId == _selectedHoldingId ? "M" : "S")
+                    </Template>
+                </RadzenDataGridColumn>
+                }
                 <RadzenDataGridColumn TItem="Equity" Property="Symbol" Title="Symbol" Width="50px" Frozen="true" TextAlign="TextAlign.Left">
                     <Template Context="equity">
                     <a href="@EquityUtils.GetFinancePortalUrlForStock(@EquityUtils.GetSymbolAdjustedToMarket(equity))" target="_blank">
@@ -201,7 +227,7 @@
                     </Template>
                 </RadzenDataGridColumn> *@
 
-                <RadzenDataGridColumn TItem="Equity" Property="MarketPrice" Title="Market Price + 52w" Width="100px">
+                <RadzenDataGridColumn TItem="Equity" Property="CurrentMarketPrice" Title="Market Price + 52w" Width="100px">
                     <Template Context="equity">
                         @{
                             // bool result = FinanceService.GetEquityMarket(EquityUtils.GetSymbolAdjustedToMarket(equity), out var equityMarket);
@@ -477,7 +503,56 @@
 
     private async Task OnHoldingChanged()
     {
+        _snapshotEquities.Clear();
+        _showSnapshots = false;
         await LoadEquitiesAsync();
+    }
+
+    private List<Equity> _snapshotEquities = new();
+    private bool _showSnapshots;
+    private string _snapshotHoldingsNames = string.Empty;
+
+    private IEnumerable<Equity> DisplayedEquities =>  _showSnapshots ? _equities.Concat(_snapshotEquities) : _equities;
+
+    private async Task OnShowSnapshotsChanged(bool value)
+    {
+        _showSnapshots = value;
+        _snapshotEquities.Clear();
+
+        if (!value || !_selectedHoldingId.HasValue)
+        {
+            _snapshotHoldingsNames = string.Empty;
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            var snapshots = _holdings
+                .Where(h => h.Type == HoldingType.Snapshot && h.HoldingMasterId == _selectedHoldingId.Value)
+                .ToList();
+
+            _snapshotHoldingsNames = string.Join(", ", snapshots.Select(s => s.Name));
+
+            foreach (var snapshot in snapshots)
+            {
+                _snapshotEquities.AddRange(await FinanceService.FetchEquitiesForHoldingAsync(snapshot));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to load snapshots: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private async Task LoadEquitiesAsync()
