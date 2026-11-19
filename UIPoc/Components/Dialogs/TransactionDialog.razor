@@ -11,36 +11,41 @@
     </RadzenFormField>
 
     <RadzenFormField Text="Quantity" Style="width: 100%;">
-        <RadzenNumeric TValue="int" @bind-Value="_transaction.Quantity" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+        <RadzenNumeric TValue="int" @bind-Value="_transaction.Quantity"  Style="width: 100%;" />
     </RadzenFormField>
 
-    <RadzenFormField Text="Total Amount"  Style="width: 100%;">
-        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.TotalAmount" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+    <RadzenFormField Text="Market Commission" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Commission"  Style="width: 100%;" />
     </RadzenFormField>
 
     <RadzenFormField Text="Market Price" Style="width: 100%;">
-        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.MarketPrice" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
-    </RadzenFormField>
-
-    <RadzenFormField Text="Commission" Style="width: 100%;">
-        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Commission" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.MarketPrice"  Style="width: 100%;" />
     </RadzenFormField>
 
     <RadzenFormField Text="Market" Style="width: 100%;">
-        <RadzenDropDown TValue="string" @bind-Value="_transaction.Market" Data="@_markets" Change="@(_ => UpdateCurrencyRate())" Style="width: 100%;" />
+        <RadzenDropDown TValue="string" @bind-Value="_transaction.Market" Data="@_markets" Style="width: 100%;" />
     </RadzenFormField>
 
     <RadzenFormField Text="Currency" Style="width: 100%;">
         <RadzenTextBox @bind-Value="_transaction.Currency" Style="width: 100%;" />
     </RadzenFormField>
 
+    <RadzenFormField Text="Total Amount" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.TotalAmount" Style="width: 100%;" />
+    </RadzenFormField>
+
     <RadzenFormField Text="Currency Rate" Style="width: 100%;">
-        <RadzenNumeric TValue="decimal" @bind-Value="this.CurrencyRate" ReadOnly="true" Format="0.0000" Style="width: 100%;" />
+        <RadzenNumeric TValue="decimal" @bind-Value="this.CurrencyRate" Change="@(_ => UpdatePrice())" Format="0.0000" Style="width: 100%;" />
     </RadzenFormField>
 
     <RadzenFormField Text="Price" Style="width: 100%;">
-        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Price" ReadOnly="true" Format="0.0000" Style="width: 100%;" />
+        <RadzenNumeric TValue="decimal" @bind-Value="_transaction.Price"   ReadOnly="true" Format="0.0000" Style="width: 100%;" />
     </RadzenFormField>
+
+    <RadzenFormField Text="Total Market" Style="width: 100%;">
+        <RadzenNumeric TValue="decimal" @bind-Value="this._transactionTotalMarket" ReadOnly="true" Format="0.0000" Style="width: 100%;" />
+    </RadzenFormField>
+
 
     <RadzenFormField Text="Date" Style="width: 100%;">
         <RadzenDatePicker TValue="DateTime" @bind-Value="_transaction.TransactionDate" ShowTime="true" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
@@ -78,6 +83,7 @@
     private readonly string[] _markets = ["US", "CDN"];
     private Transaction _transaction = new();
     private string? _error;
+    private decimal _transactionTotalMarket;
 
     protected override void OnInitialized()
     {
@@ -91,16 +97,14 @@
         };
     }
 
-    private bool UpdateCurrencyRate()
+    private bool UpdatePrice()
     {
         if (   _transaction.Quantity <= 0 
             || _transaction.MarketPrice <= 0
             || _transaction.TotalAmount <= 0
             || _transaction.Commission  <= 0)
         {
-            this.CurrencyRate = 0;
-            _transaction.Price = 0;
-            this.CurrencyRate = 0;
+            _transaction.Price= 0;
             return false;
         }
 
@@ -116,17 +120,23 @@
             return false;
         }
 
-        if (!(_transaction.Market == "US" && _transaction.Currency == "USD"))
+        if (_transaction.Market == "CAD" && _transaction.Currency == "USD")
         {
-            _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'US/USD'.";
+            _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'US/USD', 'CAD/USD' or 'CAD/CDN' ";
             return false;
         }
 
-        if (!(_transaction.Market == "CAN" && _transaction.Currency == "CAD"))
-        {
-            _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'CAN/CAD'.";
-            return false;
-        }
+        // if (!(_transaction.Market == "US" && _transaction.Currency == "USD"))
+        // {
+        //     _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'US/USD'.";
+        //     return false;
+        // }
+
+        // if (!(_transaction.Market == "CAN" && _transaction.Currency == "CAD"))
+        // {
+        //     _error = $"Invalid Market/Currency combination: {_transaction.Market}/{_transaction.Currency}. Should be 'CAN/CAD'.";
+        //     return false;
+        // }
 
        _transaction.Symbol = _transaction.Symbol.Trim().ToUpperInvariant();
 
@@ -138,8 +148,15 @@
         }
         else if (_transaction.Market == "US" && this.HoldingCurrency == "CAD")
         {
-            _transaction.Price = (_transaction.TotalAmount - _transaction.Commission) / _transaction.Quantity;
-            this.CurrencyRate = _transaction.Price / _transaction.MarketPrice;
+            // Nov 12
+            //6.95    1.4411
+            //$23,932.28 = (16600 + 6.95) * 1.4411 = 23,932.275645/239.32 = 23,932.28
+            //16600
+            //$16,606.95
+            // AVG BANK $238.625 CAD
+
+            this._transactionTotalMarket = _transaction.MarketPrice * _transaction.Quantity + _transaction.Commission;
+            _transaction.Price = _transaction.MarketPrice * this.CurrencyRate;
         }
         else
         {
@@ -158,7 +175,7 @@
             return;
         }
 
-        if (!UpdateCurrencyRate())
+        if (!UpdatePrice())
         {
             _error = "Invalid transaction values.";
             return;

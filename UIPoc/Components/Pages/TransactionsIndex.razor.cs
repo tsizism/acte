@@ -89,7 +89,6 @@ public partial class TransactionsIndex
         {
             await ModelService.CreateTransactionAsync(transaction);
 
-
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
@@ -98,20 +97,48 @@ public partial class TransactionsIndex
                 Duration = 5000
             });
 
-            Equity equity = EquityUtils.CreateEquityFromTransaction(transaction);
-            await ModelService.CreateEquityAsync(equity);
 
-            var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+            Equity? equity = await ModelService.GetEquity(HoldingId, transaction.Symbol, transaction.Market);
 
-            NotificationService.Notify(new NotificationMessage
+            if (equity != null)
             {
-                Severity = NotificationSeverity.Success,
-                Summary = "Success",
-                Detail = $"Equity for '{symbol}' added.",
-                Duration = 3000
-            });
+                // $170.00 USD / $237.93 CAD
+                //6.95    1.4411
+                //$23,932.28 = (16600 + 6.95) * 1.4411 = 23,932.275645/
+                //16600
+                //$16,606.95
+                // Avg $238.625 CAD	  $47,725.00 CAD Book 
+                // $137.72 USD / $191.29 CAD
 
+                equity.Quantity += transaction.Quantity;
+                equity.AverageCost = EquityUtils.CalculateNewAverageCost(equity.AverageCost, equity.Quantity, transaction.Price, transaction.Quantity);
+                equity.AverageCostMarket = EquityUtils.CalculateNewAverageCost(equity.AverageCostMarket, equity.Quantity, transaction.MarketPrice, transaction.Quantity);
+                await ModelService.UpdateEquityAsync(equity);
+                var marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = $"Equity for '{marketSymbol}' updated.",
+                    Duration = 3000
+                });
+            }
+            else
+            {
+                Equity newEquity = EquityUtils.CreateEquityFromTransaction(transaction);
+                await ModelService.CreateEquityAsync(newEquity);
 
+                var marketSymbol = EquityUtils.GetSymbolAdjustedToMarket(newEquity);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = $"Equity for '{marketSymbol}' added.",
+                    Duration = 3000
+                });
+
+            }
 
 
             await LoadDataAsync();

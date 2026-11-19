@@ -249,6 +249,12 @@ namespace UIPooc.Services
                 .ToListAsync();
         }
 
+        public async Task<Equity?> GetEquity(int holdingId, string symbol, string market)
+        {
+            return await _context.Equities
+                .FirstOrDefaultAsync(e => e.HoldingId == holdingId && e.Symbol == symbol && e.Market == market);
+        }
+
         public async Task<Equity> CreateEquityAsync(Equity equity)
         {
             _context.Equities.Add(equity);

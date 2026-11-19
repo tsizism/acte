@@ -156,5 +156,10 @@ static public class EquityUtils
         return equity;
     }
 
+    internal static decimal CalculateNewAverageCost(decimal averageCost, int prevTotal, decimal price, int quantity     )
+    {
+        return ((averageCost * prevTotal) + (price * quantity)) / (prevTotal + quantity);
+    }
+        
 }
 
