@@ -158,7 +158,7 @@ static public class EquityUtils
 
     internal static decimal CalculateNewAverageCost(decimal averageCost, int prevTotal, decimal price, int quantity     )
     {
-        return ((averageCost * prevTotal) + (price * quantity)) / (prevTotal + quantity);
+        return Math.Round(((averageCost * prevTotal) + (price * quantity)) / (prevTotal + quantity), 2, MidpointRounding.AwayFromZero);
     }
         
 }

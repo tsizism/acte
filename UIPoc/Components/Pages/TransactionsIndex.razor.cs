@@ -29,6 +29,7 @@ public partial class TransactionsIndex
 
     private Holding? _holding;
     private List<Transaction> _transactions = [];
+    private List<Equity> _equities = [];
     private bool _isLoading;
 
     protected override async Task OnParametersSetAsync()
@@ -43,6 +44,7 @@ public partial class TransactionsIndex
         {
             _holding = await ModelService.GetHoldingByIdAsync(HoldingId);
             _transactions = await ModelService.GetTransactionsByHoldingIdAsync(HoldingId);
+            _equities = await ModelService.GetEquitiesByHoldingIdAsync(HoldingId);
             if (!string.IsNullOrWhiteSpace(Symbol))
             {
                 _transactions = _transactions
@@ -64,6 +66,27 @@ public partial class TransactionsIndex
         {
             _isLoading = false;
         }
+    }
+
+    private Equity? FindEquity(Transaction transaction) =>
+        _equities.FirstOrDefault(e =>
+            string.Equals(e.Symbol, transaction.Symbol, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(e.Market, transaction.Market, StringComparison.OrdinalIgnoreCase));
+
+    private decimal? GetGainLoss(Transaction transaction)
+    {
+        var equity = FindEquity(transaction);
+        if (equity == null)
+        {
+            return null;
+        }
+
+        return transaction.Type switch
+        {
+            TransactionType.Buy => (equity.CurrentPrice - transaction.Price) * transaction.Quantity,
+            TransactionType.Sell => (transaction.Price - equity.CurrentPrice) * transaction.Quantity,
+            _ => null
+        };
     }
 
     private async Task NewTransactionAsync()
@@ -104,12 +127,15 @@ public partial class TransactionsIndex
             {
                 // $170.00 USD / $237.93 CAD
                 //6.95    1.4411
-                //$23,932.28 = (16600 + 6.95) * 1.4411 = 23,932.275645/
+                //------------------------
+                //Amount: $23,932.28 = (16600 + 6.95) * 1.4411
                 //16600
                 //$16,606.95
                 // Avg $238.625 CAD	  $47,725.00 CAD Book 
                 // $137.72 USD / $191.29 CAD
-
+                // S: Nov 12 
+                //------------------------
+                // S?: Nov 23, 2026  (127x100 + 6.95) * 1.45720 = 18,516.57
                 equity.Quantity += transaction.Quantity;
                 equity.AverageCost = EquityUtils.CalculateNewAverageCost(equity.AverageCost, equity.Quantity, transaction.Price, transaction.Quantity);
                 equity.AverageCostMarket = EquityUtils.CalculateNewAverageCost(equity.AverageCostMarket, equity.Quantity, transaction.MarketPrice, transaction.Quantity);

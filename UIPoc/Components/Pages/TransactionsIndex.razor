@@ -56,12 +56,35 @@
                 <RadzenDataGridColumn TItem="Transaction" Property="Currency" Title="Currency" Width="100px" />
                 <RadzenDataGridColumn TItem="Transaction" Property="Market" Title="Market" Width="100px" />
                 <RadzenDataGridColumn TItem="Transaction" Property="TotalAmount" Title="Total" Width="130px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn TItem="Transaction" Title="Currency Rate" Width="130px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                <RadzenDataGridColumn TItem="Transaction" Title="Purchase Rate" Width="130px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
                     <Template Context="transaction">
                         @(transaction.MarketPrice != 0 ? (transaction.Price / transaction.MarketPrice).ToString("N4") : "-")
                     </Template>
                 </RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="Transaction" Property="Commission" Title="Commission" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn TItem="Transaction" Title="Price" Width="120px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="transaction">
+                        @(FindEquity(transaction) is { } equity ? equity.CurrentPrice.ToString("N2") : "")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Title="Market Price" Width="150px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="transaction">
+                        @(FindEquity(transaction) is { } equity ? equity.CurrentMarketPrice.ToString("N2") : "")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Title="Rate" Width="150px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="transaction">
+                        @(FindEquity(transaction) is { } equity ? (equity.CurrentPrice/equity.CurrentMarketPrice).ToString("N2") : "")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Title="Gain/Loss" Width="120px" TextAlign="TextAlign.Right" Sortable="false" Filterable="false">
+                    <Template Context="transaction">
+                        @if (GetGainLoss(transaction) is decimal gainLoss)
+                        {
+                            <span style="color: @(gainLoss >= 0 ? "green" : "red")">@gainLoss.ToString("N2")</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Transaction" Property="Commission" Title="Fee US" Width="120px" FormatString="{0:N2}" TextAlign="TextAlign.Right" />
                 <RadzenDataGridColumn TItem="Transaction" Property="Notes" Title="Notes" />
             </Columns>
         </RadzenDataGrid>
