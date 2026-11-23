@@ -87,7 +87,8 @@ public partial class HoldingIndexHistory
         HoldingType.Active => BadgeStyle.Success,
         HoldingType.WatchList => BadgeStyle.Info,
         HoldingType.SoldAndKeep => BadgeStyle.Warning,
-        HoldingType.BuyPending => BadgeStyle.Primary,
+        HoldingType.Waitlist => BadgeStyle.Primary,
+        HoldingType.Blacklist => BadgeStyle.Danger,
         _ => BadgeStyle.Light
     };
 }

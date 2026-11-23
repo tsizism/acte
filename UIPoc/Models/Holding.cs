@@ -2,11 +2,13 @@ namespace UIPooc.Models;
 
 public enum HoldingType
 {
-    WatchList, 
-    Active,
-    SoldAndKeep,
-    BuyPending,
-    Snapshot,  
+    WatchList = 0,      // General Watchlist
+    Active = 1,
+    SoldAndKeep = 2,
+    Waitlist = 3,       // Sold And Will Re-buy
+    Snapshot = 4,
+    Wishlist = 5,      // Buy New To portfolio
+    Blacklist = 6,      // Sold and Not Interested
 }
 
 public class Holding
