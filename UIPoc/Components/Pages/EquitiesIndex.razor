@@ -372,7 +372,7 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Market/Upd" Width="100px" TextAlign="TextAlign.Center">
+                <RadzenDataGridColumn TItem="Equity" Property="LastUpdated" Title="Last Market/Equity Upd" Width="100px" TextAlign="TextAlign.Center">
                     <Template Context="equity">
                     @{
                         var equityMarket = this.GetEquityMarket(equity);
@@ -461,6 +461,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!RendererInfo.IsInteractive) return;
+
         await LoadHoldingsAsync();
 
         if (HoldingId.HasValue)
@@ -592,6 +594,7 @@
                     ? (await FinanceService.FetchHoldingAsync(masterId))?.Name
                     : null;
                 CalculateTotals();
+                await GetRatesAsync();
             }
             catch (Exception ex)
             {
@@ -604,8 +607,6 @@
                     CloseOnClick = true
                 });
             }
-            await GetRatesAsync();
-            CalculateTotals();
         }
         catch (Exception ex)
         {

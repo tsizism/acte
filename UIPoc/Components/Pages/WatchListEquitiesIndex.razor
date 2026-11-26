@@ -422,6 +422,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!RendererInfo.IsInteractive) return;
+
+
         await LoadHoldingsAsync();
 
         if (HoldingId.HasValue)
@@ -498,7 +501,7 @@
                 }
 
                 _equities = await FinanceService.FetchEquitiesForHoldingAsync(_selectedHolding);
-                _selectedHolding = await FinanceService.FetchHoldingAsync(_selectedHoldingId.Value);
+                
                 CalculateTotals();
             }
             catch (Exception ex)

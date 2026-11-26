@@ -380,7 +380,12 @@ public class FinanceService : IFinanceService
 
             foreach (var equity in equities)
             {
-                if (holding.Type == HoldingType.Active)
+                //if (equity.Symbol == "AVGO")
+                //{
+                //    var _ = equity.CurrentMarketPrice;
+                //}
+
+                if (holding.Type != HoldingType.Snapshot)
                 {
                     await equityBuilder.WithEquityMarketFromCache(equity);
                     await equityBuilder.WithEquityMarket(equity);
@@ -400,32 +405,37 @@ public class FinanceService : IFinanceService
                 await equityBuilder.Build(equity);
                 var symbol = EquityUtils.GetSymbolAdjustedToMarket(equity);
                 holdingIndexSnapshotDict[symbol] = decimal.Round(equity.CurrentPrice, 4);
+
+                //if (equity.Symbol == "AVGO" && equity.CurrentMarketPrice > 300)
+                //{
+                //    var _ = equity.CurrentMarketPrice;
+                //}
             }
 
             // Lets have index for any Holding
             //if (holding.Type == HoldingType.Active && holding.Equities.Count > 0)
             //{
-                if (!TimeUtils.IsUpToDateWithMarket(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+            if (!TimeUtils.IsUpToDateWithMarket(holding.LastUpdated) || holding.Index == 0 || alwaysRealTime) // 4 hours old ?
+            {
+                holding.Index = decimal.Round((decimal)equities.Sum(e => e.Quantity * e.CurrentPrice), 4);
+
+                await _modelService.UpdateHoldingAsync(holding);
+
+                try
                 {
-                    holding.Index = decimal.Round((decimal)equities.Sum(e => e.Quantity * e.CurrentPrice), 4);
-
-                    await _modelService.UpdateHoldingAsync(holding);
-
-                    try
+                    await _modelService.UpsertIndexHistoryAsync(new IndexHistory
                     {
-                        await _modelService.UpsertIndexHistoryAsync(new IndexHistory
-                        {
-                            HoldingId = holding.HoldingId,
-                            Index = holding.Index,
-                            HoldingSnapshot = JsonSerializer.Serialize(holdingIndexSnapshotDict),
-                            RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
-                    }
+                        HoldingId = holding.HoldingId,
+                        Index = holding.Index,
+                        HoldingSnapshot = JsonSerializer.Serialize(holdingIndexSnapshotDict),
+                        RecordedAt = DateOnly.FromDateTime(DateTime.UtcNow)
+                    });
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error saving index history for holding {holding.HoldingId}");
+                }
+            }
             //}
 
             return equities;

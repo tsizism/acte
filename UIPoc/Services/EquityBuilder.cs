@@ -63,6 +63,8 @@ public class EquityBuilder
         {
             FinanceService._equityMarketCache[symbol] = _equityMarket;  //Refresh local cache with up-to-date data from database
             _logger.LogDebug("EquityMarket for {Symbol} resolved from cache.", symbol);
+            equity.LastUpdated = _equityMarket.LastUpdated;
+            equity.CurrentMarketPrice = _equityMarket.CurrentPrice;
             return this;
         }
 
@@ -71,7 +73,6 @@ public class EquityBuilder
         _equityMarket = await _modelService.UpsertEquityMarketAsync(equityMarket);
         FinanceService._equityMarketCache[symbol] = _equityMarket;
         _dataSource = stockPriceInfo.DataSource;
-
 
         if (_equityMarket == null || EquityUtils.GetSymbolAdjustedToMarket(equity.Symbol, equity.Market) != _equityMarket.Symbol)
         {

@@ -64,7 +64,7 @@ static public class TimeUtils
                 return false;
             }
 
-            result = nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(1);  
+            result = nowUtc - lastUpdatedUtc <= TimeSpan.FromHours(1);  // One hour is the threshold for up-to-date during trading hours
             return result;
         }
 
